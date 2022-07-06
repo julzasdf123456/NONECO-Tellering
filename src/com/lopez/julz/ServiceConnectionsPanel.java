@@ -6,14 +6,15 @@
 package com.lopez.julz;
 
 import db.BillOfMaterialsSummaryDao;
-import db.BillsDao;
+import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.ORAssigningDao;
 import db.PaidBillDetailsDao;
-import db.PaidBillsDao;
 import db.ParticularPaymentTransactionsDao;
-import db.ServiceAccountsDao;
 import db.ServiceConnectionsDao;
+import db.TransactionDetailsDao;
+import db.TransactionIndexDao;
+import db.TransactionPaymentDetailsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
@@ -29,8 +30,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
@@ -45,27 +44,24 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
 import pojos.BillOfMaterialsSummary;
-import pojos.Bills;
 import pojos.CheckPayments;
 import pojos.DCRSummaryTransactions;
 import pojos.Login;
 import pojos.ORAssigning;
-import pojos.PaidBills;
 import pojos.ParticularPaymentTransactions;
 import pojos.Server;
-import pojos.ServiceAccounts;
 import pojos.ServiceConnections;
+import pojos.TransactionDetails;
+import pojos.TransactionIndex;
+import pojos.TransactionPaymentDetails;
 
 /**
  *
@@ -86,6 +82,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     int nextOrNumber = 0;
     
     public List<ServiceConnections> serviceConnections;
+    public ServiceConnections activeSvcCon;
     
     /**
      * Queue Table
@@ -102,12 +99,14 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     BillOfMaterialsSummary bomSummary;
     
     public double serviceConnectionTotalPayable = 0;
+    public double subTotal = 0;
+    public double totalVat = 0;
     public double powerLoadTotalPayable = 0;
     
     /**
      * Checks
      */
-    public List<CheckPayments> checkLists;
+    public List<TransactionPaymentDetails> checkLists;
     Object[] checkColNames = {"Bank", "Check No", "Amount"};
     DefaultTableModel checkModel;
     
@@ -498,13 +497,14 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             isOrLocked = false;
         } else {
             orNumberField.setEnabled(false);
+            nextOrNumber = Integer.valueOf(orNumberField.getText());
             isOrLocked = true;
         }
     }//GEN-LAST:event_unlockOrNumberBtnActionPerformed
 
     private void cashPaymentFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cashPaymentFieldKeyReleased
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-//            showTransactConfirmation();
+            showTransactConfirmation();
         } else {
             totalAmountPaid.setValue(getTotalAmount());
         }
@@ -543,7 +543,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             amountField.setPreferredSize(new Dimension(400, 36));
             amountField.setFont(new Font("Arial", Font.BOLD, 16));
             amountField.setHorizontalAlignment(JTextField.RIGHT);
-            amountField.setValue(null);
+            amountField.setValue(getOverallTotal());
             amountField.addFocusListener(new FocusAdapter() {
                 @Override
                 public void focusGained(FocusEvent e) {
@@ -605,25 +605,22 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                 @Override
                 public void keyReleased(KeyEvent e) {
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        checkLists.add(new CheckPayments(
-                            ObjectHelpers.generateRandomString(),
+                        checkLists.add(new TransactionPaymentDetails(
+                            ObjectHelpers.generateIDandRandString(),
                             null,
-                            null,
-                            null,
-                            orNumberField.getText(),
                             amountField.getValue().toString(),
                             "Check",
-                            checkNoField.getText(),
                             checkBank.getText(),
+                            checkNoField.getText(),
                             null,
-                            login.getId(),
+                            nextOrNumber + "",
                             ObjectHelpers.getCurrentTimestamp(),
                             ObjectHelpers.getCurrentTimestamp()
                         ));
 
                         populateCheckTable();
                         checkDialog.dispose();
-                        transactBtn.requestFocus();
+                        cashPaymentField.requestFocus();
                         totalAmountPaid.setValue(getTotalAmount());
                     }
                 }
@@ -639,25 +636,22 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             saveCheckBtn.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    checkLists.add(new CheckPayments(
-                        ObjectHelpers.generateRandomString(),
+                    checkLists.add(new TransactionPaymentDetails(
+                        ObjectHelpers.generateIDandRandString(),
                         null,
-                        null,
-                        null,
-                        orNumberField.getText(),
                         amountField.getValue().toString(),
                         "Check",
-                        checkNoField.getText(),
                         checkBank.getText(),
+                        checkNoField.getText(),
                         null,
-                        login.getId(),
+                        nextOrNumber + "",
                         ObjectHelpers.getCurrentTimestamp(),
                         ObjectHelpers.getCurrentTimestamp()
                     ));
 
                     populateCheckTable();
                     checkDialog.dispose();
-                    transactBtn.requestFocus();
+                    cashPaymentField.requestFocus();
                     totalAmountPaid.setValue(getTotalAmount());
                 }
             });
@@ -672,7 +666,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_addCheckButtonActionPerformed
 
     private void transactBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transactBtnActionPerformed
-//        showTransactConfirmation();
+        showTransactConfirmation();
     }//GEN-LAST:event_transactBtnActionPerformed
 
     private void clearChecksBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearChecksBtnActionPerformed
@@ -688,8 +682,8 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
 
     private void queueTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_queueTableMouseClicked
         if (evt.getClickCount() == 2) {
-            ServiceConnections connection = serviceConnections.get(queueTable.getSelectedRow());
-            getAllPayables(connection);
+            activeSvcCon = serviceConnections.get(queueTable.getSelectedRow());
+            getAllPayables(activeSvcCon);
         }
     }//GEN-LAST:event_queueTableMouseClicked
 
@@ -795,6 +789,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     
     public void updateOR() {
         fetchOR();
+        getQueue();
         System.out.println("OR FETCHED FOR SERVICE CONNECTION PAYMENTS");
     }
     
@@ -828,7 +823,10 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             serviceConnectionPayables.clear();
             serviceConnectionTotalPayable = 0;
             powerLoadTotalPayable = 0;
+            subTotal = 0;
+            totalVat = 0;
             bomSummary = null;
+            addCheckButton.setEnabled(true);
             if (serviceConnectionPayablesModel != null) {
                 serviceConnectionPayablesModel.getDataVector().removeAllElements();
                 serviceConnectionPayablesModel.fireTableDataChanged();
@@ -847,10 +845,12 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             Object scpData[][] = new Object[serviceConnectionPayables.size()+1][serviceConnectionPayablesColumns.length];
             for (int i=0; i<serviceConnectionPayables.size(); i++) {
                 scpData[i][0] = serviceConnectionPayables.get(i).getParticularName();
-                scpData[i][1] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getAmount());
-                scpData[i][2] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getVat());
-                scpData[i][3] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getTotal());
-                serviceConnectionTotalPayable += Double.valueOf(serviceConnectionPayables.get(i).getTotal());
+                scpData[i][1] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getAmount() != null ? serviceConnectionPayables.get(i).getAmount() : "0");
+                scpData[i][2] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
+                scpData[i][3] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getTotal() != null ? serviceConnectionPayables.get(i).getTotal() : "0");
+                serviceConnectionTotalPayable += Double.valueOf(serviceConnectionPayables.get(i).getTotal() != null ? serviceConnectionPayables.get(i).getTotal() : "0");
+                subTotal += Double.valueOf(serviceConnectionPayables.get(i).getAmount()!= null ? serviceConnectionPayables.get(i).getAmount() : "0");
+                totalVat += Double.valueOf(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
             }
             
             scpData[serviceConnectionPayables.size()][0] = "Over All Total";
@@ -934,5 +934,376 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     
     public double getOverallTotal() {
         return serviceConnectionTotalPayable + powerLoadTotalPayable;
+    }
+    
+    public void showTransactConfirmation() {
+        try {
+            // SHOW CONFIRMATION
+            JDialog confirmationDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(getParent()));
+            Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+            int x = (int) size.getWidth();
+            int y = (int) size.getHeight();
+            confirmationDialog.setLocation(x/3, y/3);
+            confirmationDialog.setTitle("Payment Confirmation");
+
+            JPanel mainPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+            mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+            // CASH AMOUNT
+            JLabel cashAmntLabel = new JLabel("CASH AMOUNT");
+            cashAmntLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            mainPanel.add(cashAmntLabel);
+
+            NumberFormat format = NumberFormat.getInstance();
+            format.setMinimumFractionDigits(2);
+            format.setMaximumFractionDigits(2);
+            format.setRoundingMode(RoundingMode.HALF_UP);
+            NumberFormatter formatter = new NumberFormatter(format);
+            formatter.setValueClass(Double.class);
+            formatter.setAllowsInvalid(false);
+            formatter.setCommitsOnValidEdit(true);
+
+            JFormattedTextField cashAmountField = new JFormattedTextField(formatter);
+            cashAmountField.setPreferredSize(new Dimension(250, 36));
+            cashAmountField.setFont(new Font("Arial", Font.BOLD, 19)); 
+            cashAmountField.setHorizontalAlignment(JTextField.RIGHT);
+            cashAmountField.setValue(cashPaymentField.getValue());
+            cashAmountField.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            cashAmountField.selectAll();
+                        }
+                    });                    
+                }                
+            });                
+
+            mainPanel.add(cashAmountField);
+
+            // CHECK AMOUNT
+            JLabel checkAmount = new JLabel("CHECK AMOUNT");
+            checkAmount.setFont(new Font("Arial", Font.BOLD, 16));
+            mainPanel.add(checkAmount);
+
+            JFormattedTextField totalCheckAmountField = new JFormattedTextField(formatter);
+            totalCheckAmountField.setPreferredSize(new Dimension(250, 36));
+            totalCheckAmountField.setFont(new Font("Arial", Font.BOLD, 19)); 
+            totalCheckAmountField.setHorizontalAlignment(JTextField.RIGHT);
+            totalCheckAmountField.setValue(getTotalCheckPayments());
+            totalCheckAmountField.setEnabled(false);
+            mainPanel.add(totalCheckAmountField);
+
+            // TOTAL AMOUNT PAID
+            JLabel totalAmountPaidLabel = new JLabel("TOTAL AMOUNT PAID");
+            totalAmountPaidLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            mainPanel.add(totalAmountPaidLabel);                
+
+            JFormattedTextField totalAmountPaidField = new JFormattedTextField(formatter);
+            totalAmountPaidField.setPreferredSize(new Dimension(250, 36));
+            totalAmountPaidField.setFont(new Font("Arial", Font.BOLD, 19)); 
+            totalAmountPaidField.setHorizontalAlignment(JTextField.RIGHT);
+            totalAmountPaidField.setValue(getTotalAmount());
+            totalAmountPaidField.setEnabled(false);
+            mainPanel.add(totalAmountPaidField);
+
+            // TOTAL AMOUNT DUE
+            JLabel totalAmountDueLabel = new JLabel("TOTAL AMOUNT DUE");
+            totalAmountDueLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            mainPanel.add(totalAmountDueLabel);                
+
+            JFormattedTextField totalAmountDueField = new JFormattedTextField(formatter);
+            totalAmountDueField.setPreferredSize(new Dimension(250, 36));
+            totalAmountDueField.setFont(new Font("Arial", Font.BOLD, 19)); 
+            totalAmountDueField.setForeground(Color.red);
+            totalAmountDueField.setHorizontalAlignment(JTextField.RIGHT);
+            totalAmountDueField.setValue(getOverallTotal());
+            mainPanel.add(totalAmountDueField);
+
+            // TOTAL AMOUNT DUE
+            JLabel changeLabel = new JLabel("CHANGE");
+            changeLabel.setFont(new Font("Arial", Font.BOLD, 16));
+            mainPanel.add(changeLabel);                
+
+            JFormattedTextField changeField = new JFormattedTextField(formatter);
+            changeField.setPreferredSize(new Dimension(250, 36));
+            changeField.setFont(new Font("Arial", Font.BOLD, 19)); 
+            changeField.setForeground(Color.BLUE);
+            changeField.setHorizontalAlignment(JTextField.RIGHT);
+            changeField.setValue(getTotalAmount() - getOverallTotal());
+            mainPanel.add(changeField);
+
+            cashAmountField.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    try {
+                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                            transact();
+                            confirmationDialog.dispose();
+                        } else {
+                            cashAmountField.commitEdit();
+                            cashPaymentField.setValue(cashAmountField.getValue());
+                            totalAmountPaid.setValue(getTotalAmount());
+                            totalAmountPaidField.setValue(getTotalAmount());
+                            changeField.setValue(getTotalAmount() - getOverallTotal());  
+                        }
+                    } catch (ParseException ex) {
+                        Logger.getLogger(PowerBillsPanel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            });
+
+            JButton transactButton = new JButton("CONFIRM", new javax.swing.ImageIcon(getClass().getResource("/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png")));
+            transactButton.setFont(new Font("Arial", Font.BOLD, 18)); 
+            transactButton.setPreferredSize(new Dimension(100, 40));
+            mainPanel.add(new JLabel());
+            mainPanel.add(transactButton);
+            
+            transactButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    transact();
+                    confirmationDialog.dispose();
+                }
+            });
+
+            confirmationDialog.add(mainPanel);
+            confirmationDialog.pack();
+            confirmationDialog.setVisible(true);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Showing Payment Confirmation", e.getMessage());
+        }
+    }
+    
+    public void transact() {
+        try {
+            if (getTotalAmount() >= getOverallTotal()) {
+                String paymentUsed = "";
+                if (cashPaymentField.getValue() != null && checkLists.size() > 0) {
+                    paymentUsed = "Cash and Check";
+                } else if (cashPaymentField.getValue() == null && checkLists.size() > 0) {
+                    paymentUsed = "Check";
+                } else {
+                    paymentUsed = "Cash";
+                }
+                /**
+                 * SAVE TRANSACTION
+                 */
+                String transId = ObjectHelpers.getTimeInMillis();
+                TransactionIndex transaction = new TransactionIndex(
+                        transId,
+                        office + "-" + transId,
+                        activeSvcCon.getServiceAccountName(),
+                        "Service Connection Application Payment of" + activeSvcCon.getServiceAccountName(),
+                        nextOrNumber + "",
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.roundTwoNoComma(subTotal + ""),
+                        ObjectHelpers.roundTwoNoComma(totalVat + ""),
+                        ObjectHelpers.roundTwoNoComma(getOverallTotal() + ""),
+                        null,
+                        login.getId(),
+                        activeSvcCon.getId(),
+                        null,
+                        null,
+                        (activeSvcCon.getLoadCategory() != null && activeSvcCon.getLoadCategory().equals("above 5kVa") ? "Service Connection Application w Power Load" : "Service Connection Application"),
+                        paymentUsed,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        activeSvcCon.getServiceAccountName(),
+                        null,
+                        null, 
+                        null,
+                        activeSvcCon.getAccountNumber(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp()
+                );
+                
+                TransactionIndexDao.insert(connection, transaction);
+                
+                 // UPDATE SERVICE CONNECTION OR
+                ServiceConnectionsDao.updateOr(connection, activeSvcCon.getId(), transaction.getORNumber(), transaction.getORDate());
+                ServiceConnectionsDao.updateOrOnServiceConPayments(connection, activeSvcCon.getId(), transaction.getORNumber());
+
+                /**
+                 * SAVE TRANSACTION DETAILS
+                 */
+                for (int i=0; i<serviceConnectionPayables.size(); i++) {
+                    TransactionDetails details = new TransactionDetails(
+                            ObjectHelpers.generateIDandRandString(),
+                            transId,
+                            serviceConnectionPayables.get(i).getParticularName(),
+                            serviceConnectionPayables.get(i).getAmount(),
+                            serviceConnectionPayables.get(i).getVat(),
+                            serviceConnectionPayables.get(i).getTotal(),
+                            serviceConnectionPayables.get(i).getAccountCode(),
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp()
+                    );
+                    TransactionDetailsDao.insert(connection, details);
+
+                    /**
+                     * SAVE DCR
+                     */
+                    if (serviceConnectionPayables.get(i).getAccountCode() != null) {
+                        DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                            ObjectHelpers.generateIDandRandString(),
+                            serviceConnectionPayables.get(i).getAccountCode(),
+                            null,
+                            null,
+                            serviceConnectionPayables.get(i).getTotal(),
+                            ObjectHelpers.getSqlDate(),
+                            ObjectHelpers.getSqlTime(),
+                            login.getId(),
+                            null,
+                            null,
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp(),
+                            nextOrNumber + "",
+                            "COLLECTION",
+                            office,
+                            null);
+                        DCRSummaryTransactionsDao.insert(connection, dcr);                           
+                    }                            
+                }
+                
+                /**
+                 * IF POWER LOAD
+                 **/
+                if (bomSummary != null) {
+                    TransactionDetails details = new TransactionDetails(
+                            ObjectHelpers.generateIDandRandString(),
+                            transId,
+                            "Power Load Payables",
+                            ObjectHelpers.roundTwoNoComma(bomSummary.getSubTotal()),
+                            ObjectHelpers.roundTwoNoComma(bomSummary.getTotalVAT()),
+                            ObjectHelpers.roundTwoNoComma(bomSummary.getTotal()),
+                            "250-251-00",
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp()
+                    );
+                    TransactionDetailsDao.insert(connection, details);
+                    
+                    bomSummary.setORNumber(orNumberField.getText());
+                    bomSummary.setORDate(ObjectHelpers.getSqlDate());
+                    BillOfMaterialsSummaryDao.updateOr(connection, bomSummary);
+                    
+                    DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                            ObjectHelpers.generateIDandRandString(),
+                            "250-251-00",
+                            null,
+                            null,
+                            ObjectHelpers.roundTwoNoComma(bomSummary.getTotal()),
+                            ObjectHelpers.getSqlDate(),
+                            ObjectHelpers.getSqlTime(),
+                            login.getId(),
+                            null,
+                            null,
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp(),
+                            nextOrNumber + "",
+                            "COLLECTION",
+                            office,
+                            null);
+                        DCRSummaryTransactionsDao.insert(connection, dcr); 
+                }
+
+                /**
+                 * SAVE Transaction Logs
+                 */
+                if (cashPaymentField.getValue() != null) {
+                    TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                            ObjectHelpers.generateIDandRandString(),
+                            transId,
+                            cashPaymentField.getValue().toString(),
+                            "Cash",
+                            null,
+                            null,
+                            null,
+                            nextOrNumber + "",
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp()
+                    );
+                    TransactionPaymentDetailsDao.insert(connection, logs);
+                }
+                if (checkLists.size() > 0) {
+                    for (int i=0; i<checkLists.size(); i++) {
+                        TransactionPaymentDetails checkLogs = checkLists.get(i);
+                        checkLogs.setTransactionIndexId(transId);
+                        TransactionPaymentDetailsDao.insert(connection, checkLogs);
+                    }
+                }
+
+                /**
+                 * SAVE OR ASSIGNING
+                 */
+                ORAssigning orNew = new ORAssigning(
+                        ObjectHelpers.generateIDandRandString(),
+                        orNumberField.getText(),
+                        login.getId(),
+                        ObjectHelpers.getSqlDate(),
+                        null,
+                        ObjectHelpers.getSqlTime(),
+                        office,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp()
+                );
+                ORAssigningDao.insert(connection, orNew);
+                
+                /**
+                 * PRINT HERE
+                 */
+                
+                /**
+                 * CLEAR FIELDS
+                 */
+                serviceConnectionPayables.clear();
+                checkLists.clear();
+                serviceConnectionTotalPayable = 0;
+                powerLoadTotalPayable = 0;
+                subTotal = 0;
+                totalVat = 0;
+                bomSummary = null;
+                addCheckButton.setEnabled(true);
+                if (serviceConnectionPayablesModel != null) {
+                    serviceConnectionPayablesModel.getDataVector().removeAllElements();
+                    serviceConnectionPayablesModel.fireTableDataChanged();
+                }
+                if (powerLoadPayablesModel != null) {
+                    powerLoadPayablesModel.getDataVector().removeAllElements();
+                    powerLoadPayablesModel.fireTableDataChanged();
+                }
+                if (checkModel != null) {
+                    checkModel.getDataVector().removeAllElements();
+                    checkModel.fireTableDataChanged();
+                }
+                fetchOR();
+                getQueue();
+                totalAmounPayable.setValue(null);
+                cashPaymentField.setEnabled(false);
+                cashPaymentField.setValue(null);
+                addCheckButton.setEnabled(false);
+                clearChecksBtn.setEnabled(false);
+            } else {
+                Notifiers.showErrorMessage("Invalid Amount", "The amount you inputted is less than the actual amount.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Saving the Transaction", e.getMessage());
+        }
     }
 }

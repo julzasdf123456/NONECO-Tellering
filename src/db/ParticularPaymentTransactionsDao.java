@@ -20,7 +20,7 @@ public class ParticularPaymentTransactionsDao {
     public static List<ParticularPaymentTransactions> getPaymentParticulars(Connection con, String svcId) {
         try {
             List<ParticularPaymentTransactions> payments = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT t.*, p.Particular AS ParticularName FROM CRM_ServiceConnectionParticularPaymentsTransactions t "
+            PreparedStatement ps = con.prepareStatement("SELECT t.*, p.Particular AS ParticularName, p.AccountNumber FROM CRM_ServiceConnectionParticularPaymentsTransactions t "
                     + "LEFT JOIN CRM_ServiceConnectionPaymentParticulars p ON t.Particular=p.id "
                     + "WHERE t.ServiceConnectionId=?");
             ps.setString(1, svcId);
@@ -36,7 +36,8 @@ public class ParticularPaymentTransactionsDao {
                         rs.getString("Total"),
                         rs.getString("created_at"),
                         rs.getString("updated_at"),
-                        rs.getString("ParticularName")
+                        rs.getString("ParticularName"),
+                        rs.getString("AccountNumber")
                 );
                 payments.add(payment);
             }

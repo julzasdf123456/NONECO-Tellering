@@ -58,4 +58,18 @@ public class BillOfMaterialsSummaryDao {
             return null;
         }
     }
+    
+    public static boolean updateOr(Connection con, BillOfMaterialsSummary summary) {
+        try {
+            PreparedStatement ps = con.prepareStatement("UPDATE CRM_BillsOfMaterialsSummary SET ORNumber=?, ORDate=?, IsPaid='Yes' WHERE ServiceConnectionId=?");
+            ps.setString(1, summary.getORNumber());
+            ps.setString(2, summary.getORDate());
+            ps.setString(3, summary.getServiceConnectionId());
+            
+            return ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

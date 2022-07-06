@@ -19,11 +19,12 @@ public class ParticularPaymentTransactions {
     private String created_at;
     private String updated_at;
     private String ParticularName;
+    private String AccountCode;
 
     public ParticularPaymentTransactions() {
     }
 
-    public ParticularPaymentTransactions(String id, String ServiceConnectionId, String Particular, String Amount, String Vat, String Total, String created_at, String updated_at, String ParticularName) {
+    public ParticularPaymentTransactions(String id, String ServiceConnectionId, String Particular, String Amount, String Vat, String Total, String created_at, String updated_at, String ParticularName, String AccountCode) {
         this.id = id;
         this.ServiceConnectionId = ServiceConnectionId;
         this.Particular = Particular;
@@ -33,6 +34,15 @@ public class ParticularPaymentTransactions {
         this.created_at = created_at;
         this.updated_at = updated_at;
         this.ParticularName = ParticularName;
+        this.AccountCode = AccountCode;
+    }
+
+    public String getAccountCode() {
+        return AccountCode;
+    }
+
+    public void setAccountCode(String AccountCode) {
+        this.AccountCode = AccountCode;
     }
 
     public String getId() {

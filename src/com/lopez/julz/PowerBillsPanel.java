@@ -659,7 +659,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 public void keyReleased(KeyEvent e) {
                     if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                         checkLists.add(new CheckPayments(
-                            ObjectHelpers.generateRandomString(),
+                            ObjectHelpers.generateIDandRandString(),
                             activeAccount.getId(),
                             null,
                             null,
@@ -693,7 +693,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     checkLists.add(new CheckPayments(
-                        ObjectHelpers.generateRandomString(),
+                        ObjectHelpers.generateIDandRandString(),
                         activeAccount.getId(),
                         null,
                         null,

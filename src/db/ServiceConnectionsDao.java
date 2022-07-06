@@ -73,4 +73,31 @@ public class ServiceConnectionsDao {
             return null;
         }
     }
+    
+    public static boolean updateOr(Connection con, String svcId, String orNumber, String orDate) {
+        try {
+            PreparedStatement ps = con.prepareStatement("UPDATE CRM_ServiceConnections SET ORNumber=?, ORDate=? WHERE id=?");
+            ps.setString(1, orNumber);
+            ps.setString(2, orDate);
+            ps.setString(3, svcId);
+            
+            return ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    public static boolean updateOrOnServiceConPayments(Connection con, String svcId, String orNumber) {
+        try {
+            PreparedStatement ps = con.prepareStatement("UPDATE CRM_ServiceConnectionTotalPayments SET Notes=? WHERE ServiceConnectionId=?");
+            ps.setString(1, orNumber);
+            ps.setString(2, svcId);
+            
+            return ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

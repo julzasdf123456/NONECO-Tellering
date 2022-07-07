@@ -286,4 +286,80 @@ public class ServiceAccountsDao {
             return null;
         }
     }
+    
+    public static List<ServiceAccounts> searchWithOcl(Connection con, String regex) {
+        try {
+            List<ServiceAccounts> serviceAccountses = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT " + accountsTableName + ".*, " + townsTableName + ".Town as TownName, " + barangaysTableName + ".Barangay as BarangayName FROM " 
+                    + accountsTableName + " LEFT JOIN " + 
+                    townsTableName + " ON " + accountsTableName + ".Town = " + townsTableName + ".id LEFT JOIN " +
+                    barangaysTableName + " ON " + accountsTableName + ".Barangay = " + barangaysTableName + ".id " +
+                    "WHERE OldAccountNo LIKE '%" + regex + "%' OR " + accountsTableName + ".id LIKE '%" + regex + "%' OR ServiceAccountName LIKE '%" + regex + "%' "
+                            + "AND " + accountsTableName + ".id IN (SELECT AccountNumber FROM Billing_Collectibles)");
+            
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+                ServiceAccounts account = new ServiceAccounts(
+                    rs.getString("id"),
+                    rs.getString("ServiceAccountName"),
+                    rs.getString("TownName"),
+                    rs.getString("BarangayName"),
+                    rs.getString("Purok"),
+                    rs.getString("AccountType"),
+                    rs.getString("AccountStatus"),
+                    rs.getString("ContactNumber"),
+                    rs.getString("EmailAddress"),
+                    rs.getString("ServiceConnectionId"),
+                    rs.getString("MeterDetailsId"),
+                    rs.getString("TransformerDetailsId"),
+                    rs.getString("PoleNumber"),
+                    rs.getString("AreaCode"),
+                    rs.getString("BlockCode"),
+                    rs.getString("SequenceCode"),
+                    rs.getString("Feeder"),
+                    rs.getString("ComputeType"),
+                    rs.getString("Organization"),
+                    rs.getString("OrganizationParentAccount"),
+                    rs.getString("GPSMeter"),
+                    rs.getString("OldAccountNo"),
+                    rs.getString("UserId"),
+                    rs.getString("MeterReader"),
+                    rs.getString("GroupCode"),
+                    rs.getString("ForDistribution"),
+                    rs.getString("Multiplier"),
+                    rs.getString("Coreloss"),
+                    rs.getString("Main"),
+                    rs.getString("Evat5Percent"),
+                    rs.getString("Ewt2Percent"),
+                    rs.getString("AccountCount"),
+                    rs.getString("ConnectionDate"),
+                    rs.getString("LatestReadingDate"),
+                    rs.getString("DateDisconnected"),
+                    rs.getString("DateTransfered"),
+                    rs.getString("SeniorCitizen"),
+                    rs.getString("AccountPaymentType"),
+                    rs.getString("Latitude"),
+                    rs.getString("Longitude"),
+                    rs.getString("AccountRetention"),
+                    rs.getString("AccountExpiration"),
+                    rs.getString("DurationInMonths"),
+                    rs.getString("Contestable"),
+                    rs.getString("NetMetered"),
+                    rs.getString("Notes"),
+                    rs.getString("Migrated"),
+                    rs.getString("MemberConsumerId"),
+                    rs.getString("DistributionAccountCode"),
+                    rs.getString("Town")
+                );
+                serviceAccountses.add(account);
+            }
+
+            rs.close();
+            ps.close();
+            return serviceAccountses;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

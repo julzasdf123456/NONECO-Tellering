@@ -9,7 +9,6 @@ import db.DatabaseConnection;
 import db.PaidBillsDao;
 import helpers.Auth;
 import helpers.ConfigFileHelpers;
-import helpers.Notifiers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -21,14 +20,11 @@ import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.util.List;
-import javafx.scene.input.KeyCode;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.NumberFormatter;
@@ -43,6 +39,9 @@ public class MainFrame extends javax.swing.JFrame {
     public PowerBillsPanel powerBillsPanel;
     public BAPAPaymentsPanel bAPAPaymentsPanel;
     public ServiceConnectionsPanel serviceConnectionsPanel;
+    public DCRPanel dcrPanel;
+    public OCLPanel oclPanel;
+    public ORMaintenancePanel ormanMaintenance;
     
     public Server server;
     public String office;
@@ -75,6 +74,9 @@ public class MainFrame extends javax.swing.JFrame {
         powerBillsPanel = new PowerBillsPanel(login);
         bAPAPaymentsPanel = new BAPAPaymentsPanel(login);
         serviceConnectionsPanel = new ServiceConnectionsPanel(login);
+        dcrPanel = new DCRPanel(login);
+        oclPanel = new OCLPanel(login);
+        ormanMaintenance = new ORMaintenancePanel(login);
         
         mainSplitPane.setRightComponent(powerBillsPanel);
     }
@@ -107,7 +109,9 @@ public class MainFrame extends javax.swing.JFrame {
         sumORBtn = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
-        jMenu2 = new javax.swing.JMenu();
+        toolsMenu = new javax.swing.JMenu();
+        orMaintenanceMenu = new javax.swing.JMenuItem();
+        dcrMenu = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -203,6 +207,11 @@ public class MainFrame extends javax.swing.JFrame {
         oclPaymentsMenu.setToolTipText("");
         oclPaymentsMenu.setFocusable(false);
         oclPaymentsMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        oclPaymentsMenu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                oclPaymentsMenuActionPerformed(evt);
+            }
+        });
 
         reconnectionPaymentsMenu.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         reconnectionPaymentsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/link_off_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
@@ -292,11 +301,36 @@ public class MainFrame extends javax.swing.JFrame {
             .addComponent(mainSplitPane)
         );
 
+        jMenuBar1.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
         jMenu1.setText("File");
+        jMenu1.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         jMenuBar1.add(jMenu1);
 
-        jMenu2.setText("Edit");
-        jMenuBar1.add(jMenu2);
+        toolsMenu.setText("Tools");
+        toolsMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
+        orMaintenanceMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        orMaintenanceMenu.setText("OR Maintenance");
+        orMaintenanceMenu.setMargin(new java.awt.Insets(5, 0, 5, 0));
+        orMaintenanceMenu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orMaintenanceMenuActionPerformed(evt);
+            }
+        });
+        toolsMenu.add(orMaintenanceMenu);
+
+        dcrMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        dcrMenu.setText("DCR");
+        dcrMenu.setMargin(new java.awt.Insets(5, 0, 5, 0));
+        dcrMenu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dcrMenuActionPerformed(evt);
+            }
+        });
+        toolsMenu.add(dcrMenu);
+
+        jMenuBar1.add(toolsMenu);
 
         setJMenuBar(jMenuBar1);
 
@@ -477,6 +511,21 @@ public class MainFrame extends javax.swing.JFrame {
         serviceConnectionsPanel.updateOR();
     }//GEN-LAST:event_serviceConnectionPaymentsActionPerformed
 
+    private void orMaintenanceMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orMaintenanceMenuActionPerformed
+        mainSplitPane.setRightComponent(ormanMaintenance);
+        ormanMaintenance.getOrs();
+    }//GEN-LAST:event_orMaintenanceMenuActionPerformed
+
+    private void dcrMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dcrMenuActionPerformed
+        mainSplitPane.setRightComponent(dcrPanel);
+        dcrPanel.getAllDCR();
+    }//GEN-LAST:event_dcrMenuActionPerformed
+
+    private void oclPaymentsMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oclPaymentsMenuActionPerformed
+        mainSplitPane.setRightComponent(oclPanel);
+        oclPanel.fetchOR();
+    }//GEN-LAST:event_oclPaymentsMenuActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -511,10 +560,10 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bapaPayments;
     private javax.swing.JButton billsPayment;
+    private javax.swing.JMenuItem dcrMenu;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
@@ -525,9 +574,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel menuPanel;
     private javax.swing.JButton miscellaneousPaymentsMenu;
     private javax.swing.JButton oclPaymentsMenu;
+    private javax.swing.JMenuItem orMaintenanceMenu;
     private javax.swing.JButton reconnectionPaymentsMenu;
     private javax.swing.JButton serviceConnectionPayments;
     private javax.swing.JButton sumORBtn;
+    private javax.swing.JMenu toolsMenu;
     private javax.swing.JLabel usernamelabel;
     // End of variables declaration//GEN-END:variables
 

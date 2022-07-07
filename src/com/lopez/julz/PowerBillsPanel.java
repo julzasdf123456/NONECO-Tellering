@@ -7,7 +7,9 @@ package com.lopez.julz;
 
 import db.DCRSummaryTransactionsDao;
 import db.BillsDao;
+import db.CollectiblesDao;
 import db.DatabaseConnection;
+import db.OCLMonthlyDao;
 import db.ORAssigningDao;
 import db.PaidBillDetailsDao;
 import db.PaidBillsDao;
@@ -17,6 +19,7 @@ import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
@@ -55,8 +58,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
 import pojos.Bills;
 import pojos.CheckPayments;
+import pojos.Collectibles;
 import pojos.DCRSummaryTransactions;
 import pojos.Login;
+import pojos.OCLMonthly;
 import pojos.ORAssigning;
 import pojos.PaidBills;
 import pojos.Server;
@@ -72,6 +77,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     
     public Server server;
     public String office;
+    String officeCode;
     
     public DatabaseConnection db;
     public Connection connection;
@@ -112,11 +118,24 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         
         server = ConfigFileHelpers.getServer();
         office = ConfigFileHelpers.getOffice();
+        officeCode = ConfigFileHelpers.getOfficeCode();
     
         db = new DatabaseConnection();
         connection = db.getDbConnectionFromDatabase(server);
         
+        accountNumberSearch.setValue(officeCode); 
         accountNumberSearch.requestFocus();
+        accountNumberSearch.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent arg0) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        accountNumberSearch.setCaretPosition(2);
+                    }
+                });
+            }
+        });
         
         billsList = new ArrayList<>();
         selectedBills = new ArrayList<>();
@@ -1220,6 +1239,24 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             null,
                             paymentUsed
                     );
+                    
+                    /**
+                     * UPDATE OCL TO PAID
+                     */
+                    if (bill.getAdditionalCharges() != null) {
+                        OCLMonthly ocl = OCLMonthlyDao.getOne(connection, bill.getServicePeriod(), bill.getAccountNumber());
+                        if (ocl != null) {
+                            // UPDATE OCL
+                            OCLMonthlyDao.setOclPaid(connection, ocl.getId());
+                            
+                            // DEDUCT BALANCE
+                            Collectibles collectible = CollectiblesDao.getOne(connection, bill.getAccountNumber());
+                            if (collectible != null) {
+                                double newBal = Double.valueOf(collectible.getBalance()) - Double.valueOf(ocl.getAmount());
+                                CollectiblesDao.updateCollectible(connection, bill.getAccountNumber(), ObjectHelpers.roundTwoNoComma(newBal + ""));
+                            }                            
+                        }
+                    }
 
                     if (PaidBillsDao.insert(connection, paidBill)) {
                         successStream = true;
@@ -1290,7 +1327,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     // RESET EVERYTHING
                     fetchOR();
                     resetForm();
-                    accountNumberSearch.setValue(null);
+                    accountNumberSearch.setValue(officeCode);
                     consumerNameField.setText("");
                     accountNumber.setText("");
                     accountType.setText("");
@@ -1308,6 +1345,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                         model.getDataVector().removeAllElements();
                         model.fireTableDataChanged();
                     }
+                    accountNumberSearch.requestFocus();
                 } else {
                     Notifiers.showErrorMessage("Error Saving Transaction", "An error occured during the transaction!");
                 }            
@@ -1324,6 +1362,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
         nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
         orNumberField.setText(nextOrNumber + "");
+        accountNumberSearch.requestFocus();
     }
     
     public void saveDCR(Bills bill) {

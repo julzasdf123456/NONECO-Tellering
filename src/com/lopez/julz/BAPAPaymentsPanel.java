@@ -8,7 +8,9 @@ package com.lopez.julz;
 import db.DCRSummaryTransactionsDao;
 import db.BAPAAdjustmentDetailsDao;
 import db.BillsDao;
+import db.CollectiblesDao;
 import db.DatabaseConnection;
+import db.OCLMonthlyDao;
 import db.ORAssigningDao;
 import db.PaidBillDetailsDao;
 import db.PaidBillsDao;
@@ -54,9 +56,11 @@ import javax.swing.text.NumberFormatter;
 import pojos.BAPAAdjustmentDetails;
 import pojos.Bills;
 import pojos.CheckPayments;
+import pojos.Collectibles;
 import pojos.DCRSummaryTransactions;
 import pojos.Login;
 import pojos.MonthParser;
+import pojos.OCLMonthly;
 import pojos.ORAssigning;
 import pojos.PaidBills;
 import pojos.Server;
@@ -1020,6 +1024,24 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         );
                         
                         PaidBillsDao.insert(connection, paidBill);
+                        
+                        /*
+                         * UPDATE OCL TO PAID
+                         */
+                       if (bill.getAdditionalCharges() != null) {
+                           OCLMonthly ocl = OCLMonthlyDao.getOne(connection, bill.getServicePeriod(), bill.getAccountNumber());
+                           if (ocl != null) {
+                               // UPDATE OCL
+                               OCLMonthlyDao.setOclPaid(connection, ocl.getId());
+
+                               // DEDUCT BALANCE
+                               Collectibles collectible = CollectiblesDao.getOne(connection, bill.getAccountNumber());
+                               if (collectible != null) {
+                                   double newBal = Double.valueOf(collectible.getBalance()) - Double.valueOf(ocl.getAmount());
+                                   CollectiblesDao.updateCollectible(connection, bill.getAccountNumber(), ObjectHelpers.roundTwoNoComma(newBal + ""));
+                               }                            
+                           }
+                       }
                         
                         /**
                          * sAVE DCR

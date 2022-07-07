@@ -113,4 +113,97 @@ public class PaidBillsDao {
             return null;
         }
     }
+    
+    public static List<PaidBills> getCashPowerBills(Connection con, String orDate, String teller) {
+        try {
+            List<PaidBills> paidBills = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT pb.*, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
+                    + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND pb.Status IS NULL AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
+            ps.setString(1, orDate);
+            ps.setString(2, teller);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                paidBills.add(new PaidBills(
+                        rs.getString("ServiceAccountName"),
+                        rs.getString("BillNumber"),
+                        rs.getString("OldAccountNo"),
+                        rs.getString("ServicePeriod"),
+                        rs.getString("ORNumber"),
+                        rs.getString("ORDate"),
+                        null,
+                        rs.getString("KwhUsed"),
+                        teller,
+                        rs.getString("OfficeTransacted"),
+                        rs.getString("PostingDate"),
+                        rs.getString("PostingTime"),
+                        rs.getString("Surcharge"),
+                        rs.getString("Form2307TwoPercent"),
+                        rs.getString("Form2307FivePercent"),
+                        rs.getString("AdditionalCharges"),
+                        rs.getString("Deductions"),
+                        rs.getString("NetAmount"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));   
+            }
+            return paidBills;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static boolean updateOR(Connection con, String id, String oldOr, String newOr) {
+        try {
+            // update paidbills
+            String updatePaidBills = "UPDATE Cashier_PaidBills SET ORNumber=? WHERE id=?";
+            PreparedStatement ps = con.prepareStatement(updatePaidBills);
+            ps.setString(1, newOr);
+            ps.setString(2, id);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update paidbillsdetails
+            String updatePaidBillsDetails = "UPDATE Cashier_PaidBillsDetails SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updatePaidBillsDetails);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update orassigning
+            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updateOrAssigning);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update dcrtransactionsummary
+            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updateDcr);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

@@ -8,8 +8,12 @@ package db;
 import helpers.ObjectHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import pojos.Bills;
 import pojos.DCRSummaryTransactions;
+import pojos.TransactionDetails;
 
 /**
  *
@@ -168,6 +172,104 @@ public class DCRSummaryTransactionsDao {
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+    
+    public static List<DCRSummaryTransactions> getDcrSummary(Connection con, String day, String teller) {
+        try {
+            List<DCRSummaryTransactions> dcr = new ArrayList<>();
+            
+            PreparedStatement ps = con.prepareStatement("SELECT GLCode, "
+                    + "(SELECT Notes FROM Cashier_AccountGLCodes WHERE AccountCode=Cashier_DCRSummaryTransactions.GLCode) AS Description,"
+                    + "SUM(CAST(Amount AS DECIMAL(10,2))) AS Amount "
+                    + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND ReportDestination='COLLECTION' GROUP BY GLCode ORDER BY GLCode");
+            ps.setString(1, day);
+            ps.setString(2, teller);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                dcr.add(new DCRSummaryTransactions(
+                        null,
+                        rs.getString("GLCode"),
+                        null,
+                        rs.getString("Description"),
+                        rs.getString("Amount"),
+                        day,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                ));
+            }
+            return dcr;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static List<TransactionDetails> getCheckPayments(Connection con, String day, String teller) {
+        try {
+            List<TransactionDetails> checkList = new ArrayList<>();
+            
+            String powerBillQry = "SELECT ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.Amount, pb.CheckNo, pb.Bank FROM Cashier_PaidBillsDetails pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.UserId='" + teller + "' AND CAST(pb.created_at AS DATE)='" + day + "' AND PaymentUsed LIKE '%Check%'";
+            String othersQry = "SELECT t.ORNumber, t.AccountNumber, t.PayeeName, 'OTHERS' AS Source, td.Amount, td.CheckNo, td.Bank FROM Cashier_TransactionPaymentDetails td LEFT JOIN Cashier_TransactionIndex t ON t.ORNumber=td.ORNumber WHERE t.UserId='" + teller + "' AND t.ORDate='" + day + "' AND td.PaymentUsed LIKE '%Check%'";
+            PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                checkList.add(new TransactionDetails(
+                        rs.getString("ORNumber"),
+                        rs.getString("AccountNumber"),
+                        rs.getString("ServiceAccountName"),
+                        rs.getString("Source"),
+                        rs.getString("CheckNo"),
+                        rs.getString("Amount"),
+                        rs.getString("Bank"),
+                        null,
+                        null
+                ));
+            }
+            
+            return checkList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static List<TransactionDetails> getORsToday(Connection con, String day, String teller) {
+        try {
+            List<TransactionDetails> checkList = new ArrayList<>();
+            
+            String powerBillQry = "SELECT pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Teller='" + teller + "' AND ORDate='" + day + "'";
+            String othersQry = "SELECT td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed FROM Cashier_TransactionIndex td WHERE td.UserId='" + teller + "' AND td.ORDate='" + day + "'";
+            PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry + " ORDER BY ORNumber DESC");
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                checkList.add(new TransactionDetails(
+                        rs.getString("ORNumber"),
+                        rs.getString("AccountNumber"),
+                        rs.getString("ServiceAccountName"),
+                        rs.getString("Source"),
+                        rs.getString("id"),
+                        rs.getString("NetAmount"),
+                        rs.getString("PaymentUsed"),
+                        null,
+                        null
+                ));
+            }
+            
+            return checkList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

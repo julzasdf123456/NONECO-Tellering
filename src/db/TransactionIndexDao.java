@@ -8,6 +8,10 @@ package db;
 import helpers.Notifiers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import pojos.TransactionDetails;
 import pojos.TransactionIndex;
 
 /**
@@ -52,6 +56,83 @@ public class TransactionIndexDao {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error saving transaction", e.getMessage());
+            return false;
+        }
+    }
+    
+    public static List<TransactionDetails> getDcr(Connection con, String orDate, String teller) {
+        try {
+            List<TransactionDetails> dcr = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT t.ORNumber,"
+                    + "d.Total,"
+                    + "t.AccountNumber,"
+                    + "t.PayeeName,"
+                    + "d.AccountCode, "
+                    + "d.Particular, "
+                    + "t.PaymentUsed "
+                    + "FROM Cashier_TransactionDetails d LEFT JOIN Cashier_TransactionIndex t ON t.id=d.TransactionIndexId "
+                    + "WHERE t.ORDate=? AND t.UserId=? AND t.Status IS NULL AND t.PaymentUsed='Cash' ORDER BY t.ORNumber");
+            ps.setString(1, orDate);
+            ps.setString(2, teller);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                dcr.add(new TransactionDetails(
+                        rs.getString("ORNumber"),
+                        rs.getString("PaymentUsed"),
+                        rs.getString("Particular"),
+                        null,
+                        rs.getString("PayeeName"),
+                        rs.getString("Total"),
+                        rs.getString("AccountCode"),
+                        null,
+                        null
+                ));
+            }
+            return dcr;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static boolean updateOR(Connection con, String id, String oldOr, String newOr) {
+        try {
+            // update transaction index
+            String updateTransactionindex = "UPDATE Cashier_TransactionIndex SET ORNumber=? WHERE id=?";
+            PreparedStatement ps = con.prepareStatement(updateTransactionindex);
+            ps.setString(1, newOr);
+            ps.setString(2, id);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update transaction paymentdetails
+            String updateTransactionPaymentDetails = "UPDATE Cashier_TransactionPaymentDetails SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updateTransactionPaymentDetails);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update orassigning
+            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updateOrAssigning);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            // update dcrtransactionsummary
+            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=?";
+            ps = con.prepareStatement(updateDcr);
+            ps.setString(1, newOr);
+            ps.setString(2, oldOr);
+            ps.execute();
+            ps.clearParameters();
+            
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }

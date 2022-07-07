@@ -30,8 +30,33 @@ public class ConfigFileHelpers {
             FileReader fr=new FileReader(file);   //reads the file  
             BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream  
             String line;  
-            while((line=br.readLine())!=null) {   
+            if((line=br.readLine())!=null) {   
                 office = line;
+            } 
+            
+            fr.close();    //closes the stream and release the resources   
+            
+            return office;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Getting Office", e.getMessage());
+            return null;
+        }
+    }
+    
+    public static String getOfficeCode () {
+        try {
+            String office = "";
+            File file=new File(OTHER_CONFIG);    //creates a new file instance  
+            FileReader fr=new FileReader(file);   //reads the file  
+            BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream  
+            String line;  
+            int i=0;
+            while((line=br.readLine())!=null) {  
+                if (i==1) {
+                    office = line;
+                }                
+                i++;
             } 
             
             fr.close();    //closes the stream and release the resources   
@@ -111,5 +136,9 @@ public class ConfigFileHelpers {
             Notifiers.showErrorMessage("Error Getting Server", e.getMessage());
             return null;
         }
+    }
+    
+    public static void main(String[] args) {
+        System.out.println(getOfficeCode() + "" + getOffice());
     }
 }

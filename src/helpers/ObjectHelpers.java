@@ -164,4 +164,16 @@ public class ObjectHelpers {
             return "";
         }
     }
+    
+    public static String formatSqlDate(String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy");
+            Date d = sdf.parse(date);
+            sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.format(d);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
 }

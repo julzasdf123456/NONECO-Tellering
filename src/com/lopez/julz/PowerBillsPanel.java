@@ -17,6 +17,7 @@ import db.ServiceAccountsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
+import helpers.PowerBillPrint;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -32,6 +33,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
@@ -858,6 +864,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             isBapa.setText(activeAccount.getOrganization());
             consumerAddress.setText(ServiceAccountsDao.getAddress(activeAccount));
             acctStatus.setText(activeAccount.getAccountStatus());
+            meterNumber.setText(activeAccount.getMeterDetailsId());
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Populating Account Details", e.getMessage());
@@ -874,10 +881,10 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             for (int i=0; i<billsSize; i++) {
                 if (i==0) {
                     data[i][0] = true;
-                } else {
+                } else { 
                     data[i][0] = false;
                 }
-                double surcharge = BillsDao.getSurcharge(billsList.get(i));
+                double surcharge = Double.valueOf(ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(billsList.get(i)) + ""));
                 data[i][1] = billsList.get(i).getBillNumber();
                 data[i][2] = billsList.get(i).getServicePeriod();
                 data[i][3] = billsList.get(i).getDueDate();
@@ -1203,6 +1210,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 /**
                  * SAVE PAIDBILLS
                  */
+                List<PaidBills> paidBillsForPrint = new ArrayList<>();
                 for (int i=0; i<selectedBills.size(); i++) {
                     Bills bill = selectedBills.get(i);
                     PaidBills paidBill = new PaidBills(
@@ -1218,12 +1226,12 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             office,
                             ObjectHelpers.getSqlDate(),
                             ObjectHelpers.getSqlTime(),
-                            BillsDao.getSurcharge(selectedBills.get(i)) + "",
+                            ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(selectedBills.get(i)) + ""),
                             bill.getEvat2Percent(),
                             bill.getEvat5Percent(),
                             bill.getAdditionalCharges(),
                             bill.getDeductions(),
-                            ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), BillsDao.getSurcharge(selectedBills.get(i))),
+                            ObjectHelpers.roundTwoNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), BillsDao.getSurcharge(selectedBills.get(i))) + ""),
                             "MONTHLY BILL",
                             bill.getId(),
                             login.getId(),
@@ -1264,12 +1272,36 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                         successStream = false;
                         break;
                     }
+                    paidBill.setBank(bill.getDueDate());// SET FOR PRINT
+                    paidBillsForPrint.add(paidBill);
                     
                     /**
                      * =======================================
                      * SAVE DCR
                      * =======================================
                      */
+                    // DCR FOR SURCHARGE
+                    DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                            ObjectHelpers.generateIDandRandString(),
+                            "312-450-00",
+                            null,
+                            null,
+                            paidBill.getSurcharge() != null ? paidBill.getSurcharge() : "0",
+                            ObjectHelpers.getSqlDate(),
+                            ObjectHelpers.getSqlTime(),
+                            login.getId(),
+                            null,
+                            null,
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp(),
+                            orNumberField.getText(),
+                            "BOTH",
+                            office,
+                            activeAccount.getId()
+                    );
+                    DCRSummaryTransactionsDao.insert(connection, dcr);
+                    
+                    //ALL DCR
                     saveDCR(bill);
                 }
 
@@ -1322,7 +1354,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                      * PRINT HERE YOU DUMBASS
                      * ===============================
                      */
-                    print();
+                    print(activeAccount, paidBillsForPrint, orNumberField.getText(), login.getUsername());
                             
                     // RESET EVERYTHING
                     fetchOR();
@@ -1859,46 +1891,6 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             activeAccount.getId());
         DCRSummaryTransactionsDao.insert(connection, dcr);
         
-        // GET EWT 2% COLLECTION
-        dcr = new DCRSummaryTransactions(
-            ObjectHelpers.generateIDandRandString(),
-            "140-160-00",
-            null,
-            null,
-            bill.getEvat2Percent(),
-            ObjectHelpers.getSqlDate(),
-            ObjectHelpers.getSqlTime(),
-            login.getId(),
-            null,
-            null,
-            ObjectHelpers.getCurrentTimestamp(),
-            ObjectHelpers.getCurrentTimestamp(),
-            orNumberField.getText(),
-            "COLLECTION",
-            office,
-            activeAccount.getId());
-        DCRSummaryTransactionsDao.insert(connection, dcr);
-        
-        // GET EWT 5% COLLECTION
-        dcr = new DCRSummaryTransactions(
-            ObjectHelpers.generateIDandRandString(),
-            "140-170-00",
-            null,
-            null,
-            bill.getEvat5Percent(),
-            ObjectHelpers.getSqlDate(),
-            ObjectHelpers.getSqlTime(),
-            login.getId(),
-            null,
-            null,
-            ObjectHelpers.getCurrentTimestamp(),
-            ObjectHelpers.getCurrentTimestamp(),
-            orNumberField.getText(),
-            "COLLECTION",
-            office,
-            activeAccount.getId());
-        DCRSummaryTransactionsDao.insert(connection, dcr);
-        
         // GET ENVIRONMENTAL COLLECTION
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
@@ -1978,10 +1970,73 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             office,
             activeAccount.getId());
         DCRSummaryTransactionsDao.insert(connection, dcr);
+        
+        // GET 2% COLLECTION & SALES
+        dcr = new DCRSummaryTransactions(
+            ObjectHelpers.generateIDandRandString(),
+            "140-160-00",
+            null,
+            null,
+            bill.getEvat2Percent() != null ? ("-" + bill.getEvat2Percent()) : "0",
+            ObjectHelpers.getSqlDate(),
+            ObjectHelpers.getSqlTime(),
+            login.getId(),
+            null,
+            null,
+            ObjectHelpers.getCurrentTimestamp(),
+            ObjectHelpers.getCurrentTimestamp(),
+            orNumberField.getText(),
+            "BOTH",
+            office,
+            activeAccount.getId());
+        DCRSummaryTransactionsDao.insert(connection, dcr);
+        
+        // GET 5% COLLECTION & SALES
+        dcr = new DCRSummaryTransactions(
+            ObjectHelpers.generateIDandRandString(),
+            "140-170-00",
+            null,
+            null,
+            bill.getEvat5Percent() != null ? ("-" + bill.getEvat5Percent()) : "0",
+            ObjectHelpers.getSqlDate(),
+            ObjectHelpers.getSqlTime(),
+            login.getId(),
+            null,
+            null,
+            ObjectHelpers.getCurrentTimestamp(),
+            ObjectHelpers.getCurrentTimestamp(),
+            orNumberField.getText(),
+            "BOTH",
+            office,
+            activeAccount.getId());
+        DCRSummaryTransactionsDao.insert(connection, dcr);
     }
     
-    public void print() {
-        
+    public void print(ServiceAccounts account, List<PaidBills> bills, String orNumber, String username) {
+        PrinterJob job = PrinterJob.getPrinterJob();
+        PageFormat pf = job.defaultPage();
+        Paper paper = pf.getPaper();
+        double width = 5d * 72d;
+        double height = 4d * 72d;
+        double margin = 0.1d * 72d;
+        paper.setSize(width, height);
+        paper.setImageableArea(
+                margin,
+                margin,
+                width - (margin * 2),
+                height - (margin * 2));
+        pf.setPaper(paper);
+        Book pBook = new Book();
+        pBook.append(new PowerBillPrint(bills, account, orNumber, username), pf);
+        job.setPageable(pBook);
+
+//            job.setPrintable(new PowerBillPrint(bills.get(i), account));
+        try {
+            job.print();
+        } catch (PrinterException e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Printing Payment", "Account No: " + account.getOldAccountNo() + "\n" + e.getMessage());
+        }
     }
     
     public void advancedSearch() {

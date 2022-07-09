@@ -24,7 +24,9 @@ public class ServiceAccountsDao {
     
     public static ServiceAccounts getOneByOldAccountNumber(Connection con, String oldAccountNo) {
         try {
-            PreparedStatement ps = con.prepareStatement("SELECT " + accountsTableName + ".*, " + townsTableName + ".Town as TownName, " + barangaysTableName + ".Barangay as BarangayName FROM " 
+            PreparedStatement ps = con.prepareStatement("SELECT " + accountsTableName + ".*, " + townsTableName + ".Town as TownName, " + barangaysTableName + ".Barangay as BarangayName, "
+                    + "(SELECT TOP 1 SerialNumber FROM Billing_Meters WHERE ServiceAccountId=" + accountsTableName + ".id ORDER BY created_at DESC) AS MeterNumber "
+                    + "FROM " 
                     + accountsTableName + " LEFT JOIN " + 
                     townsTableName + " ON " + accountsTableName + ".Town = " + townsTableName + ".id LEFT JOIN " +
                     barangaysTableName + " ON " + accountsTableName + ".Barangay = " + barangaysTableName + ".id " +
@@ -44,7 +46,7 @@ public class ServiceAccountsDao {
                     rs.getString("ContactNumber"),
                     rs.getString("EmailAddress"),
                     rs.getString("ServiceConnectionId"),
-                    rs.getString("MeterDetailsId"),
+                    rs.getString("MeterNumber"),
                     rs.getString("TransformerDetailsId"),
                     rs.getString("PoleNumber"),
                     rs.getString("AreaCode"),
@@ -102,7 +104,9 @@ public class ServiceAccountsDao {
     
     public static ServiceAccounts getOneById(Connection con, String id) {
         try {
-            PreparedStatement ps = con.prepareStatement("SELECT " + accountsTableName + ".*, " + townsTableName + ".Town as TownName, " + barangaysTableName + ".Barangay as BarangayName FROM " 
+            PreparedStatement ps = con.prepareStatement("SELECT " + accountsTableName + ".*, " + townsTableName + ".Town as TownName, " + barangaysTableName + ".Barangay as BarangayName, "
+                    + "(SELECT TOP 1 SerialNumber FROM Billing_Meters WHERE ServiceAccountId=" + accountsTableName + ".id ORDER BY created_at DESC) AS MeterNumber "
+                    + " FROM " 
                     + accountsTableName + " LEFT JOIN " + 
                     townsTableName + " ON " + accountsTableName + ".Town = " + townsTableName + ".id LEFT JOIN " +
                     barangaysTableName + " ON " + accountsTableName + ".Barangay = " + barangaysTableName + ".id " +
@@ -122,7 +126,7 @@ public class ServiceAccountsDao {
                     rs.getString("ContactNumber"),
                     rs.getString("EmailAddress"),
                     rs.getString("ServiceConnectionId"),
-                    rs.getString("MeterDetailsId"),
+                    rs.getString("MeterNumber"),
                     rs.getString("TransformerDetailsId"),
                     rs.getString("PoleNumber"),
                     rs.getString("AreaCode"),

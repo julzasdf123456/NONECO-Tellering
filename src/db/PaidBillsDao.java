@@ -206,4 +206,54 @@ public class PaidBillsDao {
             return false;
         }
     }
+    
+    public static List<PaidBills> getPaidBillsByDcrNum(Connection con, String dcrNum) {
+        try {
+            List<PaidBills> paidBillses = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM " + paidBillsTableName + " WHERE DCRNumber=? AND Status IS NULL ORDER BY ORNumber");
+            ps.setString(1, dcrNum);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                PaidBills paidBill = new PaidBills(
+                    rs.getString("id"),
+                    rs.getString("BillNumber"),
+                    rs.getString("AccountNumber"),
+                    rs.getString("ServicePeriod"),
+                    rs.getString("ORNumber"),
+                    rs.getString("ORDate"),
+                    rs.getString("DCRNumber"),
+                    rs.getString("KwhUsed"),
+                    rs.getString("Teller"),
+                    rs.getString("OfficeTransacted"),
+                    rs.getString("PostingDate"),
+                    rs.getString("PostingTime"),
+                    rs.getString("Surcharge"),
+                    rs.getString("Form2307TwoPercent"),
+                    rs.getString("Form2307FivePercent"),
+                    rs.getString("AdditionalCharges"),
+                    rs.getString("Deductions"),
+                    rs.getString("NetAmount"),
+                    rs.getString("Source"),
+                    rs.getString("ObjectSourceId"),
+                    rs.getString("UserId"),
+                    rs.getString("created_at"),
+                    rs.getString("updated_at"),
+                    rs.getString("Status"),
+                    rs.getString("FiledBy"),
+                    rs.getString("ApprovedBy"),
+                    rs.getString("AuditedBy"),
+                    rs.getString("Notes"),
+                    rs.getString("CheckNo"),
+                    rs.getString("Bank"),
+                    rs.getString("CheckExpiration"),
+                    rs.getString("PaymentUsed")
+                );
+                paidBillses.add(paidBill);
+            }
+            return paidBillses;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

@@ -10,6 +10,7 @@ import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.ORAssigningDao;
 import db.ParticularPaymentTransactionsDao;
+import db.ServiceAccountsDao;
 import db.ServiceConnectionsDao;
 import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
@@ -17,6 +18,7 @@ import db.TransactionPaymentDetailsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
+import helpers.TransactionsPrint;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -29,6 +31,11 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
@@ -56,6 +63,7 @@ import pojos.Login;
 import pojos.ORAssigning;
 import pojos.ParticularPaymentTransactions;
 import pojos.Server;
+import pojos.ServiceAccounts;
 import pojos.ServiceConnections;
 import pojos.TransactionDetails;
 import pojos.TransactionIndex;
@@ -1140,6 +1148,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                 /**
                  * SAVE TRANSACTION DETAILS
                  */
+                List<TransactionDetails> detailsList = new ArrayList<>(); // FOR PRINTING
                 for (int i=0; i<serviceConnectionPayables.size(); i++) {
                     TransactionDetails details = new TransactionDetails(
                             ObjectHelpers.generateIDandRandString(),
@@ -1153,6 +1162,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                             ObjectHelpers.getCurrentTimestamp()
                     );
                     TransactionDetailsDao.insert(connection, details);
+                    detailsList.add(details);
 
                     /**
                      * SAVE DCR
@@ -1265,6 +1275,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                 /**
                  * PRINT HERE
                  */
+                print(transaction, detailsList, login.getUsername());
                 
                 /**
                  * CLEAR FIELDS
@@ -1302,6 +1313,40 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Saving the Transaction", e.getMessage());
+        }
+    }
+ 
+    public void print(TransactionIndex index, List<TransactionDetails> details, String username) {
+        try {
+            ServiceAccounts account = ServiceAccountsDao.getOneById(connection, index.getAccountNumber());
+            
+            PrinterJob job = PrinterJob.getPrinterJob();
+            PageFormat pf = job.defaultPage();
+            Paper paper = pf.getPaper();
+            double width = 5d * 72d;
+            double height = 4d * 72d;
+            double margin = 0.1d * 72d;
+            paper.setSize(width, height);
+            paper.setImageableArea(
+                    margin,
+                    margin,
+                    width - (margin * 2),
+                    height - (margin * 2));
+            pf.setPaper(paper);
+            Book pBook = new Book();
+            pBook.append(new TransactionsPrint(index, details, username, account), pf);
+            job.setPageable(pBook);
+
+    //            job.setPrintable(new PowerBillPrint(bills.get(i), account));
+            try {
+                job.print();
+            } catch (PrinterException e) {
+                e.printStackTrace();
+                Notifiers.showErrorMessage("Error Printing Payment", "Transaction No: " + index.getId()+ "\n" + e.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Printing OR", e.getMessage());
         }
     }
 }

@@ -5,11 +5,10 @@
         <group>
             <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/DCRSummaryTransactionsDao.java</file>
             <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/MainFrame.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/CollectiblesDao.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/OCLPanel.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/OCLMonthlyDao.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/ServiceAccountsDao.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/pojos/TransactionIndex.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/AccountPayablesDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/MiscellaneousPanel.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/BAPAPaymentsPanel.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/DCRPanel.java</file>
             <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/ServiceConnectionsPanel.java</file>
             <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/PowerBillsPanel.java</file>
         </group>

@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.util.List;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -27,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.text.NumberFormatter;
 import pojos.PaidBills;
 import pojos.Server;
@@ -42,6 +44,7 @@ public class MainFrame extends javax.swing.JFrame {
     public DCRPanel dcrPanel;
     public OCLPanel oclPanel;
     public ORMaintenancePanel ormanMaintenance;
+    public MiscellaneousPanel miscellaneousPanel;
     
     public Server server;
     public String office;
@@ -49,6 +52,8 @@ public class MainFrame extends javax.swing.JFrame {
     public Connection connection;
     
     public pojos.Login login;
+    
+    JButton dummyBtn;
     /**
      * Creates new form MainFrame
      */
@@ -77,8 +82,13 @@ public class MainFrame extends javax.swing.JFrame {
         dcrPanel = new DCRPanel(login);
         oclPanel = new OCLPanel(login);
         ormanMaintenance = new ORMaintenancePanel(login);
+        miscellaneousPanel = new MiscellaneousPanel(login);
         
         mainSplitPane.setRightComponent(powerBillsPanel);
+        
+        billsPayment.setForeground(Color.decode("#00968b"));
+        billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = billsPayment;
     }
 
     /**
@@ -93,19 +103,18 @@ public class MainFrame extends javax.swing.JFrame {
         mainPanel = new javax.swing.JPanel();
         mainSplitPane = new javax.swing.JSplitPane();
         menuPanel = new javax.swing.JPanel();
-        billsPayment = new javax.swing.JButton();
-        bapaPayments = new javax.swing.JButton();
-        serviceConnectionPayments = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         usernamelabel = new javax.swing.JLabel();
         logoutBtn = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
+        jToolBar1 = new javax.swing.JToolBar();
+        billsPayment = new javax.swing.JButton();
+        bapaPayments = new javax.swing.JButton();
+        serviceConnectionPayments = new javax.swing.JButton();
         oclPaymentsMenu = new javax.swing.JButton();
-        reconnectionPaymentsMenu = new javax.swing.JButton();
         miscellaneousPaymentsMenu = new javax.swing.JButton();
-        jSeparator2 = new javax.swing.JSeparator();
         sumORBtn = new javax.swing.JButton();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -119,42 +128,6 @@ public class MainFrame extends javax.swing.JFrame {
         mainSplitPane.setDividerSize(3);
 
         menuPanel.setMaximumSize(new java.awt.Dimension(130, 32767));
-
-        billsPayment.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        billsPayment.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/request_quote_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
-        billsPayment.setText("Bills Payment");
-        billsPayment.setToolTipText("");
-        billsPayment.setFocusable(false);
-        billsPayment.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
-        billsPayment.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                billsPaymentActionPerformed(evt);
-            }
-        });
-
-        bapaPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        bapaPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mediation_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
-        bapaPayments.setText("BAPA Payments");
-        bapaPayments.setToolTipText("");
-        bapaPayments.setFocusable(false);
-        bapaPayments.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
-        bapaPayments.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bapaPaymentsActionPerformed(evt);
-            }
-        });
-
-        serviceConnectionPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        serviceConnectionPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/power_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
-        serviceConnectionPayments.setText("Service Connections");
-        serviceConnectionPayments.setToolTipText("");
-        serviceConnectionPayments.setFocusable(false);
-        serviceConnectionPayments.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
-        serviceConnectionPayments.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                serviceConnectionPaymentsActionPerformed(evt);
-            }
-        });
 
         jLabel1.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 14)); // NOI18N
         jLabel1.setText("Main Menu");
@@ -201,24 +174,74 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap(16, Short.MAX_VALUE))
         );
 
+        jToolBar1.setFloatable(false);
+        jToolBar1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+        jToolBar1.setRollover(true);
+        jToolBar1.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
+        billsPayment.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        billsPayment.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/request_quote_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
+        billsPayment.setText("Bills Payment");
+        billsPayment.setToolTipText("");
+        billsPayment.setFocusable(false);
+        billsPayment.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        billsPayment.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        billsPayment.setMaximumSize(new java.awt.Dimension(175, 39));
+        billsPayment.setMinimumSize(new java.awt.Dimension(175, 39));
+        billsPayment.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                billsPaymentActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(billsPayment);
+
+        bapaPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        bapaPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mediation_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
+        bapaPayments.setText("BAPA Payments");
+        bapaPayments.setToolTipText("");
+        bapaPayments.setFocusable(false);
+        bapaPayments.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        bapaPayments.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        bapaPayments.setMaximumSize(new java.awt.Dimension(175, 39));
+        bapaPayments.setMinimumSize(new java.awt.Dimension(175, 39));
+        bapaPayments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bapaPaymentsActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(bapaPayments);
+
+        serviceConnectionPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        serviceConnectionPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/power_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
+        serviceConnectionPayments.setText("Service Connections");
+        serviceConnectionPayments.setToolTipText("");
+        serviceConnectionPayments.setFocusable(false);
+        serviceConnectionPayments.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        serviceConnectionPayments.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        serviceConnectionPayments.setMaximumSize(new java.awt.Dimension(175, 39));
+        serviceConnectionPayments.setMinimumSize(new java.awt.Dimension(175, 39));
+        serviceConnectionPayments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                serviceConnectionPaymentsActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(serviceConnectionPayments);
+
         oclPaymentsMenu.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         oclPaymentsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/receipt_long_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         oclPaymentsMenu.setText("OCL Payments");
         oclPaymentsMenu.setToolTipText("");
         oclPaymentsMenu.setFocusable(false);
         oclPaymentsMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        oclPaymentsMenu.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        oclPaymentsMenu.setMaximumSize(new java.awt.Dimension(175, 35));
+        oclPaymentsMenu.setMinimumSize(new java.awt.Dimension(175, 35));
         oclPaymentsMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 oclPaymentsMenuActionPerformed(evt);
             }
         });
-
-        reconnectionPaymentsMenu.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
-        reconnectionPaymentsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/link_off_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
-        reconnectionPaymentsMenu.setText("Reconnection");
-        reconnectionPaymentsMenu.setToolTipText("");
-        reconnectionPaymentsMenu.setFocusable(false);
-        reconnectionPaymentsMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        jToolBar1.add(oclPaymentsMenu);
 
         miscellaneousPaymentsMenu.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         miscellaneousPaymentsMenu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/shopping_cart_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
@@ -226,6 +249,15 @@ public class MainFrame extends javax.swing.JFrame {
         miscellaneousPaymentsMenu.setToolTipText("");
         miscellaneousPaymentsMenu.setFocusable(false);
         miscellaneousPaymentsMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        miscellaneousPaymentsMenu.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        miscellaneousPaymentsMenu.setMaximumSize(new java.awt.Dimension(175, 35));
+        miscellaneousPaymentsMenu.setMinimumSize(new java.awt.Dimension(175, 35));
+        miscellaneousPaymentsMenu.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miscellaneousPaymentsMenuActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(miscellaneousPaymentsMenu);
 
         sumORBtn.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         sumORBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/note_add_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
@@ -233,11 +265,15 @@ public class MainFrame extends javax.swing.JFrame {
         sumORBtn.setToolTipText("");
         sumORBtn.setFocusable(false);
         sumORBtn.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        sumORBtn.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        sumORBtn.setMaximumSize(new java.awt.Dimension(175, 35));
+        sumORBtn.setMinimumSize(new java.awt.Dimension(175, 35));
         sumORBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sumORBtnActionPerformed(evt);
             }
         });
+        jToolBar1.add(sumORBtn);
 
         javax.swing.GroupLayout menuPanelLayout = new javax.swing.GroupLayout(menuPanel);
         menuPanel.setLayout(menuPanelLayout);
@@ -247,18 +283,11 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(menuPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(serviceConnectionPayments, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(billsPayment, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(bapaPayments, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jSeparator1)
                     .addGroup(menuPanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jSeparator1)
-                    .addComponent(oclPaymentsMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(reconnectionPaymentsMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(miscellaneousPaymentsMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(sumORBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         menuPanelLayout.setVerticalGroup(
@@ -269,23 +298,9 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(billsPayment, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bapaPayments, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(serviceConnectionPayments, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(oclPaymentsMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(reconnectionPaymentsMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(miscellaneousPaymentsMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(sumORBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(208, Short.MAX_VALUE))
+                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         mainSplitPane.setLeftComponent(menuPanel);
@@ -351,11 +366,23 @@ public class MainFrame extends javax.swing.JFrame {
     private void billsPaymentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_billsPaymentActionPerformed
         mainSplitPane.setRightComponent(powerBillsPanel);
         powerBillsPanel.updateOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        billsPayment.setForeground(Color.decode("#00968b"));
+        billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = billsPayment;
     }//GEN-LAST:event_billsPaymentActionPerformed
 
     private void bapaPaymentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bapaPaymentsActionPerformed
         mainSplitPane.setRightComponent(bAPAPaymentsPanel);
         bAPAPaymentsPanel.updateOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        bapaPayments.setForeground(Color.decode("#00968b"));
+        bapaPayments.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = bapaPayments;
     }//GEN-LAST:event_bapaPaymentsActionPerformed
 
     private void logoutBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logoutBtnActionPerformed
@@ -509,6 +536,12 @@ public class MainFrame extends javax.swing.JFrame {
     private void serviceConnectionPaymentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_serviceConnectionPaymentsActionPerformed
         mainSplitPane.setRightComponent(serviceConnectionsPanel);
         serviceConnectionsPanel.updateOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        serviceConnectionPayments.setForeground(Color.decode("#00968b"));
+        serviceConnectionPayments.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = serviceConnectionPayments;
     }//GEN-LAST:event_serviceConnectionPaymentsActionPerformed
 
     private void orMaintenanceMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orMaintenanceMenuActionPerformed
@@ -524,7 +557,25 @@ public class MainFrame extends javax.swing.JFrame {
     private void oclPaymentsMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oclPaymentsMenuActionPerformed
         mainSplitPane.setRightComponent(oclPanel);
         oclPanel.fetchOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        oclPaymentsMenu.setForeground(Color.decode("#00968b"));
+        oclPaymentsMenu.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = oclPaymentsMenu;
     }//GEN-LAST:event_oclPaymentsMenuActionPerformed
+
+    private void miscellaneousPaymentsMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miscellaneousPaymentsMenuActionPerformed
+        mainSplitPane.setRightComponent(miscellaneousPanel);
+        miscellaneousPanel.fetchOR();
+        miscellaneousPanel.addItemsToDropdown();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        miscellaneousPaymentsMenu.setForeground(Color.decode("#00968b"));
+        miscellaneousPaymentsMenu.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = miscellaneousPaymentsMenu;
+    }//GEN-LAST:event_miscellaneousPaymentsMenuActionPerformed
 
     /**
      * @param args the command line arguments
@@ -567,7 +618,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JToolBar jToolBar1;
     private javax.swing.JButton logoutBtn;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JSplitPane mainSplitPane;
@@ -575,7 +626,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton miscellaneousPaymentsMenu;
     private javax.swing.JButton oclPaymentsMenu;
     private javax.swing.JMenuItem orMaintenanceMenu;
-    private javax.swing.JButton reconnectionPaymentsMenu;
     private javax.swing.JButton serviceConnectionPayments;
     private javax.swing.JButton sumORBtn;
     private javax.swing.JMenu toolsMenu;

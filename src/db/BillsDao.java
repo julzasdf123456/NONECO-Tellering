@@ -223,6 +223,107 @@ public class BillsDao {
             return null;
         }
     }
+    
+    public static Bills getOneByAccountAndPeriod(Connection con, String accountNo, String servicePeriod) {
+        try {
+            Bills bill;
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM Billing_Bills WHERE AccountNumber=? AND ServicePeriod=?");
+            ps.setString(1, accountNo);
+            ps.setString(2, servicePeriod);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                bill = new Bills(
+                        rs.getString("id"),
+                        rs.getString("BillNumber"),
+                        rs.getString("AccountNumber"),
+                        rs.getString("ServicePeriod"),
+                        rs.getString("Multiplier"),
+                        rs.getString("Coreloss"),
+                        rs.getString("KwhUsed"),
+                        rs.getString("PreviousKwh"),
+                        rs.getString("PresentKwh"),
+                        rs.getString("DemandPreviousKwh"),
+                        rs.getString("DemandPresentKwh"),
+                        rs.getString("AdditionalKwh"),
+                        rs.getString("AdditionalDemandKwh"),
+                        rs.getString("KwhAmount"),
+                        rs.getString("EffectiveRate"),
+                        rs.getString("AdditionalCharges"),
+                        rs.getString("Deductions"),
+                        rs.getString("NetAmount"),
+                        rs.getString("BillingDate"),
+                        rs.getString("ServiceDateFrom"),
+                        rs.getString("ServiceDateTo"),
+                        rs.getString("DueDate"),
+                        rs.getString("MeterNumber"),
+                        rs.getString("ConsumerType"),
+                        rs.getString("BillType"),
+                        rs.getString("GenerationSystemCharge"),
+                        rs.getString("TransmissionDeliveryChargeKW"),
+                        rs.getString("TransmissionDeliveryChargeKWH"),
+                        rs.getString("SystemLossCharge"),
+                        rs.getString("DistributionDemandCharge"),
+                        rs.getString("DistributionSystemCharge"),
+                        rs.getString("SupplyRetailCustomerCharge"),
+                        rs.getString("SupplySystemCharge"),
+                        rs.getString("MeteringRetailCustomerCharge"),
+                        rs.getString("MeteringSystemCharge"),
+                        rs.getString("RFSC"),
+                        rs.getString("LifelineRate"),
+                        rs.getString("InterClassCrossSubsidyCharge"),
+                        rs.getString("PPARefund"),
+                        rs.getString("SeniorCitizenSubsidy"),
+                        rs.getString("MissionaryElectrificationCharge"),
+                        rs.getString("EnvironmentalCharge"),
+                        rs.getString("StrandedContractCosts"),
+                        rs.getString("NPCStrandedDebt"),
+                        rs.getString("FeedInTariffAllowance"),
+                        rs.getString("MissionaryElectrificationREDCI"),
+                        rs.getString("GenerationVAT"),
+                        rs.getString("TransmissionVAT"),
+                        rs.getString("SystemLossVAT"),
+                        rs.getString("DistributionVAT"),
+                        rs.getString("RealPropertyTax"),
+                        rs.getString("Notes"),
+                        rs.getString("UserId"),
+                        rs.getString("BilledFrom"),
+                        rs.getString("AveragedCount"),
+                        rs.getString("MergedToCollectible"),
+                        rs.getString("OtherGenerationRateAdjustment"),
+                        rs.getString("OtherTransmissionCostAdjustmentKW"),
+                        rs.getString("OtherTransmissionCostAdjustmentKWH"),
+                        rs.getString("OtherSystemLossCostAdjustment"),
+                        rs.getString("OtherLifelineRateCostAdjustment"),
+                        rs.getString("SeniorCitizenDiscountAndSubsidyAdjustment"),
+                        rs.getString("FranchiseTax"),
+                        rs.getString("BusinessTax"),
+                        rs.getString("AdjustmentType"),
+                        rs.getString("Form2307Amount"),
+                        rs.getString("DeductedDeposit"),
+                        rs.getString("ExcessDeposit"),
+                        rs.getString("IsUnlockedForPayment"),
+                        rs.getString("UnlockedBy"),
+                        rs.getString("Evat2Percent"),
+                        rs.getString("Evat5Percent"),
+                        rs.getString("AdjustmentNumber"),
+                        rs.getString("AdjustedBy"),
+                        rs.getString("DateAdjusted"),
+                        rs.getString("ForCancellation"),
+                        rs.getString("CancelRequestedBy"),
+                        rs.getString("CancelApprovedBy")
+                );
+                ps.close();
+                rs.close();
+                return bill;
+            }
+            ps.close();
+            rs.close();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     public static String getAccountType(String acctType) {
         try {

@@ -18,6 +18,7 @@ import db.ServiceAccountsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
+import helpers.PowerBillPrint;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -32,10 +33,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1001,7 +1008,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                 office,
                                 ObjectHelpers.getSqlDate(),
                                 ObjectHelpers.getSqlTime(),
-                                BillsDao.getSurcharge(bill) + "",
+                                ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(bill) + ""),
                                 bill.getEvat2Percent(),
                                 bill.getEvat5Percent(),
                                 bill.getAdditionalCharges(),
@@ -1028,7 +1035,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         /*
                          * UPDATE OCL TO PAID
                          */
-                       if (bill.getAdditionalCharges() != null) {
+                        if (bill.getAdditionalCharges() != null) {
                            OCLMonthly ocl = OCLMonthlyDao.getOne(connection, bill.getServicePeriod(), bill.getAccountNumber());
                            if (ocl != null) {
                                // UPDATE OCL
@@ -1041,11 +1048,52 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                    CollectiblesDao.updateCollectible(connection, bill.getAccountNumber(), ObjectHelpers.roundTwoNoComma(newBal + ""));
                                }                            
                            }
-                       }
+                        }
                         
                         /**
                          * sAVE DCR
                          */
+                        // DCR FOR SURCHARGE
+                        DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                                ObjectHelpers.generateIDandRandString(),
+                                "312-450-00",
+                                null,
+                                null,
+                                paidBill.getSurcharge() != null ? paidBill.getSurcharge() : "0",
+                                ObjectHelpers.getSqlDate(),
+                                ObjectHelpers.getSqlTime(),
+                                login.getId(),
+                                null,
+                                null,
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp(),
+                                orNumberField.getText(),
+                                "BOTH",
+                                office,
+                                account.getId()
+                        );
+                        DCRSummaryTransactionsDao.insert(connection, dcr);
+                        
+                        // DCR FOR DISCOUNTS
+                        dcr = new DCRSummaryTransactions(
+                                ObjectHelpers.generateIDandRandString(),
+                                "312-452-00",
+                                null,
+                                null,
+                                "-" + ObjectHelpers.roundTwoNoComma(dsc + ""),
+                                ObjectHelpers.getSqlDate(),
+                                ObjectHelpers.getSqlTime(),
+                                login.getId(),
+                                null,
+                                null,
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp(),
+                                orNumberField.getText(),
+                                "BOTH",
+                                office,
+                                account.getId()
+                        );
+                        DCRSummaryTransactionsDao.insert(connection, dcr);
                         saveDCR(bill, account);
                         
                         /**
@@ -1091,12 +1139,6 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                     }                        
                 }
                 
-                /**
-                 * =======================
-                 * PRINT HERE IDIOT
-                 * =======================
-                 */
-                
                 // RESET
                 fetchOR();
                 totalAmountPayable = 0;
@@ -1116,6 +1158,14 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 bapaName.setText("");
                 cashPaymentField.setEnabled(false);
                 billingMonthDropdown.setSelectedIndex(0);
+                                
+                /**
+                 * =======================
+                 * PRINT HERE IDIOT
+                 * =======================
+                 */
+                print(dcrNum);
+                
                 dcrNum = "";
             } else {
                 Notifiers.showErrorMessage("Insufficient Amount", "Insufficient Amount Provided");
@@ -1626,7 +1676,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             "140-160-00",
             null,
             null,
-            bill.getEvat2Percent(),
+            bill.getEvat2Percent() != null ? ("-" + bill.getEvat2Percent()) : "0",
             ObjectHelpers.getSqlDate(),
             ObjectHelpers.getSqlTime(),
             login.getId(),
@@ -1646,7 +1696,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             "140-170-00",
             null,
             null,
-            bill.getEvat5Percent(),
+            bill.getEvat5Percent() != null ? ("-" + bill.getEvat5Percent()) : "0",
             ObjectHelpers.getSqlDate(),
             ObjectHelpers.getSqlTime(),
             login.getId(),
@@ -1744,5 +1794,48 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     public void updateOR() {
         fetchOR();
         System.out.println("OR FETCHED FOR BAPA PAYMENTS");
+    }
+    
+    public void print(String dcrNum) {
+        try {
+            List<PaidBills> paidBills = PaidBillsDao.getPaidBillsByDcrNum(connection, dcrNum);
+            int pbSize = paidBills.size();
+            for (int i=0; i<pbSize; i++) {
+                PaidBills pb = paidBills.get(i);
+                Bills bill = BillsDao.getOneByAccountAndPeriod(connection, pb.getAccountNumber(), pb.getServicePeriod());
+                pb.setBank(bill.getDueDate());
+                ServiceAccounts account = ServiceAccountsDao.getOneById(connection, pb.getAccountNumber());
+                List<PaidBills> billsList = new ArrayList<>();
+                billsList.add(pb);
+                
+                PrinterJob job = PrinterJob.getPrinterJob();
+                PageFormat pf = job.defaultPage();
+                Paper paper = pf.getPaper();
+                double width = 5d * 72d;
+                double height = 4d * 72d;
+                double margin = 0.1d * 72d;
+                paper.setSize(width, height);
+                paper.setImageableArea(
+                        margin,
+                        margin,
+                        width - (margin * 2),
+                        height - (margin * 2));
+                pf.setPaper(paper);
+                Book pBook = new Book();
+                pBook.append(new PowerBillPrint(billsList, account, pb.getORNumber(), login.getUsername()), pf);
+                job.setPageable(pBook);
+
+        //            job.setPrintable(new PowerBillPrint(bills.get(i), account));
+                try {
+                    job.print();
+                } catch (PrinterException e) {
+                    e.printStackTrace();
+                    Notifiers.showErrorMessage("Error Printing Payment", "Account No: " + account.getOldAccountNo() + "\n" + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Printing Transaction", e.getMessage());
+        }
     }
 }

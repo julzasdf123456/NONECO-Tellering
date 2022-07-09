@@ -10,7 +10,6 @@ import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.OCLMonthlyDao;
 import db.ORAssigningDao;
-import db.PaidBillsDao;
 import db.ServiceAccountsDao;
 import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
@@ -18,6 +17,7 @@ import db.TransactionPaymentDetailsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
+import helpers.TransactionsPrint;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -32,6 +32,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
@@ -1331,6 +1336,7 @@ public class OCLPanel extends javax.swing.JPanel {
                         String transId = ObjectHelpers.getTimeInMillis();
 
                         double ttl = 0;
+                        List<TransactionDetails> detailsList = new ArrayList<>();
                         for (int i=0; i<selectedList.size(); i++) {
                             OCLMonthly ocl = selectedList.get(i);
                             OCLMonthlyDao.setOclPaid(connection, ocl.getId());
@@ -1351,6 +1357,7 @@ public class OCLPanel extends javax.swing.JPanel {
                                     ObjectHelpers.getCurrentTimestamp()
                             );
                             TransactionDetailsDao.insert(connection, details);
+                            detailsList.add(details);
 
                             /**
                              * SAVE DCR
@@ -1467,6 +1474,11 @@ public class OCLPanel extends javax.swing.JPanel {
                                ObjectHelpers.getCurrentTimestamp()
                         );
                         ORAssigningDao.insert(connection, orNew);
+                        
+                        /**
+                         * PRINT HERE
+                         */
+                        print(transaction, detailsList, login.getUsername());
 
                        /**
                         * CLEAR AND RESET
@@ -1505,6 +1517,7 @@ public class OCLPanel extends javax.swing.JPanel {
                         /**
                         * SAVE TRANSACTION DETAILS
                         */
+                        List<TransactionDetails> detailsList = new ArrayList<>();
                         TransactionDetails details = new TransactionDetails(
                                 ObjectHelpers.generateIDandRandString(),
                                 transId,
@@ -1517,6 +1530,7 @@ public class OCLPanel extends javax.swing.JPanel {
                                 ObjectHelpers.getCurrentTimestamp()
                         );
                         TransactionDetailsDao.insert(connection, details);
+                        detailsList.add(details);
 
                         /**
                          * SAVE DCR
@@ -1632,6 +1646,11 @@ public class OCLPanel extends javax.swing.JPanel {
                                ObjectHelpers.getCurrentTimestamp()
                         );
                         ORAssigningDao.insert(connection, orNew);
+                        
+                        /**
+                         * PRINT HERE
+                         */
+                        print(transaction, detailsList, login.getUsername());
 
                        /**
                         * CLEAR AND RESET
@@ -1671,6 +1690,40 @@ public class OCLPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Saving Transaction", e.getMessage());
+        }
+    }
+    
+    public void print(TransactionIndex index, List<TransactionDetails> details, String username) {
+        try {
+            ServiceAccounts account = ServiceAccountsDao.getOneById(connection, index.getAccountNumber());
+            
+            PrinterJob job = PrinterJob.getPrinterJob();
+            PageFormat pf = job.defaultPage();
+            Paper paper = pf.getPaper();
+            double width = 5d * 72d;
+            double height = 4d * 72d;
+            double margin = 0.1d * 72d;
+            paper.setSize(width, height);
+            paper.setImageableArea(
+                    margin,
+                    margin,
+                    width - (margin * 2),
+                    height - (margin * 2));
+            pf.setPaper(paper);
+            Book pBook = new Book();
+            pBook.append(new TransactionsPrint(index, details, username, account), pf);
+            job.setPageable(pBook);
+
+    //            job.setPrintable(new PowerBillPrint(bills.get(i), account));
+            try {
+                job.print();
+            } catch (PrinterException e) {
+                e.printStackTrace();
+                Notifiers.showErrorMessage("Error Printing Payment", "Transaction No: " + index.getId()+ "\n" + e.getMessage());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Printing OR", e.getMessage());
         }
     }
 }

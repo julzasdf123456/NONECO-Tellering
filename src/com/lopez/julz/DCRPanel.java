@@ -7,9 +7,7 @@ package com.lopez.julz;
 
 import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
-import db.PaidBillDetailsDao;
 import db.PaidBillsDao;
-import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
@@ -179,9 +177,9 @@ public class DCRPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 549, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(totalDcrSummaryLabel))
+                .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(totalDcrSummaryLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel3))
                 .addContainerGap())
         );
 
@@ -462,7 +460,7 @@ public class DCRPanel extends javax.swing.JPanel {
                     data[tbIndex][2] = ObjectHelpers.roundTwo(dcrSummary.get(i).getAmount());
                     dcrSummaryTotal += Double.valueOf(dcrSummary.get(i).getAmount());
                     tbIndex++;
-                }                    
+                } 
             }
             dcrSummaryModel = new DefaultTableModel(data, dcrSummaryColNames) {
                 @Override

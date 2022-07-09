@@ -182,7 +182,8 @@ public class DCRSummaryTransactionsDao {
             PreparedStatement ps = con.prepareStatement("SELECT GLCode, "
                     + "(SELECT Notes FROM Cashier_AccountGLCodes WHERE AccountCode=Cashier_DCRSummaryTransactions.GLCode) AS Description,"
                     + "SUM(CAST(Amount AS DECIMAL(10,2))) AS Amount "
-                    + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND ReportDestination='COLLECTION' GROUP BY GLCode ORDER BY GLCode");
+                    + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND (ReportDestination='COLLECTION' OR ReportDestination='BOTH') "
+                    + "GROUP BY GLCode ORDER BY GLCode");
             ps.setString(1, day);
             ps.setString(2, teller);
             ResultSet rs = ps.executeQuery();

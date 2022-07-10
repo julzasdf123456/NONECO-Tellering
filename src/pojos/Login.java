@@ -10,7 +10,7 @@ package pojos;
  * @author Julio Lopez
  */
 public class Login {
-    private String username, password, id;
+    private String username, password, id, name;
 
     public Login() {
     }
@@ -49,4 +49,14 @@ public class Login {
     public void setId(String id) {
         this.id = id;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    
 }

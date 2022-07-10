@@ -28,6 +28,7 @@ public class Auth {
                     String[] lineTab = line.split(" ");
                     login.setUsername(lineTab[0]);
                     login.setId(lineTab[1]);
+                    login.setPassword(lineTab[2]);
                 } 
 
                 fr.close();    //closes the stream and release the resources   
@@ -40,6 +41,19 @@ public class Auth {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Active Login", e.getMessage());
             return null;
+        }
+    }
+    
+    public static boolean authenticate(String username, String password, Login login) {
+        try {
+            if (login.getUsername().equals(username) && login.getPassword().equals(password)) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

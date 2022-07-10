@@ -9,17 +9,27 @@ import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.PaidBillsDao;
 import db.TransactionIndexDao;
+import db.UsersDao;
 import helpers.ConfigFileHelpers;
+import helpers.DCRPrinter;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import pojos.DCRSummaryTransactions;
@@ -75,6 +85,8 @@ public class DCRPanel extends javax.swing.JPanel {
         dcrDate.getFormattedTextField().setFont(new Font("Arial", Font.BOLD, 13));
         
         getAllDCR();
+        
+        addTableCancelPopupMenu(powerBillsTable);
     }
 
     /**
@@ -354,6 +366,11 @@ public class DCRPanel extends javax.swing.JPanel {
 
         jButton1.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
         jButton1.setText("Print DCR");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -400,6 +417,11 @@ public class DCRPanel extends javax.swing.JPanel {
     private void goBtnDcrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goBtnDcrActionPerformed
         getAllDCR();
     }//GEN-LAST:event_goBtnDcrActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        pojos.Login l = UsersDao.getLogin(connection, login.getId());
+        DCRPrinter.printDcr(l, dcrDate.getFormattedTextField().getText(), dcrSummary, powerBills, nonPowerBills, checkPayments);
+    }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -600,7 +622,7 @@ public class DCRPanel extends javax.swing.JPanel {
             for (int i=0; i<npbSize; i++) {
                 prevHolder = nonPowerBills.get(i).getId();
                 data[i][0] = prevHolder.equals(prev) ? "" : nonPowerBills.get(i).getId();
-                data[i][1] = prevHolder.equals(prev) ? "" : nonPowerBills.get(i).getVAT();
+                data[i][1] = prevHolder.equals(prev) ? "" : nonPowerBills.get(i).getVAT(); // payee name
                 data[i][2] = nonPowerBills.get(i).getAccountCode();
                 data[i][3] = nonPowerBills.get(i).getParticular();
                 data[i][4] = ObjectHelpers.roundTwo(nonPowerBills.get(i).getTotal());
@@ -720,6 +742,57 @@ public class DCRPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Check Payments", e.getMessage());
+        }
+    }
+    
+    public void addTableCancelPopupMenu(JTable table) {
+        try {
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem cancel = new JMenuItem("Cancel This OR");
+            cancel.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    
+                    if (orNumber != null) {
+                        
+                    } else {
+                        Notifiers.showErrorMessage("Selection Error", "Please select the OR item to cancel.");
+                    }
+                }
+            });
+            
+            popupMenu.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            int rowAtPoint = table.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), table));
+                            if (rowAtPoint > -1) {
+                                table.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            popupMenu.add(cancel);
+            table.setComponentPopupMenu(popupMenu);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

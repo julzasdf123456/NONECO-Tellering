@@ -177,7 +177,7 @@ public class Login extends javax.swing.JFrame {
                     @Override
                     public void onResponse(Call<pojos.Login> call, Response<pojos.Login> rspns) {
                         if (rspns.isSuccessful()) {
-                            ConfigFileHelpers.saveLoginInfo(rspns.body().getUsername(), rspns.body().getId());
+                            ConfigFileHelpers.saveLoginInfo(rspns.body().getUsername(), rspns.body().getId(), password.getText());
                             dispose();
                             new MainFrame().setVisible(rootPaneCheckingEnabled);
                         } else {
@@ -211,7 +211,7 @@ public class Login extends javax.swing.JFrame {
                 @Override
                 public void onResponse(Call<pojos.Login> call, Response<pojos.Login> rspns) {
                     if (rspns.isSuccessful()) {
-                        ConfigFileHelpers.saveLoginInfo(rspns.body().getUsername(), rspns.body().getId());
+                        ConfigFileHelpers.saveLoginInfo(rspns.body().getUsername(), rspns.body().getId(), password.getText());
                         dispose();
                         new MainFrame().setVisible(rootPaneCheckingEnabled);
                     } else {

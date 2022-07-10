@@ -354,4 +354,20 @@ public class BillsDao {
             return 0;
         }
     }
+    
+    public static int getBillIndexFromBillNumber(List<Bills> bills, String billNo) {
+        try {
+            int index = -1;
+            for (int i=0; i<bills.size(); i++) {
+                if (billNo.equals(bills.get(i).getBillNumber())) {
+                    index = i;
+                    break;
+                }
+            }
+            return index;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
 }

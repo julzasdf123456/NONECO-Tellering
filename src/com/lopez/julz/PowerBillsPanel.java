@@ -14,11 +14,13 @@ import db.ORAssigningDao;
 import db.PaidBillDetailsDao;
 import db.PaidBillsDao;
 import db.ServiceAccountsDao;
+import helpers.Auth;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import helpers.PowerBillPrint;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -29,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -46,12 +49,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -61,6 +70,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.text.NumberFormatter;
 import pojos.Bills;
 import pojos.CheckPayments;
@@ -98,7 +108,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     /**
      * Bills Table 
      */
-    Object[] columnNames = {"*", "Bill Number", "Billing Month", "Due Date", "Amount Due", "Surcharge", "Total Amount Due"};
+    Object[] columnNames = {"*", "Bill Number", "Billing Month", "Due Date", "Amount Due", "Surcharge", "2%", "5%", "Options", "Total Amount Due"};
     DefaultTableModel model;
     
     /**
@@ -148,6 +158,8 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         fetchOR();
         
         checkLists = new ArrayList<>();
+        
+        
     }
 
     public Login getLogin() {
@@ -158,8 +170,6 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         this.login = login;
     }
     
-    
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -885,12 +895,15 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     data[i][0] = false;
                 }
                 double surcharge = Double.valueOf(ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(billsList.get(i)) + ""));
+                billsList.get(i).setAdditionalKwh(surcharge + "");
                 data[i][1] = billsList.get(i).getBillNumber();
                 data[i][2] = billsList.get(i).getServicePeriod();
                 data[i][3] = billsList.get(i).getDueDate();
                 data[i][4] = ObjectHelpers.roundTwo(billsList.get(i).getNetAmount());
                 data[i][5] = ObjectHelpers.roundTwo(surcharge + "");
-                data[i][6] = ObjectHelpers.roundTwo(ObjectHelpers.getTotals(Double.valueOf(billsList.get(i).getNetAmount()), surcharge));
+                data[i][6] = billsList.get(i).getEvat2Percent() != null ? ObjectHelpers.roundTwo(billsList.get(i).getEvat2Percent()) : "0";
+                data[i][7] = billsList.get(i).getEvat5Percent() != null ? ObjectHelpers.roundTwo(billsList.get(i).getEvat5Percent()) : "0";
+                data[i][9] = ObjectHelpers.roundTwo(ObjectHelpers.getTotals(Double.valueOf(billsList.get(i).getNetAmount()), surcharge));
             }
             
             // DISPLAY TO TABLE
@@ -910,10 +923,10 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             return String.class;
                         case 5:
                             return String.class;
-                        case 6:
+                        case 9:
                             return String.class;
                         default:
-                            return Boolean.class;
+                            return String.class;
                     }
                 }            
             };
@@ -924,12 +937,21 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             DefaultTableCellRenderer rightRendererBlue = new DefaultTableCellRenderer();
             rightRendererBlue.setHorizontalAlignment(JLabel.RIGHT);
             rightRendererBlue.setForeground(Color.BLUE);
+            
+            DefaultTableCellRenderer rightRendererGreen = new DefaultTableCellRenderer();
+            rightRendererGreen.setHorizontalAlignment(JLabel.RIGHT);
+            rightRendererGreen.setForeground(Color.decode("#00675b"));
 
             billsTable.setModel(model);
             billsTable.getColumnModel().getColumn(0).setMaxWidth(40);
             billsTable.getColumnModel().getColumn(4).setCellRenderer(rightRendererBlue);
             billsTable.getColumnModel().getColumn(5).setCellRenderer(rightRendererRed);
-            billsTable.getColumnModel().getColumn(6).setCellRenderer(rightRendererBlue);
+            billsTable.getColumnModel().getColumn(6).setCellRenderer(rightRendererGreen);
+            billsTable.getColumnModel().getColumn(7).setCellRenderer(rightRendererGreen);
+            billsTable.getColumnModel().getColumn(8).setCellRenderer(new ButtonRenderer());
+            billsTable.getColumnModel().getColumn(8).setCellEditor(new ButtonEditor(new JCheckBox()));
+            billsTable.getColumnModel().getColumn(8).setMaxWidth(110); 
+            billsTable.getColumnModel().getColumn(9).setCellRenderer(rightRendererBlue);
             billsTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             billsTable.getModel().addTableModelListener(new TableModelListener() {
                 @Override
@@ -963,7 +985,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         
             for (int i = 0; i < model.getRowCount(); i++) {
                 if ((Boolean) model.getValueAt(i,0)) {  
-                    totalSurcharge += BillsDao.getSurcharge(billsList.get(i));
+                    totalSurcharge += (billsList.get(i).getAdditionalKwh() != null ? Double.valueOf(billsList.get(i).getAdditionalKwh()) : 0);
                     totalAmountPayable += Double.valueOf(billsList.get(i).getNetAmount());
                     selectedBills.add(billsList.get(i));
                 }
@@ -1226,12 +1248,12 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             office,
                             ObjectHelpers.getSqlDate(),
                             ObjectHelpers.getSqlTime(),
-                            ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(selectedBills.get(i)) + ""),
+                            ObjectHelpers.roundTwoNoComma(selectedBills.get(i).getAdditionalKwh()), // SURCHARGE
                             bill.getEvat2Percent(),
                             bill.getEvat5Percent(),
                             bill.getAdditionalCharges(),
                             bill.getDeductions(),
-                            ObjectHelpers.roundTwoNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), BillsDao.getSurcharge(selectedBills.get(i))) + ""),
+                            ObjectHelpers.roundTwoNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), Double.valueOf(selectedBills.get(i).getAdditionalKwh())) + ""),
                             "MONTHLY BILL",
                             bill.getId(),
                             login.getId(),
@@ -2160,4 +2182,237 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         fetchOR();
         System.out.println("OR FETCHED FOR BILLS PAYMENT");
     }
+    
+    class ButtonRenderer extends JButton implements TableCellRenderer  {
+        public ButtonRenderer() {
+            setOpaque(true);
+        }
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText((value == null) ? "Waive" : value.toString());
+            return this;
+        }
+    }
+    
+    class ButtonEditor extends DefaultCellEditor  {
+        private String label;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+        }
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            label = (value == null) ? "Waive" : value.toString();
+            JButton removeBtn = new JButton(label);
+            removeBtn.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JDialog dialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(getParent()));
+                    
+                    Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+                    int x = (int) size.getWidth();
+                    int y = (int) size.getHeight();
+                    dialog.setLocation(x/5, y/5);
+                    dialog.setTitle("Authentication");
+
+                    JPanel mainPanel = new JPanel(new GridLayout(0, 1, 0, 5));
+                    mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+                    JTextField username = new javax.swing.JTextField();
+                    username.setText(login.getUsername());
+                    JPasswordField password = new JPasswordField();
+                    JButton loginBtn = new javax.swing.JButton("Authenticate");
+                    
+                    mainPanel.add(new JLabel("Username"));
+                    username.setPreferredSize(new Dimension(250, 36));
+                    username.setFont(new Font("Arial", Font.BOLD, 14));  
+                    mainPanel.add(username);
+                    
+                    mainPanel.add(new JLabel("Password"));
+                    password.setPreferredSize(new Dimension(250, 36));
+                    password.setFont(new Font("Arial", Font.BOLD, 14));  
+                    mainPanel.add(password);
+                    
+                    mainPanel.add(loginBtn);
+                    
+                    username.addKeyListener(new KeyAdapter() {
+                        @Override
+                        public void keyReleased(KeyEvent e) {
+                            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                                password.requestFocus();
+                            }
+                        }
+                    });
+                    
+                    password.addKeyListener(new KeyAdapter() {
+                        @Override
+                        public void keyReleased(KeyEvent e) {
+                            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                                if (Auth.authenticate(username.getText(), password.getText(), login)) {
+                                    dialog.dispose();
+                                    waive(billsTable.getModel().getValueAt(billsTable.getSelectedRow(), 1).toString());
+                                } else {
+                                    Notifiers.showErrorMessage("Authentication Error", "Login Invalid");
+                                }
+                            }
+                        }
+                    });
+                    
+                    loginBtn.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (Auth.authenticate(username.getText(), password.getText(), login)) {
+                                dialog.dispose();
+                                waive(billsTable.getModel().getValueAt(billsTable.getSelectedRow(), 1).toString());
+                            } else {
+                                Notifiers.showErrorMessage("Authentication Error", "Login Invalid");
+                            }
+                        }
+                    });
+                    
+                    dialog.add(mainPanel);
+                    dialog.pack();
+                    dialog.setVisible(true);
+                }     
+            });
+            return removeBtn;
+        }
+        
+        public Object getCellEditorValue()  {
+          return new String(label);
+        }
+    }
+    
+    public void waive(String billNo) {
+        try {
+            int indexOfSelected = BillsDao.getBillIndexFromBillNumber(selectedBills, billNo);
+            if (indexOfSelected == -1) {
+                Notifiers.showErrorMessage("Bill Not Selected", "This Bill is not selected. Select first to waive payment.");
+            } else {
+                Bills bill = selectedBills.get(indexOfSelected);
+
+                if (bill != null) {
+                    JDialog waiveDialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(getParent()));
+                    Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+                    int x = (int) size.getWidth();
+                    int y = (int) size.getHeight();
+                    waiveDialog.setLocation(x/5, y/4);
+                    waiveDialog.setTitle("Waive Certain Amounts");
+
+                    JPanel mainPanel = new JPanel(new GridLayout(3, 5, 1, 3));
+                    mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+                    mainPanel.add(new JLabel("Bill Number"));
+                    mainPanel.add(new JLabel("Billing Month"));
+                    mainPanel.add(new JLabel("Surcharge"));
+                    mainPanel.add(new JLabel("2% EWT"));
+                    mainPanel.add(new JLabel("5% EVAT"));
+
+                    JTextField billNumber = new JTextField();
+                    billNumber.setPreferredSize(new Dimension(110, 36));
+                    billNumber.setFont(new Font("Arial", Font.BOLD, 16));  
+                    billNumber.setEnabled(false);
+                    billNumber.setText(billNo);
+                    mainPanel.add(billNumber);
+                    
+                    JTextField periodField = new JTextField();
+                    periodField.setPreferredSize(new Dimension(110, 36));
+                    periodField.setFont(new Font("Arial", Font.BOLD, 16));  
+                    periodField.setEnabled(false);
+                    periodField.setText(bill.getServicePeriod());
+                    mainPanel.add(periodField);
+
+                    NumberFormat format = NumberFormat.getInstance();
+                    format.setMinimumFractionDigits(2);
+                    format.setMaximumFractionDigits(2);
+                    format.setRoundingMode(RoundingMode.HALF_UP);
+                    NumberFormatter formatter = new NumberFormatter(format);
+                    formatter.setValueClass(Double.class);
+                    formatter.setAllowsInvalid(false);
+                    formatter.setCommitsOnValidEdit(true);
+
+                    JFormattedTextField surchargeField = new JFormattedTextField(formatter);
+                    surchargeField.setPreferredSize(new Dimension(120, 36));
+                    surchargeField.setFont(new Font("Arial", Font.BOLD, 16)); 
+                    surchargeField.setHorizontalAlignment(JTextField.RIGHT);
+                    surchargeField.setValue(bill.getAdditionalKwh() != null ? Double.valueOf(bill.getAdditionalKwh()) : 0); // SRUCHARGE
+                    mainPanel.add(surchargeField);
+                    
+                    JFormattedTextField ewtField = new JFormattedTextField(formatter);
+                    ewtField.setPreferredSize(new Dimension(120, 36));
+                    ewtField.setFont(new Font("Arial", Font.BOLD, 16)); 
+                    ewtField.setHorizontalAlignment(JTextField.RIGHT);
+                    ewtField.setValue(bill.getEvat2Percent() != null ? Double.valueOf(bill.getEvat2Percent()) : 0); 
+                    mainPanel.add(ewtField);
+                    
+                    JFormattedTextField evatField = new JFormattedTextField(formatter);
+                    evatField.setPreferredSize(new Dimension(120, 36));
+                    evatField.setFont(new Font("Arial", Font.BOLD, 16)); 
+                    evatField.setHorizontalAlignment(JTextField.RIGHT);
+                    evatField.setValue(bill.getEvat5Percent() != null ? Double.valueOf(bill.getEvat5Percent()) : 0); 
+                    mainPanel.add(evatField);
+                    
+                    mainPanel.add(new JLabel());
+                    mainPanel.add(new JLabel());
+                    mainPanel.add(new JLabel());
+                    mainPanel.add(new JLabel());
+                    
+                    JButton saveBtn = new JButton("SAVE");
+                    saveBtn.setFont(new Font("Arial", Font.BOLD, 16)); 
+                    mainPanel.add(saveBtn);
+                    
+                    saveBtn.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                double surchargeAmnt = surchargeField.getValue() != null ? Double.valueOf(surchargeField.getValue().toString()) : 0;
+                                double ewtAmount = ewtField.getValue() != null ? Double.valueOf(ewtField.getValue().toString()) : 0;
+                                double evatAmount = evatField.getValue() != null ? Double.valueOf(evatField.getValue().toString()) : 0;
+                                
+                                double originalEwt = bill.getEvat2Percent() != null ? Double.valueOf(bill.getEvat2Percent()) : 0;                                
+                                double originalEvat = bill.getEvat5Percent() != null ? Double.valueOf(bill.getEvat5Percent()) : 0;
+                                
+                                double originalAmount = bill.getNetAmount()!= null ? Double.valueOf(bill.getNetAmount()) : 0;
+                                originalAmount = (originalAmount + originalEvat + originalEwt); // ORIGINAL BILL AMOUNT MINUS THE EWT AND EVAT
+                                
+                                double newAmount = originalAmount + surchargeAmnt - (evatAmount + ewtAmount);
+                                
+                                int tblSelIndex = billsTable.getSelectedRow();
+                                
+                                billsList.get(tblSelIndex).setAdditionalKwh(ObjectHelpers.roundTwoNoComma(surchargeAmnt + ""));
+                                billsList.get(tblSelIndex).setEvat2Percent(ObjectHelpers.roundTwoNoComma(ewtAmount + ""));
+                                billsList.get(tblSelIndex).setEvat5Percent(ObjectHelpers.roundTwoNoComma(evatAmount + ""));
+                                billsList.get(tblSelIndex).setNetAmount(ObjectHelpers.roundTwoNoComma((newAmount - surchargeAmnt) + ""));
+                                
+                                // UPDATE TABLE
+                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(originalAmount + ""), tblSelIndex, 4);
+                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(surchargeAmnt + ""), tblSelIndex, 5);
+                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(ewtAmount + ""), tblSelIndex, 6);
+                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(evatAmount + ""), tblSelIndex, 7);
+                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(newAmount + ""), tblSelIndex, 9);
+                                
+                                getSelectedBillsPayablesTotal();
+                                cashPaymentField.setValue(totalAmountPayable + totalSurcharge);
+                                totalAmountPaid.setValue(getTotalAmount());
+                                transactBtn.requestFocus();
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                Notifiers.showErrorMessage("Error waiving amount", ex.getMessage());
+                            }
+                            waiveDialog.dispose();
+                        }
+                    });
+
+                    waiveDialog.add(mainPanel);
+                    waiveDialog.pack();
+                    waiveDialog.setVisible(true);
+                } else {
+                    Notifiers.showErrorMessage("Bill Not Selected", "This Bill is not selected. Select first to waive payment.");
+                }    
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error waiving amount", e.getMessage());
+        }
+    }
+    
+    
 }

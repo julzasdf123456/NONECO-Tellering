@@ -5,12 +5,17 @@
  */
 package helpers;
 
+
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
 
 /**
  *
@@ -19,18 +24,48 @@ import java.awt.print.PrinterJob;
 public class TestR {
     
     public TestR() {
-        PrinterJob job = PrinterJob.getPrinterJob();
-        job.setPrintable(new HelloWorldPrinter());
+//        PrinterJob job = PrinterJob.getPrinterJob();
+//        job.setPrintable(new HelloWorldPrinter());
+//        try {
+//            job.print();
+//        } catch (PrinterException e) {
+//            // The job did not successfully
+//            // complete
+//        }
+
+        OutputStream file = null;
         try {
-            job.print();
-        } catch (PrinterException e) {
-            // The job did not successfully
-            // complete
+            
+ 
+            System.out.println("Your PDF File is succesfully created");
+           
+        } catch (Exception e) {
+            e.printStackTrace();
+ 
+        } finally {
+ 
+            // closing FileOutputStream
+            try {
+                if (file != null) {
+                    file.close();
+                }
+            } catch (IOException io) {/*Failed to close*/
+ 
+            }
+ 
         }
     }
     
     public static void main(String[] args) {
         new TestR();
+//            PDDocument document = Loader.loadPDF(new File(ConfigFileHelpers.REPORTS_FOLDER + "Test.pdf"));
+//            
+//            PrintService myPrintService = PrintServiceLookup.lookupDefaultPrintService();
+//            
+//            PrinterJob job = PrinterJob.getPrinterJob();
+//            job.setPageable(new PDFPageable(document));
+//            job.setPrintService(myPrintService);
+//            job.print();
     }
     
     class HelloWorldPrinter implements Printable {

@@ -84,7 +84,8 @@ public class MainFrame extends javax.swing.JFrame {
         ormanMaintenance = new ORMaintenancePanel(login);
         miscellaneousPanel = new MiscellaneousPanel(login);
         
-        mainSplitPane.setRightComponent(powerBillsPanel);
+        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
+//        mainSplitPane.setRightComponent(powerBillsPanel);
         
         billsPayment.setForeground(Color.decode("#00968b"));
         billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
@@ -121,6 +122,7 @@ public class MainFrame extends javax.swing.JFrame {
         toolsMenu = new javax.swing.JMenu();
         orMaintenanceMenu = new javax.swing.JMenuItem();
         dcrMenu = new javax.swing.JMenuItem();
+        orCancellation = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -344,6 +346,16 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         toolsMenu.add(dcrMenu);
+
+        orCancellation.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        orCancellation.setText("OR Cancellations");
+        orCancellation.setMargin(new java.awt.Insets(5, 0, 5, 0));
+        orCancellation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orCancellationActionPerformed(evt);
+            }
+        });
+        toolsMenu.add(orCancellation);
 
         jMenuBar1.add(toolsMenu);
 
@@ -577,6 +589,10 @@ public class MainFrame extends javax.swing.JFrame {
         dummyBtn = miscellaneousPaymentsMenu;
     }//GEN-LAST:event_miscellaneousPaymentsMenuActionPerformed
 
+    private void orCancellationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orCancellationActionPerformed
+        
+    }//GEN-LAST:event_orCancellationActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -625,6 +641,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel menuPanel;
     private javax.swing.JButton miscellaneousPaymentsMenu;
     private javax.swing.JButton oclPaymentsMenu;
+    private javax.swing.JMenuItem orCancellation;
     private javax.swing.JMenuItem orMaintenanceMenu;
     private javax.swing.JButton serviceConnectionPayments;
     private javax.swing.JButton sumORBtn;

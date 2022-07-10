@@ -22,6 +22,7 @@ public class ConfigFileHelpers {
     public static String SERVER = System.getProperty("user.dir") + SEPARATOR + "config" + SEPARATOR + "server.txt";
     public static String ACTIVE_LOGIN = System.getProperty("user.dir") + SEPARATOR + "config" + SEPARATOR + "activelogin.txt";
     public static String OTHER_CONFIG = System.getProperty("user.dir") + SEPARATOR + "config" + SEPARATOR + "otherconfig.txt";
+    public static String REPORTS_FOLDER = System.getProperty("user.dir") + SEPARATOR + "reports" + SEPARATOR;
     
     public static String getOffice () {
         try {
@@ -92,19 +93,19 @@ public class ConfigFileHelpers {
         }
     }
     
-    public static void saveLoginInfo(String username, String id) {
+    public static void saveLoginInfo(String username, String id, String password) {
         try {
             File text = new File(ACTIVE_LOGIN);
             if (text.createNewFile()) {
                 StringBuilder data = new StringBuilder();
-                data.append(username + " " + id);
+                data.append(username + " " + id + " " + password);
                 Files.write(text.toPath(), data.toString().getBytes());
             } else {
                 text.delete();
                 
                 text = new File(ACTIVE_LOGIN);
                 StringBuilder data = new StringBuilder();
-                data.append(username + " " + id);
+                data.append(username + " " + id + " " + password);
                 Files.write(text.toPath(), data.toString().getBytes());
             }
         } catch (Exception e) {

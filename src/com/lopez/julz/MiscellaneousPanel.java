@@ -129,17 +129,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         
         accountNumberSearch.setValue(officeCode); 
         accountNumberSearch.requestFocus();
-        accountNumberSearch.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent arg0) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        accountNumberSearch.setCaretPosition(2);
-                    }
-                });
-            }
-        });
+        
         
         checkLists = new ArrayList<>();
     }
@@ -283,7 +273,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         jLabel9.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         jLabel9.setText("OR Number");
 
-        orNumberField.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        orNumberField.setFont(new java.awt.Font("Arial", 1, 23)); // NOI18N
         orNumberField.setForeground(new java.awt.Color(204, 0, 0));
         orNumberField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
         orNumberField.setEnabled(false);
@@ -310,14 +300,13 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel9)
-                        .addComponent(orNumberField, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(unlockOrNumberBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(orNumberField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE)
+                    .addComponent(unlockOrNumberBtn, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(null, "Payment Options", javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Arial", 1, 12), new java.awt.Color(0, 153, 153))); // NOI18N
@@ -486,6 +475,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         addItemToPayable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         addItemToPayable.setText("Add Item");
         addItemToPayable.setEnabled(false);
+        addItemToPayable.setFocusable(false);
         addItemToPayable.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addItemToPayableActionPerformed(evt);
@@ -502,6 +492,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         clearBtn.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         clearBtn.setForeground(new java.awt.Color(204, 0, 0));
         clearBtn.setText("Clear All");
+        clearBtn.setFocusable(false);
         clearBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 clearBtnActionPerformed(evt);

@@ -5,6 +5,8 @@
  */
 package db;
 
+import helpers.ConfigFileHelpers;
+import helpers.ObjectHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -254,6 +256,110 @@ public class PaidBillsDao {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    public static PaidBills getOneByOR(Connection con, String orNumber) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM Cashier_PaidBills WHERE ORNumber=?");
+            ps.setString(1, orNumber);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                PaidBills paidBill = new PaidBills(
+                    rs.getString("id"),
+                    rs.getString("BillNumber"),
+                    rs.getString("AccountNumber"),
+                    rs.getString("ServicePeriod"),
+                    rs.getString("ORNumber"),
+                    rs.getString("ORDate"),
+                    rs.getString("DCRNumber"),
+                    rs.getString("KwhUsed"),
+                    rs.getString("Teller"),
+                    rs.getString("OfficeTransacted"),
+                    rs.getString("PostingDate"),
+                    rs.getString("PostingTime"),
+                    rs.getString("Surcharge"),
+                    rs.getString("Form2307TwoPercent"),
+                    rs.getString("Form2307FivePercent"),
+                    rs.getString("AdditionalCharges"),
+                    rs.getString("Deductions"),
+                    rs.getString("NetAmount"),
+                    rs.getString("Source"),
+                    rs.getString("ObjectSourceId"),
+                    rs.getString("UserId"),
+                    rs.getString("created_at"),
+                    rs.getString("updated_at"),
+                    rs.getString("Status"),
+                    rs.getString("FiledBy"),
+                    rs.getString("ApprovedBy"),
+                    rs.getString("AuditedBy"),
+                    rs.getString("Notes"),
+                    rs.getString("CheckNo"),
+                    rs.getString("Bank"),
+                    rs.getString("CheckExpiration"),
+                    rs.getString("PaymentUsed")
+                );
+                ps.close();
+                rs.close();
+                return paidBill;
+            }
+            
+            ps.close();
+            rs.close();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static void requesetCancelOR(Connection con, PaidBills pb, String reason, pojos.Login login) {
+        try {
+            PreparedStatement ps = con.prepareStatement("UPDATE Cashier_PaidBills SET Status='PENDING CANCEL', FiledBy=?, Notes=? WHERE ORNumber=?");
+            ps.setString(1, login.getId());
+            ps.setString(2, reason);
+            ps.setString(3, pb.getORNumber());
+            ps.execute();            
+            ps.clearParameters();
+            
+            // ADD TO CANCELLATIONS
+            ps = con.prepareStatement("INSERT INTO Cashier_ORCancellations (id, ORNumber, ORDate, [From], ObjectId, DateTimeFiled) VALUES (?, ?, ?, ?, ?, ?)");
+            ps.setString(1, ObjectHelpers.generateIDandRandString());
+            ps.setString(2, pb.getORNumber());
+            ps.setString(3, pb.getORDate());
+            ps.setString(4, "PaidBills");
+            ps.setString(5, pb.getId());
+            ps.setString(6, ObjectHelpers.getSqlDate());
+            ps.execute();
+            ps.clearParameters();
+            
+            // ADD TO NOTIFIERS
+            ps = con.prepareStatement("INSERT INTO Notifiers (id, Notification, [From], [To], Status, Intent, ObjectId) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            ps.setString(1, ObjectHelpers.generateIDandRandString());
+            ps.setString(2, "OR Cancellation requested by " + login.getUsername() + " with OR Number " + pb.getORNumber());
+            ps.setString(3, login.getId());
+            ps.setString(4, ConfigFileHelpers.getCashierHeadId());
+            ps.setString(5, "SENT");
+            ps.setString(6, "OR CANCELLATION");
+            ps.setString(7, pb.getORNumber());
+            ps.execute();
+            ps.clearParameters();
+            
+            // REMOVE FROM DCR SUMMARY
+            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE ORNumber=?");
+            ps.setString(1, pb.getORNumber());
+            ps.execute();
+            ps.clearParameters();
+            
+            // REMOVE FROM DETALIS
+            ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ORNumber=?");
+            ps.setString(1, pb.getORNumber());
+            ps.execute();
+            
+            ps.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

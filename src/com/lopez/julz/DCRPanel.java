@@ -15,27 +15,33 @@ import helpers.DCRPrinter;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import pojos.DCRSummaryTransactions;
 import pojos.PaidBills;
 import pojos.Server;
 import pojos.TransactionDetails;
+import pojos.TransactionIndex;
 
 /**
  *
@@ -65,6 +71,10 @@ public class DCRPanel extends javax.swing.JPanel {
     public List<TransactionDetails> checkPayments;
     public DefaultTableModel checkPaymentsModel;
     public Object[] checkPaymentsColNames = {"OR Number", "Account No", "Payee Name", "Check No", "Bank", "Amount", "Source"};
+    
+    public List<TransactionDetails> cancelledORs;
+    public DefaultTableModel cancelledORsModel;
+    public Object[] cancelledORsColNames = { "OR Number", "Account Number", "Consumer Name", "Amount Paid", "Source", "Payment Used", "Status"};
    
     public DCRPanel(pojos.Login login) {
         this.login = login;
@@ -80,13 +90,16 @@ public class DCRPanel extends javax.swing.JPanel {
         powerBills = new ArrayList<>();
         nonPowerBills = new ArrayList<>();
         checkPayments = new ArrayList<>();
+        cancelledORs = new ArrayList<>();
         
         dcrDate.getFormattedTextField().setValue(Calendar.getInstance());
         dcrDate.getFormattedTextField().setFont(new Font("Arial", Font.BOLD, 13));
         
         getAllDCR();
         
-        addTableCancelPopupMenu(powerBillsTable);
+        addTableCancelPowerBillsPopupMenu(powerBillsTable);
+        addTableCancelNonPowerBillsPopupMenu(nonPowerBillsTable);
+        addTableCancelCheckCancelPopupMenu(checkPaymentsTable);
     }
 
     /**
@@ -122,9 +135,11 @@ public class DCRPanel extends javax.swing.JPanel {
         checkPaymentsTab = new javax.swing.JPanel();
         checkPaymentsTotalLabel = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        checkTable = new javax.swing.JTable();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        checkPaymentsTable = new javax.swing.JTable();
         cancelledOrsTab = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        cancelledORsTable = new javax.swing.JTable();
         jButton1 = new javax.swing.JButton();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
@@ -187,7 +202,7 @@ public class DCRPanel extends javax.swing.JPanel {
             dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(dcrSummaryTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 549, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(totalDcrSummaryLabel, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -239,7 +254,7 @@ public class DCRPanel extends javax.swing.JPanel {
             powerBillsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, powerBillsTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addGroup(powerBillsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -291,7 +306,7 @@ public class DCRPanel extends javax.swing.JPanel {
             nonPowerBillsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, nonPowerBillsTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addGroup(nonPowerBillsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
@@ -308,8 +323,8 @@ public class DCRPanel extends javax.swing.JPanel {
         jLabel6.setFont(new java.awt.Font("Arial", 2, 15)); // NOI18N
         jLabel6.setText("Total  :  ");
 
-        checkTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        checkTable.setModel(new javax.swing.table.DefaultTableModel(
+        checkPaymentsTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        checkPaymentsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {},
                 {},
@@ -320,7 +335,8 @@ public class DCRPanel extends javax.swing.JPanel {
 
             }
         ));
-        jScrollPane4.setViewportView(checkTable);
+        checkPaymentsTable.setRowHeight(26);
+        jScrollPane5.setViewportView(checkPaymentsTable);
 
         javax.swing.GroupLayout checkPaymentsTabLayout = new javax.swing.GroupLayout(checkPaymentsTab);
         checkPaymentsTab.setLayout(checkPaymentsTabLayout);
@@ -329,7 +345,7 @@ public class DCRPanel extends javax.swing.JPanel {
             .addGroup(checkPaymentsTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(checkPaymentsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 1193, Short.MAX_VALUE)
+                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 1193, Short.MAX_VALUE)
                     .addGroup(checkPaymentsTabLayout.createSequentialGroup()
                         .addComponent(jLabel6)
                         .addGap(18, 18, 18)
@@ -341,8 +357,8 @@ public class DCRPanel extends javax.swing.JPanel {
             checkPaymentsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, checkPaymentsTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 542, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(checkPaymentsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(checkPaymentsTotalLabel))
@@ -351,15 +367,40 @@ public class DCRPanel extends javax.swing.JPanel {
 
         jTabbedPane1.addTab("Check Payments", checkPaymentsTab);
 
+        cancelledORsTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        cancelledORsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {},
+                {},
+                {},
+                {}
+            },
+            new String [] {
+
+            }
+        ));
+        cancelledORsTable.setRowHeight(26);
+        jScrollPane4.setViewportView(cancelledORsTable);
+
         javax.swing.GroupLayout cancelledOrsTabLayout = new javax.swing.GroupLayout(cancelledOrsTab);
         cancelledOrsTab.setLayout(cancelledOrsTabLayout);
         cancelledOrsTabLayout.setHorizontalGroup(
             cancelledOrsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 1213, Short.MAX_VALUE)
+            .addGroup(cancelledOrsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(cancelledOrsTabLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 1193, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         cancelledOrsTabLayout.setVerticalGroup(
             cancelledOrsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 602, Short.MAX_VALUE)
+            .addGap(0, 603, Short.MAX_VALUE)
+            .addGroup(cancelledOrsTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, cancelledOrsTabLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 581, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
 
         jTabbedPane1.addTab("Cancelled ORs", cancelledOrsTab);
@@ -420,15 +461,16 @@ public class DCRPanel extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         pojos.Login l = UsersDao.getLogin(connection, login.getId());
-        DCRPrinter.printDcr(l, dcrDate.getFormattedTextField().getText(), dcrSummary, powerBills, nonPowerBills, checkPayments);
+        DCRPrinter.printDcr(l, dcrDate.getFormattedTextField().getText(), dcrSummary, powerBills, nonPowerBills, checkPayments, cancelledORs);
     }//GEN-LAST:event_jButton1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable cancelledORsTable;
     private javax.swing.JPanel cancelledOrsTab;
     private javax.swing.JPanel checkPaymentsTab;
+    private javax.swing.JTable checkPaymentsTable;
     private javax.swing.JLabel checkPaymentsTotalLabel;
-    private javax.swing.JTable checkTable;
     private org.jdatepicker.JDatePicker dcrDate;
     private javax.swing.JPanel dcrSummaryTab;
     private javax.swing.JTable dcrSummaryTable;
@@ -444,6 +486,7 @@ public class DCRPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel nonPowerBillsTab;
@@ -460,6 +503,7 @@ public class DCRPanel extends javax.swing.JPanel {
         getPowerBills();
         getNonPowerBills();
         getCheckPayments();
+        getCancelledOrs();
     }
     
     public void getDcrSummary() {
@@ -721,22 +765,22 @@ public class DCRPanel extends javax.swing.JPanel {
             rightRendererRed.setFont(new Font("Arial", Font.BOLD, 12));
             rightRendererRed.setForeground(Color.decode("#d32f2f"));
             
-            checkTable.setModel(checkPaymentsModel);
-            checkTable.setRowHeight(28);
-            checkTable.getColumnModel().getColumn(0).setMaxWidth(60);
-            checkTable.getColumnModel().getColumn(0).setMinWidth(50);
-            checkTable.getColumnModel().getColumn(1).setMaxWidth(130);
-            checkTable.getColumnModel().getColumn(1).setMinWidth(120);
-            checkTable.getColumnModel().getColumn(3).setMaxWidth(200);
-            checkTable.getColumnModel().getColumn(3).setMinWidth(180);
-            checkTable.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
-            checkTable.getColumnModel().getColumn(4).setMaxWidth(130);
-            checkTable.getColumnModel().getColumn(4).setMinWidth(100);
-            checkTable.getColumnModel().getColumn(5).setMaxWidth(180);
-            checkTable.getColumnModel().getColumn(5).setMinWidth(150);
-            checkTable.getColumnModel().getColumn(5).setCellRenderer(rightRendererBlue);
-            checkTable.getColumnModel().getColumn(6).setMaxWidth(180);
-            checkTable.getColumnModel().getColumn(6).setMinWidth(150);
+            checkPaymentsTable.setModel(checkPaymentsModel);
+            checkPaymentsTable.setRowHeight(28);
+            checkPaymentsTable.getColumnModel().getColumn(0).setMaxWidth(60);
+            checkPaymentsTable.getColumnModel().getColumn(0).setMinWidth(50);
+            checkPaymentsTable.getColumnModel().getColumn(1).setMaxWidth(130);
+            checkPaymentsTable.getColumnModel().getColumn(1).setMinWidth(120);
+            checkPaymentsTable.getColumnModel().getColumn(3).setMaxWidth(200);
+            checkPaymentsTable.getColumnModel().getColumn(3).setMinWidth(180);
+            checkPaymentsTable.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+            checkPaymentsTable.getColumnModel().getColumn(4).setMaxWidth(130);
+            checkPaymentsTable.getColumnModel().getColumn(4).setMinWidth(100);
+            checkPaymentsTable.getColumnModel().getColumn(5).setMaxWidth(180);
+            checkPaymentsTable.getColumnModel().getColumn(5).setMinWidth(150);
+            checkPaymentsTable.getColumnModel().getColumn(5).setCellRenderer(rightRendererBlue);
+            checkPaymentsTable.getColumnModel().getColumn(6).setMaxWidth(180);
+            checkPaymentsTable.getColumnModel().getColumn(6).setMinWidth(150);
             
             checkPaymentsTotalLabel.setText("(" + checkSize + ") " + ObjectHelpers.roundTwo(checkPaymentsTotal + ""));
         } catch (Exception e) {
@@ -745,10 +789,52 @@ public class DCRPanel extends javax.swing.JPanel {
         }
     }
     
-    public void addTableCancelPopupMenu(JTable table) {
+    public void getCancelledOrs() {
+        try {
+            cancelledORs.clear();
+            if (cancelledORsModel != null) {
+                cancelledORsModel.getDataVector().removeAllElements();
+                cancelledORsModel.fireTableDataChanged();
+            }
+            
+            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            int size = cancelledORs.size();
+            Object[][] data = new Object[size][cancelledORsColNames.length];
+            for (int i=0; i<size; i++) {
+                data[i][0] = cancelledORs.get(i).getId(); // ornumber
+                data[i][1] = cancelledORs.get(i).getTransactionIndexId(); // account no
+                data[i][2] = cancelledORs.get(i).getParticular(); // consumer name
+                data[i][3] = cancelledORs.get(i).getTotal() != null ? ObjectHelpers.roundTwo(cancelledORs.get(i).getTotal()) : "0"; // amount paid
+                data[i][4] = cancelledORs.get(i).getAmount(); // source
+                data[i][5] = cancelledORs.get(i).getAccountCode(); // payment used
+                data[i][6] = cancelledORs.get(i).getCreated_at(); // status
+            }
+            
+            cancelledORsModel = new DefaultTableModel(data, cancelledORsColNames) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            
+            DefaultTableCellRenderer rightRendererBlue = new DefaultTableCellRenderer();
+            rightRendererBlue.setHorizontalAlignment(JLabel.RIGHT);
+            rightRendererBlue.setFont(new Font("Arial", Font.BOLD, 12));
+            rightRendererBlue.setForeground(Color.BLUE);
+            
+            cancelledORsTable.setModel(cancelledORsModel);
+            cancelledORsTable.getColumnModel().getColumn(3).setCellRenderer(rightRendererBlue);
+        } catch (Exception e) {
+            Notifiers.showErrorMessage("Error Getting Cancelled ORs", e.getMessage());
+        }
+    }
+    
+    public void addTableCancelPowerBillsPopupMenu(JTable table) {
         try {
             JPopupMenu popupMenu = new JPopupMenu();
             JMenuItem cancel = new JMenuItem("Cancel This OR");
+            JMenuItem viewOR = new JMenuItem("View In Full Detail");
+            JMenuItem viewConsumer = new JMenuItem("View This Consumer");
             cancel.addActionListener(new ActionListener() {
 
                 @Override
@@ -756,10 +842,61 @@ public class DCRPanel extends javax.swing.JPanel {
                     String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
                     
                     if (orNumber != null) {
-                        
+                        String reason = JOptionPane.showInputDialog(cancelledORsTable, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
+                        if (reason != null) {
+                            PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                PaidBillsDao.requesetCancelOR(connection, pb, reason, login);
+                                getAllDCR();
+                                Notifiers.showInfoMessage("OR Cancelled", "Cancellation request of OR Number " + pb.getORNumber() + " successful.");
+                            }
+                        } 
                     } else {
                         Notifiers.showErrorMessage("Selection Error", "Please select the OR item to cancel.");
                     }
+                }
+            });
+            
+            viewOR.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                Desktop.getDesktop().browse(new URI(ConfigFileHelpers.OR_VIEW_URL + pb.getId() + "/BILLS%20PAYMENT"));
+                            }
+                            
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
+                }
+            });
+            
+            viewConsumer.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                Desktop.getDesktop().browse(new URI(ConfigFileHelpers.VIEW_ACCOUNT_URL + pb.getAccountNumber()));
+                            }
+                            
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
                 }
             });
             
@@ -790,6 +927,257 @@ public class DCRPanel extends javax.swing.JPanel {
                 }
             });
             popupMenu.add(cancel);
+            popupMenu.add(viewOR);
+            popupMenu.add(viewConsumer);
+            table.setComponentPopupMenu(popupMenu);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void addTableCancelNonPowerBillsPopupMenu(JTable table) {
+        try {
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem cancel = new JMenuItem("Cancel This OR");
+            JMenuItem viewOR = new JMenuItem("View In Full Detail");
+            JMenuItem viewConsumer = new JMenuItem("View This Consumer");
+            cancel.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    
+                    if (orNumber != null) {
+                        String reason = JOptionPane.showInputDialog(cancelledORsTable, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
+                        if (reason != null) {
+                            TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                TransactionIndexDao.requestCancelOR(connection, pb, reason, login);
+                                getAllDCR();
+                                Notifiers.showInfoMessage("OR Cancelled", "Cancellation request of OR Number " + pb.getORNumber() + " successful.");
+                            }
+                        } 
+                    } else {
+                        Notifiers.showErrorMessage("Selection Error", "Please select the OR item to cancel.");
+                    }
+                }
+            });
+            
+            viewOR.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                Desktop.getDesktop().browse(new URI(ConfigFileHelpers.OR_VIEW_URL + pb.getId() + "/OTHER%20PAYMENT"));
+                            }                            
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
+                }
+            });
+            
+            viewConsumer.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+                            
+                            if (pb != null) {
+                                if (pb.getAccountNumber() != null) {
+                                    Desktop.getDesktop().browse(new URI(ConfigFileHelpers.VIEW_ACCOUNT_URL + pb.getAccountNumber()));
+                                } else {
+                                    Notifiers.showErrorMessage("No Account Number Found", "This payment isn't tagged to any active account.");
+                                }                                
+                            }                            
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
+                }
+            });
+            
+            popupMenu.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            int rowAtPoint = table.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), table));
+                            if (rowAtPoint > -1) {
+                                table.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            popupMenu.add(cancel);
+            popupMenu.add(viewOR);
+            popupMenu.add(viewConsumer);
+            table.setComponentPopupMenu(popupMenu);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void addTableCancelCheckCancelPopupMenu(JTable table) {
+        try {
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem cancel = new JMenuItem("Cancel This OR");
+            JMenuItem viewOR = new JMenuItem("View In Full Detail");
+            JMenuItem viewConsumer = new JMenuItem("View This Consumer");
+            cancel.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    String source = table.getValueAt(table.getSelectedRow(), 6).toString();
+                    
+                    if (orNumber != null) {
+                        String reason = JOptionPane.showInputDialog(cancelledORsTable, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
+                        if (reason != null) {
+                            if (source != null && source.equals("POWER BILL")) {
+                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            
+                                if (pb != null) {
+                                    PaidBillsDao.requesetCancelOR(connection, pb, reason, login);
+                                    getAllDCR();
+                                    Notifiers.showInfoMessage("OR Cancelled", "Cancellation request of OR Number " + pb.getORNumber() + " successful.");
+                                }
+                            } else if (source != null && source.equals("OTHERS")) {
+                                TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+
+                                if (pb != null) {
+                                    TransactionIndexDao.requestCancelOR(connection, pb, reason, login);
+                                    getAllDCR();
+                                    Notifiers.showInfoMessage("OR Cancelled", "Cancellation request of OR Number " + pb.getORNumber() + " successful.");
+                                }
+                            }                                
+                        } 
+                    } else {
+                        Notifiers.showErrorMessage("Selection Error", "Please select the OR item to cancel.");
+                    }
+                }
+            });
+            
+            viewOR.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            String source = table.getValueAt(table.getSelectedRow(), 6).toString();
+                            
+                            if (source != null && source.equals("POWER BILL")) {
+                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+
+                                if (pb != null) {
+                                    Desktop.getDesktop().browse(new URI(ConfigFileHelpers.OR_VIEW_URL + pb.getId() + "/BILLS%20PAYMENT"));
+                                }
+                            } else if (source != null && source.equals("OTHERS")) {
+                                TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+                            
+                                if (pb != null) {
+                                    Desktop.getDesktop().browse(new URI(ConfigFileHelpers.OR_VIEW_URL + pb.getId() + "/OTHER%20PAYMENT"));
+                                }
+                            }
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
+                }
+            });
+            
+            viewConsumer.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                            String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            String source = table.getValueAt(table.getSelectedRow(), 6).toString();
+                            
+                            if (source != null && source.equals("POWER BILL")) {
+                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            
+                                if (pb != null) {
+                                    Desktop.getDesktop().browse(new URI(ConfigFileHelpers.VIEW_ACCOUNT_URL + pb.getAccountNumber()));
+                                }
+                            } else if (source != null && source.equals("OTHERS")) {
+                                TransactionIndex pb = TransactionIndexDao.getOneByOR(connection, orNumber);
+                            
+                                if (pb != null) {
+                                    if (pb.getAccountNumber() != null) {
+                                        Desktop.getDesktop().browse(new URI(ConfigFileHelpers.VIEW_ACCOUNT_URL + pb.getAccountNumber()));
+                                    } else {
+                                        Notifiers.showErrorMessage("No Account Number Found", "This payment isn't tagged to any active account.");
+                                    }                                
+                                } 
+                            }
+                            
+                                                       
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
+                    }
+                    
+                }
+            });
+            
+            popupMenu.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            int rowAtPoint = table.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), table));
+                            if (rowAtPoint > -1) {
+                                table.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            popupMenu.add(cancel);
+            popupMenu.add(viewOR);
+            popupMenu.add(viewConsumer);
             table.setComponentPopupMenu(popupMenu);
         } catch (Exception e) {
             e.printStackTrace();

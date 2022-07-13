@@ -47,6 +47,17 @@ public class ObjectHelpers {
         }
     }
     
+    public static String getCurrentDateDisplay() {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, yyyy/MM/dd hh:mm:ss a");
+
+            return sdf.format(new Date());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public static String roundTwo(String doubleX) {
         try {
             Double num = Double.valueOf(doubleX);

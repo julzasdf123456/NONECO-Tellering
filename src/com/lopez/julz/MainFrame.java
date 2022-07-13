@@ -9,16 +9,20 @@ import db.DatabaseConnection;
 import db.PaidBillsDao;
 import helpers.Auth;
 import helpers.ConfigFileHelpers;
+import helpers.ObjectHelpers;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -26,6 +30,8 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -45,6 +51,8 @@ public class MainFrame extends javax.swing.JFrame {
     public OCLPanel oclPanel;
     public ORMaintenancePanel ormanMaintenance;
     public MiscellaneousPanel miscellaneousPanel;
+    public ORCancellationPanel cancellationPanel;
+    public PrepaymentPanel prepaymentPanel;
     
     public Server server;
     public String office;
@@ -83,13 +91,19 @@ public class MainFrame extends javax.swing.JFrame {
         oclPanel = new OCLPanel(login);
         ormanMaintenance = new ORMaintenancePanel(login);
         miscellaneousPanel = new MiscellaneousPanel(login);
+        cancellationPanel = new ORCancellationPanel(login);
+        prepaymentPanel = new PrepaymentPanel(login);
         
-        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
-//        mainSplitPane.setRightComponent(powerBillsPanel);
+//        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
+        mainSplitPane.setRightComponent(powerBillsPanel);
         
         billsPayment.setForeground(Color.decode("#00968b"));
         billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
         dummyBtn = billsPayment;
+        
+        serverLabel.setText("SERVER: " + ConfigFileHelpers.getServerName());
+        
+        showClock();
     }
 
     /**
@@ -116,13 +130,14 @@ public class MainFrame extends javax.swing.JFrame {
         serviceConnectionPayments = new javax.swing.JButton();
         oclPaymentsMenu = new javax.swing.JButton();
         miscellaneousPaymentsMenu = new javax.swing.JButton();
+        prepaymentDeposits = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
         sumORBtn = new javax.swing.JButton();
-        jMenuBar1 = new javax.swing.JMenuBar();
-        jMenu1 = new javax.swing.JMenu();
-        toolsMenu = new javax.swing.JMenu();
-        orMaintenanceMenu = new javax.swing.JMenuItem();
-        dcrMenu = new javax.swing.JMenuItem();
-        orCancellation = new javax.swing.JMenuItem();
+        orCancellation = new javax.swing.JButton();
+        orMaintenance = new javax.swing.JButton();
+        dcr = new javax.swing.JButton();
+        timeLabel = new javax.swing.JLabel();
+        serverLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -173,7 +188,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addComponent(usernamelabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(logoutBtn)
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jToolBar1.setFloatable(false);
@@ -261,6 +276,23 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jToolBar1.add(miscellaneousPaymentsMenu);
 
+        prepaymentDeposits.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        prepaymentDeposits.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/account_balance_wallet_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
+        prepaymentDeposits.setText("Prepayments/Deposits");
+        prepaymentDeposits.setToolTipText("");
+        prepaymentDeposits.setFocusable(false);
+        prepaymentDeposits.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        prepaymentDeposits.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        prepaymentDeposits.setMaximumSize(new java.awt.Dimension(175, 35));
+        prepaymentDeposits.setMinimumSize(new java.awt.Dimension(175, 35));
+        prepaymentDeposits.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                prepaymentDepositsActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(prepaymentDeposits);
+        jToolBar1.add(jSeparator2);
+
         sumORBtn.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         sumORBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/note_add_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         sumORBtn.setText("Sum OR");
@@ -277,6 +309,58 @@ public class MainFrame extends javax.swing.JFrame {
         });
         jToolBar1.add(sumORBtn);
 
+        orCancellation.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        orCancellation.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
+        orCancellation.setText("ORCancellation");
+        orCancellation.setToolTipText("");
+        orCancellation.setFocusable(false);
+        orCancellation.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        orCancellation.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        orCancellation.setMaximumSize(new java.awt.Dimension(175, 35));
+        orCancellation.setMinimumSize(new java.awt.Dimension(175, 35));
+        orCancellation.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orCancellationActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(orCancellation);
+
+        orMaintenance.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        orMaintenance.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/build_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
+        orMaintenance.setText("OR Maintenance");
+        orMaintenance.setToolTipText("");
+        orMaintenance.setFocusable(false);
+        orMaintenance.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        orMaintenance.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        orMaintenance.setMaximumSize(new java.awt.Dimension(175, 35));
+        orMaintenance.setMinimumSize(new java.awt.Dimension(175, 35));
+        orMaintenance.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                orMaintenanceActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(orMaintenance);
+
+        dcr.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        dcr.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/description_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
+        dcr.setText("DCR");
+        dcr.setToolTipText("");
+        dcr.setFocusable(false);
+        dcr.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        dcr.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        dcr.setMaximumSize(new java.awt.Dimension(175, 35));
+        dcr.setMinimumSize(new java.awt.Dimension(175, 35));
+        dcr.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dcrActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(dcr);
+
+        timeLabel.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
+        serverLabel.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+
         javax.swing.GroupLayout menuPanelLayout = new javax.swing.GroupLayout(menuPanel);
         menuPanel.setLayout(menuPanelLayout);
         menuPanelLayout.setHorizontalGroup(
@@ -286,22 +370,28 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
+                    .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
+                    .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(menuPanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(serverLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         menuPanelLayout.setVerticalGroup(
             menuPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(menuPanelLayout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
+                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addComponent(serverLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeLabel)
                 .addContainerGap())
         );
 
@@ -317,49 +407,6 @@ public class MainFrame extends javax.swing.JFrame {
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(mainSplitPane)
         );
-
-        jMenuBar1.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-
-        jMenu1.setText("File");
-        jMenu1.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        jMenuBar1.add(jMenu1);
-
-        toolsMenu.setText("Tools");
-        toolsMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-
-        orMaintenanceMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        orMaintenanceMenu.setText("OR Maintenance");
-        orMaintenanceMenu.setMargin(new java.awt.Insets(5, 0, 5, 0));
-        orMaintenanceMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                orMaintenanceMenuActionPerformed(evt);
-            }
-        });
-        toolsMenu.add(orMaintenanceMenu);
-
-        dcrMenu.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        dcrMenu.setText("DCR");
-        dcrMenu.setMargin(new java.awt.Insets(5, 0, 5, 0));
-        dcrMenu.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dcrMenuActionPerformed(evt);
-            }
-        });
-        toolsMenu.add(dcrMenu);
-
-        orCancellation.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        orCancellation.setText("OR Cancellations");
-        orCancellation.setMargin(new java.awt.Insets(5, 0, 5, 0));
-        orCancellation.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                orCancellationActionPerformed(evt);
-            }
-        });
-        toolsMenu.add(orCancellation);
-
-        jMenuBar1.add(toolsMenu);
-
-        setJMenuBar(jMenuBar1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -462,7 +509,7 @@ public class MainFrame extends javax.swing.JFrame {
         totalAmountField.setPreferredSize(new Dimension(120, 36));
         totalAmountField.setHorizontalAlignment(JTextField.RIGHT);
         totalAmountField.setFont(new Font("Arial", Font.BOLD, 16));  
-        totalAmountField.setEnabled(false);
+        totalAmountField.setFocusable(false);
         mainPanel.add(totalAmountField);
         
         JLabel change = new JLabel("Change");
@@ -556,16 +603,6 @@ public class MainFrame extends javax.swing.JFrame {
         dummyBtn = serviceConnectionPayments;
     }//GEN-LAST:event_serviceConnectionPaymentsActionPerformed
 
-    private void orMaintenanceMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orMaintenanceMenuActionPerformed
-        mainSplitPane.setRightComponent(ormanMaintenance);
-        ormanMaintenance.getOrs();
-    }//GEN-LAST:event_orMaintenanceMenuActionPerformed
-
-    private void dcrMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dcrMenuActionPerformed
-        mainSplitPane.setRightComponent(dcrPanel);
-        dcrPanel.getAllDCR();
-    }//GEN-LAST:event_dcrMenuActionPerformed
-
     private void oclPaymentsMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_oclPaymentsMenuActionPerformed
         mainSplitPane.setRightComponent(oclPanel);
         oclPanel.fetchOR();
@@ -590,8 +627,47 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_miscellaneousPaymentsMenuActionPerformed
 
     private void orCancellationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orCancellationActionPerformed
+        mainSplitPane.setRightComponent(cancellationPanel);
         
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        orCancellation.setForeground(Color.decode("#00968b"));
+        orCancellation.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = orCancellation;
     }//GEN-LAST:event_orCancellationActionPerformed
+
+    private void dcrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dcrActionPerformed
+        mainSplitPane.setRightComponent(dcrPanel);
+        dcrPanel.getAllDCR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        dcr.setForeground(Color.decode("#00968b"));
+        dcr.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = dcr;
+    }//GEN-LAST:event_dcrActionPerformed
+
+    private void orMaintenanceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orMaintenanceActionPerformed
+        mainSplitPane.setRightComponent(ormanMaintenance);
+        ormanMaintenance.getOrs();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        orMaintenance.setForeground(Color.decode("#00968b"));
+        orMaintenance.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = orMaintenance;
+    }//GEN-LAST:event_orMaintenanceActionPerformed
+
+    private void prepaymentDepositsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prepaymentDepositsActionPerformed
+        mainSplitPane.setRightComponent(prepaymentPanel);
+        prepaymentPanel.fetchOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        prepaymentDeposits.setForeground(Color.decode("#00968b"));
+        prepaymentDeposits.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = prepaymentDeposits;
+    }//GEN-LAST:event_prepaymentDepositsActionPerformed
 
     /**
      * @param args the command line arguments
@@ -627,13 +703,12 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bapaPayments;
     private javax.swing.JButton billsPayment;
-    private javax.swing.JMenuItem dcrMenu;
+    private javax.swing.JButton dcr;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JMenu jMenu1;
-    private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JButton logoutBtn;
     private javax.swing.JPanel mainPanel;
@@ -641,11 +716,13 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JPanel menuPanel;
     private javax.swing.JButton miscellaneousPaymentsMenu;
     private javax.swing.JButton oclPaymentsMenu;
-    private javax.swing.JMenuItem orCancellation;
-    private javax.swing.JMenuItem orMaintenanceMenu;
+    private javax.swing.JButton orCancellation;
+    private javax.swing.JButton orMaintenance;
+    private javax.swing.JButton prepaymentDeposits;
+    private javax.swing.JLabel serverLabel;
     private javax.swing.JButton serviceConnectionPayments;
     private javax.swing.JButton sumORBtn;
-    private javax.swing.JMenu toolsMenu;
+    private javax.swing.JLabel timeLabel;
     private javax.swing.JLabel usernamelabel;
     // End of variables declaration//GEN-END:variables
 
@@ -659,6 +736,26 @@ public class MainFrame extends javax.swing.JFrame {
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+    
+    public void showClock() {
+        try {
+            Timer timer = new Timer(1000, new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            timeLabel.setText(ObjectHelpers.getCurrentDateDisplay());
+                        }
+                    });
+                }
+            });
+            timer.setInitialDelay(1);
+            timer.start();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

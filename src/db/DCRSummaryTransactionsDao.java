@@ -273,4 +273,72 @@ public class DCRSummaryTransactionsDao {
             return null;
         }
     }
+    
+    public static List<TransactionDetails> getCancelledORs(Connection con, String day, String teller) {
+        try {
+            List<TransactionDetails> checkList = new ArrayList<>();
+            
+            String powerBillQry = "SELECT pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed, pb.Status FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Teller='" + teller + "' AND ORDate='" + day + "' AND pb.Status IN ('CANCELLED', 'PENDING CANCEL')";
+            String othersQry = "SELECT td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed, td.Status FROM Cashier_TransactionIndex td WHERE td.UserId='" + teller + "' AND td.ORDate='" + day + "' AND td.Status IN ('CANCELLED', 'PENDING CANCEL')";
+            PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry + " ORDER BY ORNumber DESC");
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                checkList.add(new TransactionDetails(
+                        rs.getString("ORNumber"),
+                        rs.getString("AccountNumber"),
+                        rs.getString("ServiceAccountName"),
+                        rs.getString("Source"),
+                        rs.getString("id"),
+                        rs.getString("NetAmount"),
+                        rs.getString("PaymentUsed"),
+                        rs.getString("Status"),
+                        null
+                ));
+            }
+            
+            return checkList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static List<TransactionDetails> searchOR(Connection con, String orNumber) {
+        try {
+            List<TransactionDetails> checkList = new ArrayList<>();
+            
+            String powerBillQry = "";
+            String othersQry = "";
+            if (orNumber.equals("All")) {
+                powerBillQry = "SELECT TOP 20 pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed, pb.ORDate FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Status IS NULL";
+                othersQry = "SELECT TOP 20 td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed, td.ORDate FROM Cashier_TransactionIndex td WHERE td.Status IS NULL";
+            } else {
+                powerBillQry = "SELECT pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed, pb.ORDate FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Status IS NULL AND pb.ORNumber LIKE '%" + orNumber + "%'";
+                othersQry = "SELECT td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed, td.ORDate FROM Cashier_TransactionIndex td WHERE td.Status IS NULL AND td.ORNumber LIKE '%" + orNumber + "%'";      
+            }
+            
+            PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry + " ORDER BY ORNumber DESC");
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                checkList.add(new TransactionDetails(
+                        rs.getString("ORNumber"),
+                        rs.getString("AccountNumber"),
+                        rs.getString("ServiceAccountName"),
+                        rs.getString("Source"),
+                        rs.getString("id"),
+                        rs.getString("NetAmount"),
+                        rs.getString("PaymentUsed"),
+                        rs.getString("ORDate"),
+                        null
+                ));
+            }
+            
+            return checkList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

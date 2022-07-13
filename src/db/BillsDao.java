@@ -340,7 +340,8 @@ public class BillsDao {
     
     public static double getSurcharge(Bills bill) {
         try {
-            if (getAccountType(bill.getConsumerType()).equals("RESIDENTIAL")) {
+            String acctType = getAccountType(bill.getConsumerType());
+            if (acctType.equals("RESIDENTIAL") | acctType.equals("PUBLIC BUILDING") | acctType.equals("PUBLIC BUILDING HIGH VOLTAGE")) {
                 return 0;
             } else {
                 if (ObjectHelpers.isAfterDue(bill)) {

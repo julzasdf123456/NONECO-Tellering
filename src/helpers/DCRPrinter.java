@@ -28,9 +28,14 @@ import com.itextpdf.layout.property.TabAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import static helpers.PowerBillPrint.SAXFONT;
 import java.awt.Desktop;
+import java.awt.print.PrinterJob;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.printing.PDFPageable;
 import pojos.DCRSummaryTransactions;
 import pojos.PaidBills;
 import pojos.TransactionDetails;
@@ -42,15 +47,16 @@ import pojos.TransactionDetails;
  */
 public class DCRPrinter {
     
-    private static int FONT_SIZE = 7;
+    private static int FONT_SIZE = 8;
     private static String COMPANY = "NORTHEN NEGROS ELECTRIC COOPERATIVE, INC.";
     private static String COMPANY_ABREV = "NONECO";
     private static String COMPANY_ADDRESS = "Bo. Tortosa, Manapla, Negros Occidental";
     private static String DCRSUMMARYTITLE = "DAILY COLLECTION REPORT PER ACCOUNT CODE";
-    private static int MARGINTOP = 10;    
+    private static int MARGINTOP = 10;   
+    private static PageSize defPageSize;
     
     public static void printDcr(pojos.Login l, String date, List<DCRSummaryTransactions> list,
-            List<PaidBills> powerBills, List<TransactionDetails> nonPowerBills, List<TransactionDetails> checkPayments) {
+            List<PaidBills> powerBills, List<TransactionDetails> nonPowerBills, List<TransactionDetails> checkPayments, List<TransactionDetails> cancelledOrs) {
         try {
             String filename = ConfigFileHelpers.REPORTS_FOLDER + "DCR-" + ObjectHelpers.getSqlDate() + "-" + l.getUsername() + ".pdf";
             
@@ -66,7 +72,8 @@ public class DCRPrinter {
             PdfFontFactory.register(SAXFONT, "saxmono");
 
             // Creating a Document        
-            Document document = new Document(pdfDoc, PageSize.LETTER); 
+            defPageSize = new PageSize(new Rectangle(612, 792));
+            Document document = new Document(pdfDoc, defPageSize); 
             document.setMargins(15, 25, 15, 25);
             
             // GET PAPER WIDTH FOR CENTERING
@@ -94,7 +101,7 @@ public class DCRPrinter {
             /**
              * START POWER BILL
              */
-            document.add(new AreaBreak(PageSize.LETTER));
+            document.add(new AreaBreak(defPageSize));
                         
             populatePowerBillsTable(font, document, powerBills, l, date, width);
             
@@ -104,7 +111,7 @@ public class DCRPrinter {
             /**
              * START NON-POWER BILLS
              */
-            document.add(new AreaBreak(PageSize.LETTER));
+            document.add(new AreaBreak(defPageSize));
             
             populateNonPowerBillsTable(font, document, nonPowerBills, l, date, width);
             
@@ -114,29 +121,38 @@ public class DCRPrinter {
             /**
              * START CHECK PAYMENTS
              */
-            document.add(new AreaBreak(PageSize.LETTER));
+            document.add(new AreaBreak(defPageSize));
             
             populateCheckPaymentsTable(font, document, checkPayments, l, date, width);
+            
+            addLeftParagraph(document, "\nPrepared By:\n\n", font);
+            addCenteredParagraphSignatory(document, null, width, l.getName(), font);
+            
+            /**
+             * START CANCELLED ORS
+             */
+            document.add(new AreaBreak(defPageSize));
+            
+            populateCancelledOrsTable(font, document, cancelledOrs, l, date, width);
             
             addLeftParagraph(document, "\nPrepared By:\n\n", font);
             addCenteredParagraphSignatory(document, null, width, l.getName(), font);
 
             // Closing the document    
             document.close();              
-            System.out.println("PDF Created"); 
             
             /**
              * PRINT THE PDF
              */
-            Desktop.getDesktop().open(new File(filename));
-//            PDDocument printDoc = PDDocument.load(new File(filename));
-//            
-//            PrintService myPrintService = PrintServiceLookup.lookupDefaultPrintService();
-//            
-//            PrinterJob job = PrinterJob.getPrinterJob();
-//            job.setPageable(new PDFPageable(printDoc));
-//            job.setPrintService(myPrintService);
-//            job.print();
+//            Desktop.getDesktop().open(new File(filename));
+            PDDocument printDoc = PDDocument.load(new File(filename));
+            
+            PrintService myPrintService = PrintServiceLookup.lookupDefaultPrintService();
+            
+            PrinterJob job = PrinterJob.getPrinterJob();
+            job.setPageable(new PDFPageable(printDoc));
+            job.setPrintService(myPrintService);
+            job.print();
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error printing DCR", e.getMessage());
@@ -358,7 +374,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(PageSize.LETTER)); 
+                doc.add(new AreaBreak(defPageSize)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;
@@ -432,7 +448,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(PageSize.LETTER)); 
+                doc.add(new AreaBreak(defPageSize)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;
@@ -508,7 +524,79 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(PageSize.LETTER)); 
+                doc.add(new AreaBreak(defPageSize)); 
+            }                       
+            
+            tableItemIndex += numberOfLinestoBreak;
+        }
+        
+    }
+    
+    public static void populateCancelledOrsTable(PdfFont font, Document doc, List<TransactionDetails> cancelled, pojos.Login l, String date, float width) {
+        float [] pointColumnWidths = {50F, 60F, 200F, 80F, 70F};   
+        
+        int size = cancelled.size();
+        int numberOfLinestoBreak = 50;
+        int pageNo = (size < numberOfLinestoBreak) ? 1 : size/numberOfLinestoBreak;
+        if ((size % numberOfLinestoBreak) > 0 && size > numberOfLinestoBreak) {
+            pageNo += 1;
+        }
+        
+        int tableItemIndex = 0;
+        double overAllAmountTotal = 0;
+        for (int pg=0; pg<pageNo; pg++) {
+            addLeftParagraph(doc, "Page " + (pg+1) + " of " + pageNo , font);
+            
+            Table table = new Table(pointColumnWidths);   
+            table.setFont(font).setFontSize(FONT_SIZE);
+            addCenteredParagraph(doc, null, width, COMPANY, font);  
+            addCenteredParagraph(doc, null, width, COMPANY_ADDRESS, font);  
+            addCenteredParagraph(doc, null, width, "SUMMARY OF CANCELLED ORS", font);  
+
+            addLeftParagraph(doc, "TELLER:             " + l.getName(), font);
+            addLeftParagraph(doc, "COLLECTION DATE:    " + date + "\n", font);
+
+            // Adding cells to the table       
+            addTableCellHeaderBordered(table, TextAlignment.CENTER, "OR Number", false);
+            addTableCellHeaderBordered(table, TextAlignment.CENTER, "Account No", false);
+            addTableCellHeaderBordered(table, TextAlignment.CENTER, "Payee Name", false);
+            addTableCellHeaderBordered(table, TextAlignment.CENTER, "Source", false);
+            addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount Paid", false);
+
+            double pbTotal = 0;
+            for (int i=tableItemIndex; i<size; i++) {
+                TransactionDetails td = cancelled.get(i);
+                addTableCellLeftText(table, td.getId(), false);
+                addTableCellLeftText(table, td.getTransactionIndexId(), false);
+                addTableCellLeftText(table, td.getParticular(), false);
+                addTableCellLeftText(table, td.getAmount(), false);
+                addTableCellRightText(table, ObjectHelpers.roundTwo(td.getTotal()), false);
+                pbTotal += td.getTotal()!= null ? Double.valueOf(td.getTotal()) : 0;
+                  
+                if (i == numberOfLinestoBreak-1) {
+                    break;
+                }
+            }
+            
+            overAllAmountTotal += pbTotal;
+
+            Cell ttl = new Cell(0, 4);
+            ttl.add("Total");
+            ttl.setHeight(13f);          
+            ttl.setMargin(-2);        
+            table.addCell(ttl);
+
+            ttl = new Cell();
+            ttl.add(ObjectHelpers.roundTwo(overAllAmountTotal + ""));
+            ttl.setHeight(13f);          
+            ttl.setMargin(-2);
+            ttl.setTextAlignment(TextAlignment.RIGHT);
+            table.addCell(ttl);
+            
+            doc.add(table);
+        
+            if (pg < pageNo-1) {
+                doc.add(new AreaBreak(defPageSize)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;

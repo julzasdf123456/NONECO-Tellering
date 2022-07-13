@@ -24,6 +24,9 @@ public class ConfigFileHelpers {
     public static String OTHER_CONFIG = System.getProperty("user.dir") + SEPARATOR + "config" + SEPARATOR + "otherconfig.txt";
     public static String REPORTS_FOLDER = System.getProperty("user.dir") + SEPARATOR + "reports" + SEPARATOR;
     
+    public static String OR_VIEW_URL = "http://" + getServerIp() + ":8000/transaction_indices/browse-ors-view/";
+    public static String VIEW_ACCOUNT_URL = "http://" + getServerIp() + ":8000/serviceAccounts/";
+    
     public static String getOffice () {
         try {
             String office = "";
@@ -141,5 +144,55 @@ public class ConfigFileHelpers {
     
     public static void main(String[] args) {
         System.out.println(getOfficeCode() + "" + getOffice());
+    }
+    
+    public static String getCashierHeadId () {
+        try {
+            String office = "";
+            File file=new File(OTHER_CONFIG);    //creates a new file instance  
+            FileReader fr=new FileReader(file);   //reads the file  
+            BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream  
+            String line;  
+            int i=0;
+            while((line=br.readLine())!=null) {  
+                if (i==2) {
+                    office = line;
+                }                
+                i++;
+            } 
+            
+            fr.close();    //closes the stream and release the resources   
+            
+            return office;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Getting Cashier Head Id", e.getMessage());
+            return null;
+        }
+    }
+    
+    public static String getServerIp () {
+        try {
+            String office = "";
+            File file=new File(OTHER_CONFIG);    //creates a new file instance  
+            FileReader fr=new FileReader(file);   //reads the file  
+            BufferedReader br=new BufferedReader(fr);  //creates a buffering character input stream  
+            String line;  
+            int i=0;
+            while((line=br.readLine())!=null) {  
+                if (i==3) {
+                    office = line;
+                }                
+                i++;
+            } 
+            
+            fr.close();    //closes the stream and release the resources   
+            
+            return office;
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Getting Server IP Address", e.getMessage());
+            return null;
+        }
     }
 }

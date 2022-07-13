@@ -21,6 +21,7 @@ import helpers.ObjectHelpers;
 import helpers.PowerBillPrint;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -36,12 +37,15 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
+import java.net.URI;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -56,11 +60,8 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -158,8 +159,6 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         fetchOR();
         
         checkLists = new ArrayList<>();
-        
-        
     }
 
     public Login getLogin() {
@@ -227,6 +226,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         unlockOrNumberBtn = new javax.swing.JButton();
         jLabel13 = new javax.swing.JLabel();
         acctStatus = new javax.swing.JTextField();
+        viewAccountButton = new javax.swing.JButton();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/request_quote_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
@@ -418,7 +418,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(transactBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(52, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         billsTable.setFont(new java.awt.Font("Arial", 1, 13)); // NOI18N
@@ -441,7 +441,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         jLabel9.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         jLabel9.setText("OR Number");
 
-        orNumberField.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
+        orNumberField.setFont(new java.awt.Font("Arial", 1, 23)); // NOI18N
         orNumberField.setForeground(new java.awt.Color(204, 0, 0));
         orNumberField.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
         orNumberField.setEnabled(false);
@@ -470,18 +470,30 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel9)
-                        .addComponent(orNumberField, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(orNumberField, javax.swing.GroupLayout.DEFAULT_SIZE, 44, Short.MAX_VALUE)
+                        .addComponent(jLabel9))
                     .addComponent(unlockOrNumberBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jLabel13.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         jLabel13.setText("Status:");
 
         acctStatus.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+
+        viewAccountButton.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        viewAccountButton.setForeground(new java.awt.Color(0, 153, 153));
+        viewAccountButton.setText("View Account");
+        viewAccountButton.setEnabled(false);
+        viewAccountButton.setMaximumSize(new java.awt.Dimension(97, 26));
+        viewAccountButton.setMinimumSize(new java.awt.Dimension(97, 26));
+        viewAccountButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewAccountButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -531,9 +543,12 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(isBapa, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(18, 18, 18)
-                        .addComponent(jLabel13)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(acctStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel13)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(acctStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(viewAccountButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 52, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jScrollPane1)
@@ -566,13 +581,15 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     .addComponent(jLabel13)
                     .addComponent(acctStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(consumerAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel6)
-                    .addComponent(meterNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8)
-                    .addComponent(isBapa, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(consumerAddress, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel4)
+                        .addComponent(jLabel6)
+                        .addComponent(meterNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel8)
+                        .addComponent(isBapa, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(viewAccountButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -750,6 +767,13 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 }
             });
             
+            checkDialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    cashPaymentField.setValue(totalAmountPayable + totalSurcharge);
+                }
+            });
+            
             checkDialog.add(mainPanel);
             checkDialog.pack();
             checkDialog.setVisible(true);
@@ -772,14 +796,18 @@ public class PowerBillsPanel extends javax.swing.JPanel {
 
     private void cashPaymentFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cashPaymentFieldKeyReleased
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            showTransactConfirmation();
+            if (billsList != null && billsList.size() > 0) {
+                showTransactConfirmation();
+            } 
         } else {
             totalAmountPaid.setValue(getTotalAmount());
         }        
     }//GEN-LAST:event_cashPaymentFieldKeyReleased
 
     private void transactBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transactBtnActionPerformed
-        showTransactConfirmation();
+        if (billsList != null && billsList.size() > 0) {
+            showTransactConfirmation();
+        }        
     }//GEN-LAST:event_transactBtnActionPerformed
 
     private void unlockOrNumberBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unlockOrNumberBtnActionPerformed
@@ -791,6 +819,18 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             isOrLocked = true;
         }        
     }//GEN-LAST:event_unlockOrNumberBtnActionPerformed
+
+    private void viewAccountButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewAccountButtonActionPerformed
+        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            if (activeAccount != null) {
+                try {
+                    Desktop.getDesktop().browse(new URI(ConfigFileHelpers.VIEW_ACCOUNT_URL + activeAccount.getId()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_viewAccountButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -834,6 +874,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField totalAmountPaid;
     private javax.swing.JButton transactBtn;
     private javax.swing.JButton unlockOrNumberBtn;
+    private javax.swing.JButton viewAccountButton;
     // End of variables declaration//GEN-END:variables
 
 
@@ -843,6 +884,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         totalAmountPayable = 0;
         totalSurcharge = 0;
         checkLists.clear();
+        viewAccountButton.setEnabled(false);
     }
     
     public void getAccountByOldAccountNo(String oldAccountNo) {
@@ -852,6 +894,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             resetForm();
             
             if (activeAccount != null) {
+                viewAccountButton.setEnabled(true);
                 addCheckButton.setEnabled(true);
                 cashPaymentField.setEnabled(true);
                 populateConsumerData();
@@ -1387,6 +1430,8 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     accountType.setText("");
                     isBapa.setText("");
                     consumerAddress.setText("");
+                    acctStatus.setText("");
+                    meterNumber.setText("");
                     cashPaymentField.setValue(null);
                     cashPaymentField.setEnabled(false);
                     addCheckButton.setEnabled(false);
@@ -2413,6 +2458,4 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             Notifiers.showErrorMessage("Error waiving amount", e.getMessage());
         }
     }
-    
-    
 }

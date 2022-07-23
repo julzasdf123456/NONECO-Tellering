@@ -76,6 +76,7 @@ import pojos.TransactionPaymentDetails;
 public class ServiceConnectionsPanel extends javax.swing.JPanel {
     public Server server;
     public String office;
+    public String orNumber;
     
     public pojos.Login login;
     
@@ -116,8 +117,9 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     Object[] checkColNames = {"Bank", "Check No", "Amount"};
     DefaultTableModel checkModel;
     
-    public ServiceConnectionsPanel(Login login) {
+    public ServiceConnectionsPanel(Login login, String orNumber) {
         this.login = login;
+        this.orNumber = orNumber;
         initComponents();
         
         server = ConfigFileHelpers.getServer();
@@ -732,8 +734,13 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
 
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+        }        
     }
     
     public double getTotalAmount() {

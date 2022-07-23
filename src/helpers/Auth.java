@@ -24,11 +24,17 @@ public class Auth {
                 FileReader fr = new FileReader(file);   //reads the file  
                 BufferedReader br = new BufferedReader(fr);  //creates a buffering character input stream  
                 String line;  
+                int i=0;
                 while((line=br.readLine())!=null) {   
-                    String[] lineTab = line.split(" ");
-                    login.setUsername(lineTab[0]);
-                    login.setId(lineTab[1]);
-                    login.setPassword(lineTab[2]);
+                    if (i==0) {
+                        login.setUsername(line);
+                    } else if (i==1) {
+                        login.setId(line);
+                    } else  if (i==2) {
+                        login.setPassword(line);
+                    }
+                    
+                    i++;
                 } 
 
                 fr.close();    //closes the stream and release the resources   

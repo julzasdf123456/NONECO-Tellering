@@ -7,25 +7,17 @@ package com.lopez.julz;
 
 
 import db.DCRSummaryTransactionsDao;
-import db.BillsDao;
-import db.CollectiblesDao;
 import db.DatabaseConnection;
-import db.OCLMonthlyDao;
 import db.ORAssigningDao;
-import db.PaidBillDetailsDao;
-import db.PaidBillsDao;
 import db.PrepaymentBalanceDao;
 import db.ServiceAccountsDao;
 import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
-import helpers.Auth;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
-import helpers.PowerBillPrint;
 import helpers.TransactionsPrint;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -37,7 +29,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
@@ -58,34 +49,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.text.NumberFormatter;
-import pojos.Bills;
 import pojos.CheckPayments;
-import pojos.Collectibles;
 import pojos.DCRSummaryTransactions;
-import pojos.Login;
-import pojos.OCLMonthly;
 import pojos.ORAssigning;
-import pojos.PaidBills;
 import pojos.Server;
 import pojos.ServiceAccounts;
 import pojos.TransactionDetails;
@@ -97,6 +77,7 @@ import pojos.TransactionIndex;
  */
 public class PrepaymentPanel extends javax.swing.JPanel {
     public pojos.Login login;
+    public String orNumber;
     
     public Server server;
     public String office;
@@ -122,8 +103,9 @@ public class PrepaymentPanel extends javax.swing.JPanel {
     /**
      * Creates new form PrepaymentPanel
      */
-    public PrepaymentPanel(pojos.Login login) {
+    public PrepaymentPanel(pojos.Login login, String orNumber) {
         this.login = login;
+        this.orNumber = orNumber;
         initComponents();
         
         server = ConfigFileHelpers.getServer();
@@ -1044,9 +1026,15 @@ public class PrepaymentPanel extends javax.swing.JPanel {
     
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
-        accountNumberSearch.requestFocus();
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        }            
     }
     
     public void showTransactConfirmation() {
@@ -1258,6 +1246,25 @@ public class PrepaymentPanel extends javax.swing.JPanel {
                 /**
                  * INSERT DCR HERE
                  */
+                DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        "223-235-20",
+                        null,
+                        null,
+                        ObjectHelpers.roundTwoNoComma(getTotalAmount()+ ""),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "COLLECTION",
+                        office,
+                        activeAccount.getId()
+                );
+                DCRSummaryTransactionsDao.insert(connection, dcr);
 
                 /**
                  * PRINT HERE

@@ -24,6 +24,7 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Tab;
 import com.itextpdf.layout.element.TabStop;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.property.AreaBreakType;
 import com.itextpdf.layout.property.TabAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import static helpers.PowerBillPrint.SAXFONT;
@@ -64,6 +65,7 @@ public class DCRPrinter {
    
             // Creating a PdfDocument       
             PdfDocument pdfDoc = new PdfDocument(writer);  
+            pdfDoc.setDefaultPageSize(PageSize.LETTER);
 
             // Adding a new page 
             PdfPage dcrPage = pdfDoc.addNewPage();
@@ -73,7 +75,7 @@ public class DCRPrinter {
 
             // Creating a Document        
             defPageSize = new PageSize(new Rectangle(612, 792));
-            Document document = new Document(pdfDoc, defPageSize); 
+            Document document = new Document(pdfDoc); 
             document.setMargins(15, 25, 15, 25);
             
             // GET PAPER WIDTH FOR CENTERING
@@ -101,7 +103,7 @@ public class DCRPrinter {
             /**
              * START POWER BILL
              */
-            document.add(new AreaBreak(defPageSize));
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
                         
             populatePowerBillsTable(font, document, powerBills, l, date, width);
             
@@ -111,7 +113,7 @@ public class DCRPrinter {
             /**
              * START NON-POWER BILLS
              */
-            document.add(new AreaBreak(defPageSize));
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
             populateNonPowerBillsTable(font, document, nonPowerBills, l, date, width);
             
@@ -121,7 +123,7 @@ public class DCRPrinter {
             /**
              * START CHECK PAYMENTS
              */
-            document.add(new AreaBreak(defPageSize));
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
             populateCheckPaymentsTable(font, document, checkPayments, l, date, width);
             
@@ -131,7 +133,7 @@ public class DCRPrinter {
             /**
              * START CANCELLED ORS
              */
-            document.add(new AreaBreak(defPageSize));
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
             populateCancelledOrsTable(font, document, cancelledOrs, l, date, width);
             
@@ -333,6 +335,7 @@ public class DCRPrinter {
             addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount Paid", false);
 
             double pbTotal = 0, kwhTotal = 0;
+            int localCounter = 0;
             for (int i=tableItemIndex; i<size; i++) {
                 PaidBills pb = powerBills.get(i);
                 addTableCellLeftText(table, pb.getORNumber(), false);
@@ -344,9 +347,10 @@ public class DCRPrinter {
                 addTableCellRightText(table, ObjectHelpers.roundTwo(pb.getNetAmount()), false);
                 pbTotal += pb.getNetAmount() != null ? Double.valueOf(pb.getNetAmount()) : 0;
                 kwhTotal += pb.getKwhUsed() != null ? Double.valueOf(pb.getKwhUsed()) : 0;
-                if (i == numberOfLinestoBreak-1) {
+                if (localCounter == numberOfLinestoBreak-1) {
                     break;
                 }
+                localCounter++;
             }
             
             overAllAmountTotal += pbTotal;
@@ -374,7 +378,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(defPageSize)); 
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;
@@ -383,7 +387,7 @@ public class DCRPrinter {
     }
     
     public static void populateNonPowerBillsTable(PdfFont font, Document doc, List<TransactionDetails> details, pojos.Login l, String date, float width) {
-        float [] pointColumnWidths = {50F, 200F, 70F, 200F, 70F};   
+        float [] pointColumnWidths = {50F, 160F, 260F, 70F};   
         
         int size = details.size();
         int numberOfLinestoBreak = 50;
@@ -409,30 +413,30 @@ public class DCRPrinter {
             // Adding cells to the table       
             addTableCellHeaderBordered(table, TextAlignment.CENTER, "OR Number", false);
             addTableCellHeaderBordered(table, TextAlignment.CENTER, "Payee Name", false);
-            addTableCellHeaderBordered(table, TextAlignment.LEFT, "GL Code", false);
             addTableCellHeaderBordered(table, TextAlignment.CENTER, "Particulars", false);
             addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount Paid", false);
 
             double pbTotal = 0;
             String prevHolder = "", prev = "";
+            int localCounter = 0;
             for (int i=tableItemIndex; i<size; i++) {
                 TransactionDetails td = details.get(i);
                 prevHolder = td.getId();
                 addTableCellLeftText(table, prevHolder.equals(prev) ? "" : td.getId(), false);
                 addTableCellLeftText(table, prevHolder.equals(prev) ? "" : td.getVAT(), false);
-                addTableCellLeftText(table, td.getAccountCode(), false);
                 addTableCellLeftText(table, td.getParticular(), false);
                 addTableCellRightText(table, ObjectHelpers.roundTwo(td.getTotal()), false);
                 pbTotal += td.getTotal()!= null ? Double.valueOf(td.getTotal()) : 0;
                 prev = prevHolder;    
-                if (i == numberOfLinestoBreak-1) {
+                if (localCounter == numberOfLinestoBreak-1) {
                     break;
                 }
+                localCounter++;
             }
             
             overAllAmountTotal += pbTotal;
 
-            Cell ttl = new Cell(0, 4);
+            Cell ttl = new Cell(0, 3);
             ttl.add("Total");
             ttl.setHeight(13f);          
             ttl.setMargin(-2);        
@@ -448,7 +452,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(defPageSize)); 
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;
@@ -490,6 +494,7 @@ public class DCRPrinter {
             addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount Paid", false);
 
             double pbTotal = 0;
+            int localCounter = 0;
             for (int i=tableItemIndex; i<size; i++) {
                 TransactionDetails td = checks.get(i);
                 addTableCellLeftText(table, td.getId(), false);
@@ -501,9 +506,10 @@ public class DCRPrinter {
                 addTableCellRightText(table, ObjectHelpers.roundTwo(td.getTotal()), false);
                 pbTotal += td.getTotal()!= null ? Double.valueOf(td.getTotal()) : 0;
                   
-                if (i == numberOfLinestoBreak-1) {
+                if (localCounter == numberOfLinestoBreak-1) {
                     break;
                 }
+                localCounter++;
             }
             
             overAllAmountTotal += pbTotal;
@@ -524,7 +530,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(defPageSize)); 
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;
@@ -564,6 +570,7 @@ public class DCRPrinter {
             addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount Paid", false);
 
             double pbTotal = 0;
+            int localCounter = 0;
             for (int i=tableItemIndex; i<size; i++) {
                 TransactionDetails td = cancelled.get(i);
                 addTableCellLeftText(table, td.getId(), false);
@@ -573,9 +580,10 @@ public class DCRPrinter {
                 addTableCellRightText(table, ObjectHelpers.roundTwo(td.getTotal()), false);
                 pbTotal += td.getTotal()!= null ? Double.valueOf(td.getTotal()) : 0;
                   
-                if (i == numberOfLinestoBreak-1) {
+                if (localCounter == numberOfLinestoBreak-1) {
                     break;
                 }
+                localCounter++;
             }
             
             overAllAmountTotal += pbTotal;
@@ -596,7 +604,7 @@ public class DCRPrinter {
             doc.add(table);
         
             if (pg < pageNo-1) {
-                doc.add(new AreaBreak(defPageSize)); 
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE)); 
             }                       
             
             tableItemIndex += numberOfLinestoBreak;

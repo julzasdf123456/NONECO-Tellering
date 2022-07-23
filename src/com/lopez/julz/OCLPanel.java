@@ -78,6 +78,7 @@ import pojos.TransactionPaymentDetails;
 public class OCLPanel extends javax.swing.JPanel {
 
     public pojos.Login login;
+    public String orNumber;
     
     public Server server;
     public String office;
@@ -113,7 +114,8 @@ public class OCLPanel extends javax.swing.JPanel {
     /**
      * Creates new form OCLPanel
      */
-    public OCLPanel(pojos.Login login) {
+    public OCLPanel(pojos.Login login, String orNumber) {
+        this.orNumber = orNumber;
         this.login = login;
         initComponents();
         
@@ -1056,9 +1058,15 @@ public class OCLPanel extends javax.swing.JPanel {
     
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
-        accountNumberSearch.requestFocus();
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        }            
     }
     
     public void getOclData() {

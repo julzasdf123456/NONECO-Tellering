@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import pojos.Bills;
 import pojos.PaidBills;
 
 /**
@@ -119,10 +120,12 @@ public class PaidBillsDao {
     public static List<PaidBills> getCashPowerBills(Connection con, String orDate, String teller) {
         try {
             List<PaidBills> paidBills = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT pb.*, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
+            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(CAST(Amount AS DECIMAL(10,2))) FROM Cashier_PaidBillsDetails WHERE ORNumber=pb.ORNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
                     + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND pb.Status IS NULL AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
-            ps.setString(1, orDate);
-            ps.setString(2, teller);
+            
+            ps.setString(1, teller);
+            ps.setString(2, orDate);
+            ps.setString(3, teller);
             ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
@@ -144,7 +147,7 @@ public class PaidBillsDao {
                         rs.getString("Form2307FivePercent"),
                         rs.getString("AdditionalCharges"),
                         rs.getString("Deductions"),
-                        rs.getString("NetAmount"),
+                        rs.getString("CashPaid"),
                         null,
                         null,
                         null,
@@ -360,6 +363,108 @@ public class PaidBillsDao {
             ps.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    
+    public static List<Bills> getBillsFromGroup(Connection con, String groupId, String period) {
+        try {
+            List<Bills> billsList = new ArrayList<>();
+            String statement = "SELECT b.*, a.ServiceAccountName, a.OldAccountNo FROM Billing_Bills b "
+                    + "LEFT JOIN Billing_ServiceAccounts a ON a.id=b.AccountNumber "
+                    + "WHERE b.ServicePeriod=? AND a.MemberConsumerId=? "
+                    + "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE ServicePeriod=? AND Status IS NULL)";
+            PreparedStatement ps = con.prepareStatement(statement);
+            ps.setString(1, period);
+            ps.setString(2, groupId);
+            ps.setString(3, period);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                Bills bill = new Bills(
+                            rs.getString("id"),
+                            rs.getString("BillNumber"),
+                            rs.getString("AccountNumber"),
+                            rs.getString("ServicePeriod"),
+                            rs.getString("Multiplier"),
+                            rs.getString("Coreloss"),
+                            rs.getString("KwhUsed"),
+                            rs.getString("PreviousKwh"),
+                            rs.getString("PresentKwh"),
+                            rs.getString("OldAccountNo"), // DemandPrev = OldAccountNo
+                            rs.getString("DemandPresentKwh"),
+                            rs.getString("AdditionalKwh"),
+                            rs.getString("AdditionalDemandKwh"),
+                            rs.getString("KwhAmount"),
+                            rs.getString("EffectiveRate"),
+                            rs.getString("AdditionalCharges"),
+                            rs.getString("Deductions"),
+                            rs.getString("NetAmount"),
+                            rs.getString("BillingDate"),
+                            rs.getString("ServiceDateFrom"),
+                            rs.getString("ServiceDateTo"),
+                            rs.getString("DueDate"),
+                            rs.getString("MeterNumber"),
+                            rs.getString("ConsumerType"),
+                            rs.getString("BillType"),
+                            rs.getString("GenerationSystemCharge"),
+                            rs.getString("TransmissionDeliveryChargeKW"),
+                            rs.getString("TransmissionDeliveryChargeKWH"),
+                            rs.getString("SystemLossCharge"),
+                            rs.getString("DistributionDemandCharge"),
+                            rs.getString("DistributionSystemCharge"),
+                            rs.getString("SupplyRetailCustomerCharge"),
+                            rs.getString("SupplySystemCharge"),
+                            rs.getString("MeteringRetailCustomerCharge"),
+                            rs.getString("MeteringSystemCharge"),
+                            rs.getString("RFSC"),
+                            rs.getString("LifelineRate"),
+                            rs.getString("InterClassCrossSubsidyCharge"),
+                            rs.getString("PPARefund"),
+                            rs.getString("SeniorCitizenSubsidy"),
+                            rs.getString("MissionaryElectrificationCharge"),
+                            rs.getString("EnvironmentalCharge"),
+                            rs.getString("StrandedContractCosts"),
+                            rs.getString("NPCStrandedDebt"),
+                            rs.getString("FeedInTariffAllowance"),
+                            rs.getString("MissionaryElectrificationREDCI"),
+                            rs.getString("GenerationVAT"),
+                            rs.getString("TransmissionVAT"),
+                            rs.getString("SystemLossVAT"),
+                            rs.getString("DistributionVAT"),
+                            rs.getString("RealPropertyTax"),
+                            rs.getString("ServiceAccountName"), // Notes = Account Name
+                            rs.getString("UserId"),
+                            rs.getString("BilledFrom"),
+                            rs.getString("AveragedCount"),
+                            rs.getString("MergedToCollectible"),
+                            rs.getString("OtherGenerationRateAdjustment"),
+                            rs.getString("OtherTransmissionCostAdjustmentKW"),
+                            rs.getString("OtherTransmissionCostAdjustmentKWH"),
+                            rs.getString("OtherSystemLossCostAdjustment"),
+                            rs.getString("OtherLifelineRateCostAdjustment"),
+                            rs.getString("SeniorCitizenDiscountAndSubsidyAdjustment"),
+                            rs.getString("FranchiseTax"),
+                            rs.getString("BusinessTax"),
+                            rs.getString("AdjustmentType"),
+                            rs.getString("Form2307Amount"),
+                            rs.getString("DeductedDeposit"),
+                            rs.getString("ExcessDeposit"),
+                            rs.getString("IsUnlockedForPayment"),
+                            rs.getString("UnlockedBy"),
+                            rs.getString("Evat2Percent"),
+                            rs.getString("Evat5Percent"),
+                            rs.getString("AdjustmentNumber"),
+                            rs.getString("AdjustedBy"),
+                            rs.getString("DateAdjusted"),
+                            rs.getString("ForCancellation"),
+                            rs.getString("CancelRequestedBy"),
+                            rs.getString("CancelApprovedBy"));
+                billsList.add(bill);
+            }
+            return billsList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

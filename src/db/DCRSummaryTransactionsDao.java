@@ -50,7 +50,7 @@ public class DCRSummaryTransactionsDao {
     
     public static double getARConsumers(Bills bill) {
         try {
-            return Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationSystemCharge())) +
+            double vat = Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationSystemCharge())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getTransmissionDeliveryChargeKW())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getTransmissionDeliveryChargeKWH())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSystemLossCharge())) +
@@ -68,6 +68,8 @@ public class DCRSummaryTransactionsDao {
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getLifelineRate())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenSubsidy())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenDiscountAndSubsidyAdjustment()));
+            
+            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -166,9 +168,10 @@ public class DCRSummaryTransactionsDao {
     
     public static double getGenTransSyslossVatSales(Bills bill) {
         try {
-            return Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationVAT())) +
+            double vat = Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getTransmissionVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSystemLossVAT()));
+            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;

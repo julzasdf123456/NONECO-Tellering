@@ -80,6 +80,7 @@ import pojos.ServiceAccounts;
 
 public class BAPAPaymentsPanel extends javax.swing.JPanel {
     public pojos.Login login;
+    public String orNumber;
     
     public Server server;
     public String office;
@@ -108,8 +109,9 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     Object[] columnNames = {"", "Account No", "Consumer Name", "Status", "Kwh Used", "Billing Mo.", "Bill No.", "Amount Due", "Discount", "Net Amount Due"};
     DefaultTableModel model;
 
-    public BAPAPaymentsPanel(pojos.Login login) {
+    public BAPAPaymentsPanel(pojos.Login login, String orNumber) {
         this.login = login;
+        this.orNumber = orNumber;
         initComponents();
         
         server = ConfigFileHelpers.getServer();
@@ -621,8 +623,14 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
+        
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+        }            
     }
     
     public void showTransactConfirmation() {

@@ -31,10 +31,13 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
@@ -82,6 +85,7 @@ import pojos.TransactionPaymentDetails;
 public class MiscellaneousPanel extends javax.swing.JPanel {
 
     public pojos.Login login;
+    public String orNumber;
     
     public Server server;
     public String office;
@@ -113,8 +117,9 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     
     JButton removeButton = new JButton();
     
-    public MiscellaneousPanel(pojos.Login login) {
+    public MiscellaneousPanel(pojos.Login login, String orNumber) {
         this.login = login;
+        this.orNumber = orNumber;
         initComponents();
         
         server = ConfigFileHelpers.getServer();
@@ -191,14 +196,10 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         clearChecksBtn = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         miscTable = new javax.swing.JTable();
-        payablesSelection = new javax.swing.JComboBox<>();
-        amountOfPayable = new javax.swing.JFormattedTextField(formatter);
-        jLabel14 = new javax.swing.JLabel();
-        jLabel15 = new javax.swing.JLabel();
-        addItemToPayable = new javax.swing.JButton();
         jLabel16 = new javax.swing.JLabel();
         totalPayableLabel = new javax.swing.JLabel();
         clearBtn = new javax.swing.JButton();
+        jLabel14 = new javax.swing.JLabel();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/shopping_cart_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
@@ -319,6 +320,9 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         cashPaymentField.setEnabled(false);
         cashPaymentField.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         cashPaymentField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                cashPaymentFieldKeyPressed(evt);
+            }
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 cashPaymentFieldKeyReleased(evt);
             }
@@ -363,7 +367,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         transactBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         transactBtn.setText("Transact");
         transactBtn.setEnabled(false);
-        transactBtn.setFocusable(false);
         transactBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 transactBtnActionPerformed(evt);
@@ -437,7 +440,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(transactBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(144, Short.MAX_VALUE))
         );
 
         miscTable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
@@ -452,35 +455,13 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
 
             }
         ));
+        miscTable.setFillsViewportHeight(true);
+        miscTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                miscTableMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(miscTable);
-
-        payablesSelection.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
-        payablesSelection.setEnabled(false);
-
-        amountOfPayable.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
-        amountOfPayable.setEnabled(false);
-        amountOfPayable.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
-        amountOfPayable.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                amountOfPayableKeyReleased(evt);
-            }
-        });
-
-        jLabel14.setFont(new java.awt.Font("Arial", 2, 12)); // NOI18N
-        jLabel14.setText("Select Item");
-
-        jLabel15.setFont(new java.awt.Font("Arial", 2, 12)); // NOI18N
-        jLabel15.setText("Input Amount");
-
-        addItemToPayable.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
-        addItemToPayable.setText("Add Item");
-        addItemToPayable.setEnabled(false);
-        addItemToPayable.setFocusable(false);
-        addItemToPayable.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addItemToPayableActionPerformed(evt);
-            }
-        });
 
         jLabel16.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jLabel16.setText("Total Payables:");
@@ -498,6 +479,9 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                 clearBtnActionPerformed(evt);
             }
         });
+
+        jLabel14.setFont(new java.awt.Font("Arial", 2, 12)); // NOI18N
+        jLabel14.setText("Right Click Below To Add Payable");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -559,16 +543,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                                 .addComponent(totalPayableLabel)
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(payablesSelection, javax.swing.GroupLayout.PREFERRED_SIZE, 290, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel14))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel15)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(amountOfPayable, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(addItemToPayable)))
+                                .addComponent(jLabel14)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(clearBtn))
                             .addComponent(jScrollPane1))
@@ -619,16 +594,10 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel14)
-                            .addComponent(jLabel15))
+                            .addComponent(clearBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel14))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(amountOfPayable, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(payablesSelection, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(addItemToPayable, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(clearBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel16)
@@ -811,6 +780,15 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                     totalAmountPaid.setValue(getTotalAmount());
                 }
             });
+            
+            checkDialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    if(getCashRemainFromCheck() > 0) {
+                        cashPaymentField.setValue(getCashRemainFromCheck());
+                    }
+                }
+            });
 
             checkDialog.add(mainPanel);
             checkDialog.pack();
@@ -836,62 +814,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_clearChecksBtnActionPerformed
 
-    private void amountOfPayableKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_amountOfPayableKeyReleased
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            AccountPayables payable = results.get(payablesSelection.getSelectedIndex());
-            if (payable.getId().equals("1645770252818-S6Soo3slq1KNMJU2tcYIoLjXb2XtUI") && !activeAccount.getAccountStatus().equals("DISCONNECTED")) {
-                /**
-                 * FILTER RECONNECTION
-                 */
-                Notifiers.showErrorMessage("Item Restricted", "You cannot add Reconnection Fee to an ACTIVE account. Make sure this account is marked DISCONNECTED.");
-            } else {
-                double vat = payable.getVATPercentage() != null ? (Double.valueOf(payable.getVATPercentage()) * Double.valueOf(amountOfPayable.getValue().toString())) : 0;
-                double total = amountOfPayable.getValue() != null ? Double.valueOf(amountOfPayable.getValue().toString()) : 0;
-                TransactionDetails detail = new TransactionDetails(
-                        ObjectHelpers.getTimeInMillis(),
-                        null,
-                        payable.getAccountTitle(),
-                        ObjectHelpers.roundTwoNoComma(total + ""),
-                        ObjectHelpers.roundTwoNoComma(vat + ""),
-                        ObjectHelpers.roundTwoNoComma("" + (total + vat)),
-                        payable.getAccountCode(),
-                        ObjectHelpers.getCurrentTimestamp(),
-                        ObjectHelpers.getCurrentTimestamp()
-                );
-                payablesList.add(detail);
-                updatePayablesTable();
-                amountOfPayable.setValue(null);
-            }                
-        }
-    }//GEN-LAST:event_amountOfPayableKeyReleased
-
-    private void addItemToPayableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addItemToPayableActionPerformed
-        AccountPayables payable = results.get(payablesSelection.getSelectedIndex());
-        if (payable.getId().equals("1645770252818-S6Soo3slq1KNMJU2tcYIoLjXb2XtUI") && !activeAccount.getAccountStatus().equals("DISCONNECTED")) {
-            /**
-             * FILTER RECONNECTION
-             */
-            Notifiers.showErrorMessage("Item Restricted", "You cannot add Reconnection Fee to an ACTIVE account. Make sure this account is marked DISCONNECTED.");
-        } else {
-            double vat = payable.getVATPercentage() != null ? (Double.valueOf(payable.getVATPercentage()) * Double.valueOf(amountOfPayable.getValue().toString())) : 0;
-            double total = amountOfPayable.getValue() != null ? Double.valueOf(amountOfPayable.getValue().toString()) : 0;
-            TransactionDetails detail = new TransactionDetails(
-                    ObjectHelpers.getTimeInMillis(),
-                    null,
-                    payable.getAccountTitle(),
-                    ObjectHelpers.roundTwoNoComma(total + ""),
-                    ObjectHelpers.roundTwoNoComma(vat + ""),
-                    ObjectHelpers.roundTwoNoComma("" + (total + vat)),
-                    payable.getAccountCode(),
-                    ObjectHelpers.getCurrentTimestamp(),
-                    ObjectHelpers.getCurrentTimestamp()
-            );
-            payablesList.add(detail);
-            updatePayablesTable();
-            amountOfPayable.setValue(null);
-        }            
-    }//GEN-LAST:event_addItemToPayableActionPerformed
-
     private void clearBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearBtnActionPerformed
         resetForm();
         if (payablesModel != null) {
@@ -899,7 +821,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
             payablesModel.fireTableDataChanged();
         }
         payablesList.clear();
-        amountOfPayable.setValue(null);
         accountNumberSearch.setValue(officeCode);
         consumerNameField.setText("");
         accountNumber.setText("");
@@ -915,11 +836,22 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         totalPayableLabel.setText("0.0");
         totalAmountPaid.setValue(null);
         transactBtn.setEnabled(false);
+        activeAccount = null;
         if (checkModel != null) {
             checkModel.getDataVector().removeAllElements();
             checkModel.fireTableDataChanged();
         }
     }//GEN-LAST:event_clearBtnActionPerformed
+
+    private void miscTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_miscTableMouseClicked
+        if(SwingUtilities.isRightMouseButton(evt) == true && activeAccount != null) {
+            payableSearch();
+        } 
+    }//GEN-LAST:event_miscTableMouseClicked
+
+    private void cashPaymentFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cashPaymentFieldKeyPressed
+        
+    }//GEN-LAST:event_cashPaymentFieldKeyPressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -928,9 +860,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     private javax.swing.JTextField accountType;
     private javax.swing.JTextField acctStatus;
     private javax.swing.JButton addCheckButton;
-    private javax.swing.JButton addItemToPayable;
     private javax.swing.JButton advancedSearch;
-    private javax.swing.JFormattedTextField amountOfPayable;
     private javax.swing.JFormattedTextField cashPaymentField;
     private javax.swing.JTable checkTable;
     private javax.swing.JButton clearBtn;
@@ -944,7 +874,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -966,7 +895,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     private javax.swing.JTextField meterNumber;
     private javax.swing.JTable miscTable;
     private javax.swing.JTextField orNumberField;
-    private javax.swing.JComboBox<String> payablesSelection;
     private javax.swing.JFormattedTextField totalAmountPaid;
     private javax.swing.JLabel totalPayableLabel;
     private javax.swing.JButton transactBtn;
@@ -975,8 +903,13 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
 
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+        }
     }
     
     public void advancedSearch() {
@@ -1096,9 +1029,250 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         }
     }
     
+    public void payableSearch() {
+        try {
+            JDialog advancedSearchDialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(getParent()));
+            Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+            int x = (int) size.getWidth();
+            int y = (int) size.getHeight();
+            advancedSearchDialog.setLocation(x/5, y/5);
+            advancedSearchDialog.setTitle("Search Payable");
+            
+            JPanel mainPanel = new JPanel();
+    
+            JTextField searchField = new javax.swing.JTextField();
+            JButton searchBtn = new javax.swing.JButton();
+            JScrollPane jScrollPane1 = new javax.swing.JScrollPane();
+            JTable resultsTable = new javax.swing.JTable();
+            
+            final String searchCols[] = {"GL Code", "Item Description", "Default Amount", "VAT"};
+
+            searchField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+
+            searchBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/travel_explore_FILL0_wght700_GRAD0_opsz20.png"))); // NOI18N
+            
+            DefaultTableModel searchTableModel;
+            List<AccountPayables> results = AccountPayablesDao.getPayables(connection);
+            int searchSize = results.size();
+            Object[][] searchData = new Object[searchSize][searchCols.length];
+            for (int i=0; i<searchSize; i++) {
+                AccountPayables payable = results.get(i);
+                searchData[i][0] = payable.getAccountCode();
+                searchData[i][1] = payable.getAccountTitle();
+                searchData[i][2] = ObjectHelpers.roundTwo(payable.getDefaultAmount());
+                searchData[i][3] = payable.getVATPercentage();
+            }
+
+            searchTableModel = new DefaultTableModel(searchData, searchCols) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }                            
+            };
+
+            resultsTable.setModel(searchTableModel);
+            resultsTable.getColumnModel().getColumn(0).setWidth(100);
+            resultsTable.getColumnModel().getColumn(0).setMinWidth(100);
+            resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
+            resultsTable.getColumnModel().getColumn(1).setMinWidth(240);
+            resultsTable.getColumnModel().getColumn(1).setMaxWidth(280);
+            resultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+            resultsTable.setAutoscrolls(false);
+            
+            // SEARCH
+            searchField.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                        if (resultsTable.getModel() != null) {
+                            resultsTable.requestFocus();
+                            if (resultsTable.getModel().getRowCount() > 0) {
+                                resultsTable.changeSelection(0, 0, false, false);
+                            }
+                        }
+                    } else {
+                        DefaultTableModel searchTableModel;
+                        List<AccountPayables> results = AccountPayablesDao.searchPayable(connection, searchField.getText());
+                        int searchSize = results.size();
+                        Object[][] searchData = new Object[searchSize][searchCols.length];
+                        for (int i=0; i<searchSize; i++) {
+                            AccountPayables payable = results.get(i);
+                            searchData[i][0] = payable.getAccountCode();
+                            searchData[i][1] = payable.getAccountTitle();
+                            searchData[i][2] = ObjectHelpers.roundTwo(payable.getDefaultAmount());
+                            searchData[i][3] = payable.getVATPercentage();
+                        }
+
+                        searchTableModel = new DefaultTableModel(searchData, searchCols) {
+                            @Override
+                            public boolean isCellEditable(int row, int column) {
+                                return false;
+                            }                            
+                        };
+
+                        resultsTable.setModel(searchTableModel);
+                        resultsTable.getColumnModel().getColumn(0).setWidth(100);
+                        resultsTable.getColumnModel().getColumn(0).setMinWidth(100);
+                        resultsTable.getColumnModel().getColumn(0).setMaxWidth(100);
+                        resultsTable.getColumnModel().getColumn(1).setMinWidth(240);
+                        resultsTable.getColumnModel().getColumn(1).setMaxWidth(280);
+                        resultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+                        resultsTable.setAutoscrolls(false);
+                    }                        
+                }
+            });
+            
+            resultsTable.setRowHeight(28);
+            resultsTable.setFont(new Font("Arial", Font.PLAIN, 12));
+            
+            jScrollPane1.setViewportView(resultsTable);
+
+            javax.swing.GroupLayout layout = new javax.swing.GroupLayout(mainPanel);
+            mainPanel.setLayout(layout);
+            layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(126, 126, 126)
+                    .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, 325, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(searchBtn)
+                    .addContainerGap(143, Short.MAX_VALUE))
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jScrollPane1)
+                    .addContainerGap())
+            );
+            layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(searchBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            );
+            
+            resultsTable.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        String glCode = resultsTable.getValueAt(resultsTable.getSelectedRow(), 0).toString();
+                        String defaultAmount = resultsTable.getValueAt(resultsTable.getSelectedRow(), 2) != null ? resultsTable.getValueAt(resultsTable.getSelectedRow(), 2).toString().replace(",", "") : "0";
+                        String vatDefault = resultsTable.getValueAt(resultsTable.getSelectedRow(), 3) != null ? resultsTable.getValueAt(resultsTable.getSelectedRow(), 3).toString() : "0";
+                        
+                        String amount = JOptionPane.showInputDialog("Input Amount", defaultAmount);
+                        
+                        if (amount != null) {
+                            if (glCode.equals("312-456-00") && !activeAccount.getAccountStatus().equals("DISCONNECTED")) {
+                                /**
+                                 * FILTER RECONNECTION
+                                 */
+                                Notifiers.showErrorMessage("Item Restricted", "You cannot add Reconnection Fee to an ACTIVE account. Make sure this account is marked DISCONNECTED.");
+                            } else {
+                                double vat = vatDefault != null ? (Double.valueOf(vatDefault) * Double.valueOf(amount)) : 0;
+                                double total = Double.valueOf(amount) + vat;
+                                TransactionDetails detail = new TransactionDetails(
+                                        ObjectHelpers.getTimeInMillis(),
+                                        null,
+                                        resultsTable.getValueAt(resultsTable.getSelectedRow(), 01).toString(),
+                                        ObjectHelpers.roundTwoNoComma(Double.valueOf(amount) + ""),
+                                        ObjectHelpers.roundTwoNoComma(vat + ""),
+                                        ObjectHelpers.roundTwoNoComma("" + total),
+                                        glCode,
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                                payablesList.add(detail);
+                                advancedSearchDialog.dispose();
+                                updatePayablesTable();
+                            }                
+                        }
+                    }
+                }                
+            });
+            
+            resultsTable.addKeyListener(new KeyListener() {
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    
+                }
+
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        String glCode = resultsTable.getValueAt(resultsTable.getSelectedRow(), 0).toString();
+                        String defaultAmount = resultsTable.getValueAt(resultsTable.getSelectedRow(), 2) != null ? resultsTable.getValueAt(resultsTable.getSelectedRow(), 2).toString().replace(",", "") : "0";
+                        String vatDefault = resultsTable.getValueAt(resultsTable.getSelectedRow(), 3) != null ? resultsTable.getValueAt(resultsTable.getSelectedRow(), 3).toString() : "0";
+                        
+                        String amount = JOptionPane.showInputDialog("Input Amount", defaultAmount);
+                        
+                        if (amount != null) {
+                            if (glCode.equals("312-456-00") && !activeAccount.getAccountStatus().equals("DISCONNECTED")) {
+                                /**
+                                 * FILTER RECONNECTION
+                                 */
+                                Notifiers.showErrorMessage("Item Restricted", "You cannot add Reconnection Fee to an ACTIVE account. Make sure this account is marked DISCONNECTED.");
+                            } else {
+                                double vat = vatDefault != null ? (Double.valueOf(vatDefault) * Double.valueOf(amount)) : 0;
+                                double total = Double.valueOf(amount) + vat;
+                                TransactionDetails detail = new TransactionDetails(
+                                        ObjectHelpers.getTimeInMillis(),
+                                        null,
+                                        resultsTable.getValueAt(resultsTable.getSelectedRow(), 01).toString(),
+                                        ObjectHelpers.roundTwoNoComma(Double.valueOf(amount) + ""),
+                                        ObjectHelpers.roundTwoNoComma(vat + ""),
+                                        ObjectHelpers.roundTwoNoComma("" + total),
+                                        glCode,
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                                payablesList.add(detail);
+                                advancedSearchDialog.dispose();  
+                                updatePayablesTable();
+                            }                
+                        }
+                    }
+                }
+            });
+            
+            resultsTable.addKeyListener(new KeyAdapter() {
+                
+            });
+            
+            advancedSearchDialog.add(mainPanel);
+            advancedSearchDialog.pack();
+            advancedSearchDialog.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Adding Item", e.getMessage());
+        }
+    }
+    
     public void resetForm() {
         totalAmountPayable = 0;
         checkLists.clear();
+    }
+    
+    public double getCashRemainFromCheck() {
+        double check = getTotalCheckPayments();
+        return (totalAmountPayable) - check;
     }
     
     public void getAccountByOldAccountNo(String oldAccountNo) {
@@ -1124,9 +1298,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     
     public void populateConsumerData() {
         try {
-            payablesSelection.setEnabled(true);
-            amountOfPayable.setEnabled(true);
-            addItemToPayable.setEnabled(true);
             consumerNameField.setText(activeAccount.getServiceAccountName());
             accountNumber.setText(activeAccount.getOldAccountNo());
             accountType.setText(activeAccount.getAccountType());
@@ -1193,41 +1364,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
-        }
-    }
-    
-    public void addItemsToDropdown() {
-        try {
-            results.clear();
-            results.addAll(AccountPayablesDao.getPayables(connection));
-            for (int i=0; i<results.size(); i++) {
-                payablesSelection.addItem(results.get(i).getAccountTitle());
-            }
-            amountOfPayable.setValue(Double.valueOf(results.get(0).getDefaultAmount()));
-             
-            payablesSelection.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    AccountPayables payable = results.get(payablesSelection.getSelectedIndex());
-                    amountOfPayable.setValue(payable.getDefaultAmount() != null ? Double.valueOf(payable.getDefaultAmount()) : null);
-                    amountOfPayable.requestFocus();
-                    amountOfPayable.addFocusListener(new FocusAdapter() {
-                        @Override
-                        public void focusGained(FocusEvent arg0) {
-                            EventQueue.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (amountOfPayable.getValue() != null) {
-                                        amountOfPayable.setCaretPosition(amountOfPayable.getText().length());
-                                    }                                    
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
     
@@ -1412,7 +1548,11 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
             
             totalPayableLabel.setText(ObjectHelpers.roundTwo(totalAmountPayable + ""));
             
-            cashPaymentField.requestFocus();
+            cashPaymentField.setValue(totalAmountPayable);
+            
+            transactBtn.setFocusable(false);
+            transactBtn.setFocusable(true);
+            transactBtn.requestFocus();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1559,24 +1699,26 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                 }
                 @Override
                 public void keyPressed(KeyEvent e) {
-
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        transact();
+                        confirmationDialog.dispose();
+                    } else {
+                    }
                 }
 
                 @Override
                 public void keyReleased(KeyEvent e) {
-                    try {
-                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                            transact();
-                            confirmationDialog.dispose();
-                        } else {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    } else {
+                        try {
                             cashAmountField.commitEdit();
                             cashPaymentField.setValue(cashAmountField.getValue());
                             totalAmountPaid.setValue(getTotalAmount());
                             totalAmountPaidField.setValue(getTotalAmount());
-                            changeField.setValue(getTotalAmount() - totalAmountPayable);  
+                            changeField.setValue(getTotalAmount() - totalAmountPayable);
+                        } catch (ParseException ex) {
+                            Logger.getLogger(MiscellaneousPanel.class.getName()).log(Level.SEVERE, null, ex);
                         }
-                    } catch (ParseException ex) {
-                        Logger.getLogger(PowerBillsPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             });
@@ -1691,19 +1833,38 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                      * SAVE Transaction Logs
                      */
                     if (cashPaymentField.getValue() != null) {
-                        TransactionPaymentDetails logs = new TransactionPaymentDetails(
-                                ObjectHelpers.generateIDandRandString(),
-                                transId,
-                                cashPaymentField.getValue().toString(),
-                                "Cash",
-                                null,
-                                null,
-                                null,
-                                nextOrNumber + "",
-                                ObjectHelpers.getCurrentTimestamp(),
-                                ObjectHelpers.getCurrentTimestamp()
-                        );
-                        TransactionPaymentDetailsDao.insert(connection, logs);
+                        if (paymentUsed.equals("Cash and Check")) {                            
+                            if (getCashRemainFromCheck() > 0) {
+                                TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                        ObjectHelpers.generateIDandRandString(),
+                                        transId,
+                                        ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() + ""),
+                                        "Cash",
+                                        null,
+                                        null,
+                                        null,
+                                        nextOrNumber + "",
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                                TransactionPaymentDetailsDao.insert(connection, logs);
+                            }       
+                        } else if (paymentUsed.equals("Cash")) {
+                            TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    transId,
+                                    ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() + ""),
+                                    "Cash",
+                                    null,
+                                    null,
+                                    null,
+                                    nextOrNumber + "",
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                            );
+                            TransactionPaymentDetailsDao.insert(connection, logs);
+                        }
+                                                 
                     }
                     if (checkLists.size() > 0) {
                         for (int i=0; i<checkLists.size(); i++) {
@@ -1743,7 +1904,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                         payablesModel.fireTableDataChanged();
                     }
                     payablesList.clear();
-                    amountOfPayable.setValue(null);
                     accountNumberSearch.setValue(officeCode);
                     consumerNameField.setText("");
                     accountNumber.setText("");

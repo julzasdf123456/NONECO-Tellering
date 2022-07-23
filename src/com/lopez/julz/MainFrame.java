@@ -6,9 +6,11 @@
 package com.lopez.julz;
 
 import db.DatabaseConnection;
+import db.ORAssigningDao;
 import db.PaidBillsDao;
 import helpers.Auth;
 import helpers.ConfigFileHelpers;
+import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,12 +24,12 @@ import java.awt.event.KeyListener;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
-import java.util.Date;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -36,6 +38,7 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.NumberFormatter;
+import pojos.ORAssigning;
 import pojos.PaidBills;
 import pojos.Server;
 
@@ -53,6 +56,7 @@ public class MainFrame extends javax.swing.JFrame {
     public MiscellaneousPanel miscellaneousPanel;
     public ORCancellationPanel cancellationPanel;
     public PrepaymentPanel prepaymentPanel;
+    public GroupPaymentsPanel groupPaymentsPanel;
     
     public Server server;
     public String office;
@@ -60,6 +64,8 @@ public class MainFrame extends javax.swing.JFrame {
     public Connection connection;
     
     public pojos.Login login;
+    
+    public ORAssigning currentOr;
     
     JButton dummyBtn;
     /**
@@ -83,23 +89,53 @@ public class MainFrame extends javax.swing.JFrame {
         
         // set login displays
         usernamelabel.setText(login != null ? login.getUsername() : "Account Not Found");
+        userIdLabel.setText("User ID: " + login != null ? login.getId(): "Account Not Found");
         
-        powerBillsPanel = new PowerBillsPanel(login);
-        bAPAPaymentsPanel = new BAPAPaymentsPanel(login);
-        serviceConnectionsPanel = new ServiceConnectionsPanel(login);
-        dcrPanel = new DCRPanel(login);
-        oclPanel = new OCLPanel(login);
-        ormanMaintenance = new ORMaintenancePanel(login);
-        miscellaneousPanel = new MiscellaneousPanel(login);
-        cancellationPanel = new ORCancellationPanel(login);
-        prepaymentPanel = new PrepaymentPanel(login);
-        
-//        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
-        mainSplitPane.setRightComponent(powerBillsPanel);
-        
-        billsPayment.setForeground(Color.decode("#00968b"));
-        billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
-        dummyBtn = billsPayment;
+        // TEST IF OR EXISTS ON THIS USER
+        currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
+        if (currentOr != null) {
+            powerBillsPanel = new PowerBillsPanel(login, null);
+            bAPAPaymentsPanel = new BAPAPaymentsPanel(login, null);
+            serviceConnectionsPanel = new ServiceConnectionsPanel(login, null);
+            dcrPanel = new DCRPanel(login);
+            oclPanel = new OCLPanel(login, null);
+            ormanMaintenance = new ORMaintenancePanel(login);
+            miscellaneousPanel = new MiscellaneousPanel(login, null);
+            cancellationPanel = new ORCancellationPanel(login);
+            prepaymentPanel = new PrepaymentPanel(login, null);
+            groupPaymentsPanel = new GroupPaymentsPanel(login, null);
+
+    //        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
+            mainSplitPane.setRightComponent(powerBillsPanel);
+
+            billsPayment.setForeground(Color.decode("#00968b"));
+            billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+            dummyBtn = billsPayment;
+        } else {
+            String startOr = JOptionPane.showInputDialog(null, "Because you haven't recorded any payment yet, you are required to input your initial OR Number.", "OR Number Initialization", JOptionPane.WARNING_MESSAGE);
+            if (startOr != null) {
+                powerBillsPanel = new PowerBillsPanel(login, startOr);
+                bAPAPaymentsPanel = new BAPAPaymentsPanel(login, startOr);
+                serviceConnectionsPanel = new ServiceConnectionsPanel(login, startOr);
+                dcrPanel = new DCRPanel(login);
+                oclPanel = new OCLPanel(login, startOr);
+                ormanMaintenance = new ORMaintenancePanel(login);
+                miscellaneousPanel = new MiscellaneousPanel(login, startOr);
+                cancellationPanel = new ORCancellationPanel(login);
+                prepaymentPanel = new PrepaymentPanel(login, startOr);
+                groupPaymentsPanel = new GroupPaymentsPanel(login, startOr);
+                
+                //        mainSplitPane.setRightComponent(dcrPanel); // pwerbillpanel
+                mainSplitPane.setRightComponent(powerBillsPanel);
+
+                billsPayment.setForeground(Color.decode("#00968b"));
+                billsPayment.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+                dummyBtn = billsPayment;
+            } else {
+                Notifiers.showErrorMessage("OR Not Initialized", "Invalid input! OR number needs to be initialized.");
+                dispose();
+            }
+        }
         
         serverLabel.setText("SERVER: " + ConfigFileHelpers.getServerName());
         
@@ -127,6 +163,7 @@ public class MainFrame extends javax.swing.JFrame {
         jToolBar1 = new javax.swing.JToolBar();
         billsPayment = new javax.swing.JButton();
         bapaPayments = new javax.swing.JButton();
+        groupPayments = new javax.swing.JButton();
         serviceConnectionPayments = new javax.swing.JButton();
         oclPaymentsMenu = new javax.swing.JButton();
         miscellaneousPaymentsMenu = new javax.swing.JButton();
@@ -138,6 +175,10 @@ public class MainFrame extends javax.swing.JFrame {
         dcr = new javax.swing.JButton();
         timeLabel = new javax.swing.JLabel();
         serverLabel = new javax.swing.JLabel();
+        userIdLabel = new javax.swing.JLabel();
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        reprintOR = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -227,6 +268,22 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(bapaPayments);
+
+        groupPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
+        groupPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/diversity_3_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
+        groupPayments.setText("Group Payments");
+        groupPayments.setToolTipText("");
+        groupPayments.setFocusable(false);
+        groupPayments.setHorizontalAlignment(javax.swing.SwingConstants.LEADING);
+        groupPayments.setMargin(new java.awt.Insets(5, 5, 5, 5));
+        groupPayments.setMaximumSize(new java.awt.Dimension(175, 39));
+        groupPayments.setMinimumSize(new java.awt.Dimension(175, 39));
+        groupPayments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                groupPaymentsActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(groupPayments);
 
         serviceConnectionPayments.setFont(new java.awt.Font("Arial Rounded MT Bold", 0, 12)); // NOI18N
         serviceConnectionPayments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/power_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
@@ -372,10 +429,11 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(jSeparator1)
                     .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
                     .addComponent(timeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(serverLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(menuPanelLayout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(serverLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(userIdLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         menuPanelLayout.setVerticalGroup(
@@ -387,8 +445,10 @@ public class MainFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 543, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 518, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(userIdLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(serverLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeLabel)
@@ -408,6 +468,15 @@ public class MainFrame extends javax.swing.JFrame {
             .addComponent(mainSplitPane)
         );
 
+        jMenu1.setText("Tools");
+
+        reprintOR.setText("Re-Print OR");
+        jMenu1.add(reprintOR);
+
+        jMenuBar1.add(jMenu1);
+
+        setJMenuBar(jMenuBar1);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -416,7 +485,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(mainPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -617,7 +686,6 @@ public class MainFrame extends javax.swing.JFrame {
     private void miscellaneousPaymentsMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miscellaneousPaymentsMenuActionPerformed
         mainSplitPane.setRightComponent(miscellaneousPanel);
         miscellaneousPanel.fetchOR();
-        miscellaneousPanel.addItemsToDropdown();
         
         dummyBtn.setForeground(Color.black);
         dummyBtn.setBorder(logoutBtn.getBorder());
@@ -669,6 +737,17 @@ public class MainFrame extends javax.swing.JFrame {
         dummyBtn = prepaymentDeposits;
     }//GEN-LAST:event_prepaymentDepositsActionPerformed
 
+    private void groupPaymentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupPaymentsActionPerformed
+        mainSplitPane.setRightComponent(groupPaymentsPanel);
+        groupPaymentsPanel.fetchOR();
+        
+        dummyBtn.setForeground(Color.black);
+        dummyBtn.setBorder(logoutBtn.getBorder());
+        groupPayments.setForeground(Color.decode("#00968b"));
+        groupPayments.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
+        dummyBtn = groupPayments;
+    }//GEN-LAST:event_groupPaymentsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -704,8 +783,11 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton bapaPayments;
     private javax.swing.JButton billsPayment;
     private javax.swing.JButton dcr;
+    private javax.swing.JButton groupPayments;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
@@ -719,10 +801,12 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton orCancellation;
     private javax.swing.JButton orMaintenance;
     private javax.swing.JButton prepaymentDeposits;
+    private javax.swing.JMenuItem reprintOR;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JButton serviceConnectionPayments;
     private javax.swing.JButton sumORBtn;
     private javax.swing.JLabel timeLabel;
+    private javax.swing.JLabel userIdLabel;
     private javax.swing.JLabel usernamelabel;
     // End of variables declaration//GEN-END:variables
 

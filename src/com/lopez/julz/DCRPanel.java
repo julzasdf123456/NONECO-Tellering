@@ -33,8 +33,6 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import pojos.DCRSummaryTransactions;
@@ -66,7 +64,7 @@ public class DCRPanel extends javax.swing.JPanel {
     
     public List<TransactionDetails> nonPowerBills;
     public DefaultTableModel nonPowerBillsModel;
-    public Object[] nonPowerBillsColNames = {"OR Number", "Payee Name", "GL Code", "Particulars", "Amount Paid"};
+    public Object[] nonPowerBillsColNames = {"OR Number", "Payee Name", "Particulars", "Amount Paid"};
     
     public List<TransactionDetails> checkPayments;
     public DefaultTableModel checkPaymentsModel;
@@ -75,6 +73,9 @@ public class DCRPanel extends javax.swing.JPanel {
     public List<TransactionDetails> cancelledORs;
     public DefaultTableModel cancelledORsModel;
     public Object[] cancelledORsColNames = { "OR Number", "Account Number", "Consumer Name", "Amount Paid", "Source", "Payment Used", "Status"};
+    
+    double cashTotal = 0;
+    double checkTotal = 0;
    
     public DCRPanel(pojos.Login login) {
         this.login = login;
@@ -122,6 +123,10 @@ public class DCRPanel extends javax.swing.JPanel {
         totalDcrSummaryLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         dcrSummaryTable = new javax.swing.JTable();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        summaryTable = new javax.swing.JTable();
+        jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
         powerBillsTab = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         powerBillsTotal = new javax.swing.JLabel();
@@ -165,7 +170,7 @@ public class DCRPanel extends javax.swing.JPanel {
         jLabel3.setFont(new java.awt.Font("Arial", 2, 15)); // NOI18N
         jLabel3.setText("Total  :  ");
 
-        totalDcrSummaryLabel.setFont(new java.awt.Font("Arial", 1, 17)); // NOI18N
+        totalDcrSummaryLabel.setFont(new java.awt.Font("Arial", 1, 24)); // NOI18N
         totalDcrSummaryLabel.setForeground(new java.awt.Color(204, 51, 0));
         totalDcrSummaryLabel.setText("0.0");
 
@@ -183,6 +188,27 @@ public class DCRPanel extends javax.swing.JPanel {
         ));
         jScrollPane1.setViewportView(dcrSummaryTable);
 
+        summaryTable.setFont(new java.awt.Font("Arial", 1, 12)); // NOI18N
+        summaryTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {},
+                {},
+                {},
+                {}
+            },
+            new String [] {
+
+            }
+        ));
+        summaryTable.setRowHeight(28);
+        jScrollPane6.setViewportView(summaryTable);
+
+        jLabel7.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        jLabel7.setText("DCR Breakdown");
+
+        jLabel8.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        jLabel8.setText("Summary");
+
         javax.swing.GroupLayout dcrSummaryTabLayout = new javax.swing.GroupLayout(dcrSummaryTab);
         dcrSummaryTab.setLayout(dcrSummaryTabLayout);
         dcrSummaryTabLayout.setHorizontalGroup(
@@ -190,22 +216,35 @@ public class DCRPanel extends javax.swing.JPanel {
             .addGroup(dcrSummaryTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1193, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 767, Short.MAX_VALUE)
                     .addGroup(dcrSummaryTabLayout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addComponent(totalDcrSummaryLabel)
+                        .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(dcrSummaryTabLayout.createSequentialGroup()
+                                .addComponent(jLabel3)
+                                .addGap(18, 18, 18)
+                                .addComponent(totalDcrSummaryLabel))
+                            .addComponent(jLabel7))
                         .addGap(0, 0, Short.MAX_VALUE)))
+                .addGap(18, 18, 18)
+                .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 408, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
                 .addContainerGap())
         );
         dcrSummaryTabLayout.setVerticalGroup(
             dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(dcrSummaryTabLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(totalDcrSummaryLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane6, javax.swing.GroupLayout.DEFAULT_SIZE, 520, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(dcrSummaryTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(totalDcrSummaryLabel)
                     .addComponent(jLabel3))
                 .addContainerGap())
         );
@@ -482,11 +521,14 @@ public class DCRPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel nonPowerBillsTab;
@@ -495,15 +537,48 @@ public class DCRPanel extends javax.swing.JPanel {
     private javax.swing.JPanel powerBillsTab;
     private javax.swing.JTable powerBillsTable;
     private javax.swing.JLabel powerBillsTotal;
+    private javax.swing.JTable summaryTable;
     private javax.swing.JLabel totalDcrSummaryLabel;
     // End of variables declaration//GEN-END:variables
 
     public void getAllDCR() {
+        cashTotal = 0;
+        checkTotal = 0;
         getDcrSummary();
         getPowerBills();
         getNonPowerBills();
         getCheckPayments();
         getCancelledOrs();
+        getSummary();
+    }
+    
+    public void getSummary() {
+        try {
+            Object data[][] = new Object[3][2];
+            data[0][0] = "Cash Total";
+            data[1][0] = "Check Total";
+            data[2][0] = "Total";
+            data[0][1] = ObjectHelpers.roundTwo(cashTotal + "");
+            data[1][1] = ObjectHelpers.roundTwo(checkTotal + "");
+            data[2][1] = ObjectHelpers.roundTwo((checkTotal + cashTotal) + "");
+            
+            DefaultTableCellRenderer rightRendererBlue = new DefaultTableCellRenderer();
+            rightRendererBlue.setHorizontalAlignment(JLabel.RIGHT);
+            rightRendererBlue.setFont(new Font("Arial", Font.BOLD, 12));
+            rightRendererBlue.setForeground(Color.BLUE);
+            
+            DefaultTableModel df = new DefaultTableModel(data, new Object[]{"Item", "Amount"}) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };            
+            summaryTable.setModel(df);
+            summaryTable.getColumnModel().getColumn(1).setCellRenderer(rightRendererBlue);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Getting Summary", e.getMessage());
+        } 
     }
     
     public void getDcrSummary() {
@@ -581,7 +656,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 data[i][10] = powerBills.get(i).getAdditionalCharges() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getAdditionalCharges()) : "0";
                 data[i][11] = powerBills.get(i).getDeductions() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getDeductions()) : "0";
                 data[i][12] = powerBills.get(i).getNetAmount() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getNetAmount()) : "0";
-                powerBillsTotal += Double.valueOf(powerBills.get(i).getNetAmount());                  
+                powerBillsTotal += (powerBills.get(i).getNetAmount() != null ? Double.valueOf(powerBills.get(i).getNetAmount()) : 0);                  
             }
             powerBillsModel = new DefaultTableModel(data, powerBillsColNames) {
                 @Override
@@ -644,6 +719,7 @@ public class DCRPanel extends javax.swing.JPanel {
             powerBillsTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
             
             this.powerBillsTotal.setText("(" + powerBillsSize + ") " + ObjectHelpers.roundTwo(powerBillsTotal + ""));
+            cashTotal += powerBillsTotal;
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Power Bills", e.getMessage());
@@ -667,9 +743,8 @@ public class DCRPanel extends javax.swing.JPanel {
                 prevHolder = nonPowerBills.get(i).getId();
                 data[i][0] = prevHolder.equals(prev) ? "" : nonPowerBills.get(i).getId();
                 data[i][1] = prevHolder.equals(prev) ? "" : nonPowerBills.get(i).getVAT(); // payee name
-                data[i][2] = nonPowerBills.get(i).getAccountCode();
-                data[i][3] = nonPowerBills.get(i).getParticular();
-                data[i][4] = ObjectHelpers.roundTwo(nonPowerBills.get(i).getTotal());
+                data[i][2] = nonPowerBills.get(i).getParticular();
+                data[i][3] = ObjectHelpers.roundTwo(nonPowerBills.get(i).getTotal());
                 nonPowerBillsTotal += Double.valueOf(nonPowerBills.get(i).getTotal());   
                 prev = prevHolder;                
             }
@@ -702,14 +777,13 @@ public class DCRPanel extends javax.swing.JPanel {
             nonPowerBillsTable.setRowHeight(28);
             nonPowerBillsTable.getColumnModel().getColumn(0).setMaxWidth(60);
             nonPowerBillsTable.getColumnModel().getColumn(0).setMinWidth(50);
-            nonPowerBillsTable.getColumnModel().getColumn(2).setMaxWidth(120);
-            nonPowerBillsTable.getColumnModel().getColumn(2).setMinWidth(100);
-            nonPowerBillsTable.getColumnModel().getColumn(2).setCellRenderer(rightRenderer);
-            nonPowerBillsTable.getColumnModel().getColumn(4).setMaxWidth(130);
-            nonPowerBillsTable.getColumnModel().getColumn(4).setMinWidth(100);
-            nonPowerBillsTable.getColumnModel().getColumn(4).setCellRenderer(rightRendererBlue);
+            nonPowerBillsTable.getColumnModel().getColumn(3).setMaxWidth(130);
+            nonPowerBillsTable.getColumnModel().getColumn(3).setMinWidth(100);
+            nonPowerBillsTable.getColumnModel().getColumn(3).setCellRenderer(rightRendererBlue);
             
             nonPowerBillsTotalLabel.setText("(" + npbSize + ") " + ObjectHelpers.roundTwo(nonPowerBillsTotal + ""));
+            
+            cashTotal += nonPowerBillsTotal;
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Non-Power Bills", e.getMessage());
@@ -783,6 +857,8 @@ public class DCRPanel extends javax.swing.JPanel {
             checkPaymentsTable.getColumnModel().getColumn(6).setMinWidth(150);
             
             checkPaymentsTotalLabel.setText("(" + checkSize + ") " + ObjectHelpers.roundTwo(checkPaymentsTotal + ""));
+            
+            checkTotal += checkPaymentsTotal;
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Check Payments", e.getMessage());

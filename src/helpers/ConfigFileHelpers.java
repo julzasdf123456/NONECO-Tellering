@@ -101,14 +101,14 @@ public class ConfigFileHelpers {
             File text = new File(ACTIVE_LOGIN);
             if (text.createNewFile()) {
                 StringBuilder data = new StringBuilder();
-                data.append(username + " " + id + " " + password);
+                data.append(username + "\n" + id + "\n" + password);
                 Files.write(text.toPath(), data.toString().getBytes());
             } else {
                 text.delete();
                 
                 text = new File(ACTIVE_LOGIN);
                 StringBuilder data = new StringBuilder();
-                data.append(username + " " + id + " " + password);
+                data.append(username + "\n" + id + "\n" + password);
                 Files.write(text.toPath(), data.toString().getBytes());
             }
         } catch (Exception e) {

@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import pojos.GroupBillingAccounts;
 import pojos.ServiceAccounts;
 
 /**
@@ -363,6 +364,37 @@ public class ServiceAccountsDao {
             return serviceAccountses;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static String getGroupName(String first, String last, String orgName) {
+        try {
+            if (orgName != null) {
+                return orgName;
+            } else {
+                return first + " " + last;
+            }
+        } catch (Exception e) {
+            return "* No Name";
+        }
+    }
+    
+    public static List<GroupBillingAccounts> searchGroupBilling(Connection con, String regex) {
+        try {
+            List<GroupBillingAccounts> grouplist = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM CRM_MemberConsumers WHERE Notes='BILLING ACCOUNT GROUPING PARENT' "
+                    + "AND (FirstName LIKE '%" + regex + "%' OR LastName LIKE '%" + regex + "%' OR OrganizationName LIKE '%" + regex + "%')");
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                grouplist.add(new GroupBillingAccounts(
+                        rs.getString("Id"),
+                        getGroupName(rs.getString("FirstName"), rs.getString("LastName"), rs.getString("OrganizationName"))
+                ));
+            }
+            return grouplist;
+        } catch (Exception e) {
             return null;
         }
     }

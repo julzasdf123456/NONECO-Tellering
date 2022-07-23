@@ -19,7 +19,7 @@ public class ORAssigningDao {
     
     public static ORAssigning getCurrentOR(Connection con, String userid) {
         try {
-            PreparedStatement ps = con.prepareStatement("SELECT TOP 1 * FROM " + orAssigningTableName + " WHERE UserId=? ORDER BY ORNumber DESC");
+            PreparedStatement ps = con.prepareStatement("SELECT TOP 1 * FROM " + orAssigningTableName + " WHERE UserId=? ORDER BY created_at DESC, ORNumber DESC");
             ps.setString(1, userid);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {

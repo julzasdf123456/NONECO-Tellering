@@ -60,6 +60,7 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
@@ -91,6 +92,7 @@ import pojos.ServiceAccounts;
 public class PowerBillsPanel extends javax.swing.JPanel {
 
     public pojos.Login login;
+    String orNumber;
     
     public Server server;
     public String office;
@@ -129,7 +131,8 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     
     boolean isOrLocked = true;
    
-    public PowerBillsPanel(pojos.Login login) {
+    public PowerBillsPanel(pojos.Login login, String orNumber) {
+        this.orNumber = orNumber;
         this.login = login;
         initComponents();
         
@@ -227,6 +230,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         jLabel13 = new javax.swing.JLabel();
         acctStatus = new javax.swing.JTextField();
         viewAccountButton = new javax.swing.JButton();
+        clearBtn = new javax.swing.JButton();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/request_quote_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
@@ -495,6 +499,15 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             }
         });
 
+        clearBtn.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        clearBtn.setForeground(new java.awt.Color(255, 51, 0));
+        clearBtn.setText("Clear");
+        clearBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -548,8 +561,11 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                 .addComponent(jLabel13)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(acctStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(viewAccountButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 52, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(viewAccountButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(clearBtn)))
+                        .addGap(0, 50, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jScrollPane1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -589,7 +605,9 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                         .addComponent(meterNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel8)
                         .addComponent(isBapa, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(viewAccountButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(viewAccountButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(clearBtn)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -770,7 +788,16 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             checkDialog.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    cashPaymentField.setValue(totalAmountPayable + totalSurcharge);
+                    if(getCashRemainFromCheck() > 0) {
+                        cashPaymentField.setValue(getCashRemainFromCheck());
+                    } 
+                }
+
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    if(getCashRemainFromCheck() > 0) {
+                        cashPaymentField.setValue(getCashRemainFromCheck());
+                    }                     
                 }
             });
             
@@ -832,6 +859,31 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_viewAccountButtonActionPerformed
 
+    private void clearBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearBtnActionPerformed
+        resetForm();
+        accountNumberSearch.setValue(officeCode);
+        consumerNameField.setText("");
+        accountNumber.setText("");
+        accountType.setText("");
+        isBapa.setText("");
+        consumerAddress.setText("");
+        acctStatus.setText("");
+        meterNumber.setText("");
+        cashPaymentField.setValue(null);
+        cashPaymentField.setEnabled(false);
+        addCheckButton.setEnabled(false);
+        clearChecksBtn.setEnabled(false);
+        if (checkModel != null) {
+            checkModel.getDataVector().removeAllElements();
+            checkModel.fireTableDataChanged();
+        }
+        if (model != null) {
+            model.getDataVector().removeAllElements();
+            model.fireTableDataChanged();
+        }
+        accountNumberSearch.requestFocus();
+    }//GEN-LAST:event_clearBtnActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField accountNumber;
@@ -843,6 +895,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     private javax.swing.JTable billsTable;
     private javax.swing.JFormattedTextField cashPaymentField;
     private javax.swing.JTable checkTable;
+    private javax.swing.JButton clearBtn;
     private javax.swing.JButton clearChecksBtn;
     private javax.swing.JTextField consumerAddress;
     private javax.swing.JTextField consumerNameField;
@@ -876,7 +929,6 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     private javax.swing.JButton unlockOrNumberBtn;
     private javax.swing.JButton viewAccountButton;
     // End of variables declaration//GEN-END:variables
-
 
     public void resetForm() {
         billsList.clear();
@@ -1097,6 +1149,11 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         double cash = Double.valueOf(cashPaymentField.getValue() != null ? cashPaymentField.getValue().toString() : "0");
         double check = getTotalCheckPayments();
         return cash + check;
+    }
+    
+    public double getCashRemainFromCheck() {
+        double check = getTotalCheckPayments();
+        return (totalAmountPayable + totalSurcharge) - check;
     }
     
     public void selectCashAmount() {
@@ -1375,22 +1432,43 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                      * SAVE PAID BILL DETAILS
                      */
                     if (cashPaymentField.getValue() != null) {
-                        CheckPayments details = new CheckPayments(
-                                ObjectHelpers.generateIDandRandString(),
-                                activeAccount.getId(),
-                                null,
-                                null,
-                                orNumberField.getText(),
-                                cashPaymentField.getValue().toString(),
-                                "Cash",
-                                null,
-                                null, 
-                                null,
-                                login.getId(),
-                                ObjectHelpers.getCurrentTimestamp(),
-                                ObjectHelpers.getCurrentTimestamp()
-                        );
-                        PaidBillDetailsDao.insert(connection, details);
+                        if (paymentUsed.equals("Cash and Check")) {
+                            if (getCashRemainFromCheck() > 0) {
+                                CheckPayments details = new CheckPayments(
+                                        ObjectHelpers.generateIDandRandString(),
+                                        activeAccount.getId(),
+                                        null,
+                                        null,
+                                        orNumberField.getText(),
+                                        ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() +""),
+                                        "Cash",
+                                        null,
+                                        null, 
+                                        null,
+                                        login.getId(),
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                                PaidBillDetailsDao.insert(connection, details);
+                            }                            
+                        } else if (paymentUsed.equals("Cash")) {
+                            CheckPayments details = new CheckPayments(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    activeAccount.getId(),
+                                    null,
+                                    null,
+                                    orNumberField.getText(),
+                                    ObjectHelpers.roundTwoNoComma((totalAmountPayable + totalSurcharge) + ""),
+                                    "Cash",
+                                    null,
+                                    null, 
+                                    null,
+                                    login.getId(),
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                            );
+                            PaidBillDetailsDao.insert(connection, details);
+                        }                            
                     }
                     if (checkLists.size() > 0) {
                         for (int i=0; i<checkLists.size(); i++) {
@@ -1459,9 +1537,15 @@ public class PowerBillsPanel extends javax.swing.JPanel {
     
     public void fetchOR() {
         currentOr = ORAssigningDao.getCurrentOR(connection, login.getId());
-        nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
-        orNumberField.setText(nextOrNumber + "");
-        accountNumberSearch.requestFocus();
+        if (currentOr != null) {
+            nextOrNumber = Integer.parseInt(currentOr.getORumber()) + 1;
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        } else {
+            nextOrNumber = Integer.parseInt(orNumber);
+            orNumberField.setText(nextOrNumber + "");
+            accountNumberSearch.requestFocus();
+        }       
     }
     
     public void saveDCR(Bills bill) {

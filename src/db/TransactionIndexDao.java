@@ -66,14 +66,13 @@ public class TransactionIndexDao {
         try {
             List<TransactionDetails> dcr = new ArrayList<>();
             PreparedStatement ps = con.prepareStatement("SELECT t.ORNumber,"
-                    + "d.Total,"
+                    + "d.Amount,"
                     + "t.AccountNumber,"
                     + "t.PayeeName,"
-                    + "d.AccountCode, "
-                    + "d.Particular, "
+                    + "t.PaymentDetails, "
                     + "t.PaymentUsed "
-                    + "FROM Cashier_TransactionDetails d LEFT JOIN Cashier_TransactionIndex t ON t.id=d.TransactionIndexId "
-                    + "WHERE t.ORDate=? AND t.UserId=? AND t.Status IS NULL AND t.PaymentUsed='Cash' ORDER BY t.ORNumber");
+                    + "FROM Cashier_TransactionPaymentDetails d LEFT JOIN Cashier_TransactionIndex t ON t.ORNumber=d.ORNumber "
+                    + "WHERE t.ORDate=? AND t.UserId=? AND t.Status IS NULL AND d.PaymentUsed='Cash' ORDER BY t.ORNumber");
             ps.setString(1, orDate);
             ps.setString(2, teller);
             ResultSet rs = ps.executeQuery();
@@ -82,11 +81,11 @@ public class TransactionIndexDao {
                 dcr.add(new TransactionDetails(
                         rs.getString("ORNumber"),
                         rs.getString("PaymentUsed"),
-                        rs.getString("Particular"),
+                        rs.getString("PaymentDetails"),
                         null,
                         rs.getString("PayeeName"),
-                        rs.getString("Total"),
-                        rs.getString("AccountCode"),
+                        rs.getString("Amount"),
+                        null,
                         null,
                         null
                 ));

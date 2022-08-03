@@ -69,7 +69,7 @@ public class PaidBillsDao {
     public static List<PaidBills> getSumOr(Connection con, String from, String to) {
         try {
             List<PaidBills> paidBillses = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM " + paidBillsTableName + " WHERE (ORNumber BETWEEN ? AND ?) AND Status IS NULL");
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM " + paidBillsTableName + " WHERE (ORNumber BETWEEN ? AND ?) AND Status IS NULL ORDER BY ORNumber");
             ps.setString(1, from);
             ps.setString(2, to);
             ResultSet rs = ps.executeQuery();
@@ -120,7 +120,7 @@ public class PaidBillsDao {
     public static List<PaidBills> getCashPowerBills(Connection con, String orDate, String teller) {
         try {
             List<PaidBills> paidBills = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(CAST(Amount AS DECIMAL(10,2))) FROM Cashier_PaidBillsDetails WHERE ORNumber=pb.ORNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
+            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(CAST(Amount AS DECIMAL(25,4))) FROM Cashier_PaidBillsDetails WHERE ServicePeriod=pb.ServicePeriod AND ORNumber=pb.ORNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
                     + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND pb.Status IS NULL AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
             
             ps.setString(1, teller);

@@ -1262,6 +1262,33 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         );
                         DCRSummaryTransactionsDao.insert(connection, dcr);
                         
+                        /**
+                        * =======================================
+                        * SAVE DCR FOR PRE PAYMENTS
+                        * =======================================
+                        */
+                        if(bill.getDeductedDeposit()!= null) {
+                            DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    "223-235-20",
+                                    null,
+                                    null,
+                                    bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0",
+                                    ObjectHelpers.getSqlDate(),
+                                    ObjectHelpers.getSqlTime(),
+                                    login.getId(),
+                                    null,
+                                    null,
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    orNumberField.getText(),
+                                    "BOTH",
+                                    office,
+                                    account.getId()
+                            );
+                            DCRSummaryTransactionsDao.insert(connection, dcrDeduct);
+                        }
+                        
                         saveDCR(bill, account);
                         
                         /**
@@ -1271,7 +1298,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                             CheckPayments details = new CheckPayments(
                                     ObjectHelpers.generateIDandRandString(),
                                     bill.getAccountNumber(),
-                                    null,
+                                    bill.getServicePeriod(),
                                     null,
                                     nextOrNumber + "",
                                     paidBill.getNetAmount(),
@@ -1290,7 +1317,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                                 CheckPayments details = new CheckPayments(
                                         ObjectHelpers.generateIDandRandString(),
                                         bill.getAccountNumber(),
-                                        null,
+                                        bill.getServicePeriod(),
                                         null,
                                         nextOrNumber + "",
                                         paidBill.getNetAmount(),

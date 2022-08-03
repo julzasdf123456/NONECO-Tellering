@@ -13,6 +13,7 @@ import db.PrepaymentBalanceDao;
 import db.ServiceAccountsDao;
 import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
+import db.TransactionPaymentDetailsDao;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
@@ -70,6 +71,7 @@ import pojos.Server;
 import pojos.ServiceAccounts;
 import pojos.TransactionDetails;
 import pojos.TransactionIndex;
+import pojos.TransactionPaymentDetails;
 
 /**
  *
@@ -1168,22 +1170,6 @@ public class PrepaymentPanel extends javax.swing.JPanel {
             if (getTotalAmount() > 0) {
                 PrepaymentBalanceDao.insertOrUpdate(connection, activeAccount.getId(), getTotalAmount()+"", orNumberField.getText(), login);
                 
-                /**
-                * SAVE OR ASSIGNING
-                */
-                ORAssigning orNew = new ORAssigning(
-                   ObjectHelpers.generateIDandRandString(),
-                   orNumberField.getText(),
-                   login.getId(),
-                   ObjectHelpers.getSqlDate(),
-                   null,
-                   ObjectHelpers.getSqlTime(),
-                   office,
-                   ObjectHelpers.getCurrentTimestamp(),
-                   ObjectHelpers.getCurrentTimestamp()
-                );
-                ORAssigningDao.insert(connection, orNew);
-                
                 String paymentUsed = "";
                 if (cashPaymentField.getValue() != null && checkLists.size() > 0) {
                     paymentUsed = "Cash and Check";
@@ -1228,6 +1214,76 @@ public class PrepaymentPanel extends javax.swing.JPanel {
                 );                
                 TransactionIndexDao.insert(connection, transaction);
                 
+                if (cashPaymentField.getValue() != null) {
+                    if (paymentUsed.equals("Cash and Check")) {                            
+                        if (getTotalAmount() > 0) {
+                            TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    transId,
+                                    ObjectHelpers.roundTwoNoComma(Double.valueOf(cashPaymentField.getValue() != null ? cashPaymentField.getValue().toString() : "0") + ""),
+                                    "Cash",
+                                    null,
+                                    null,
+                                    null,
+                                    orNumberField.getText() + "",
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                            );
+                            TransactionPaymentDetailsDao.insert(connection, logs);
+                            
+                            TransactionPaymentDetails logx = new TransactionPaymentDetails(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            transId,
+                                            ObjectHelpers.roundTwoNoComma(getTotalCheckPayments()+ ""),
+                                            "Check",
+                                            null,
+                                            null,
+                                            null,
+                                            orNumberField.getText() + "",
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                    );
+                            TransactionPaymentDetailsDao.insert(connection, logx);
+                        }       
+                    } else if (paymentUsed.equals("Cash")) {
+                        TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                ObjectHelpers.generateIDandRandString(),
+                                transId,
+                                ObjectHelpers.roundTwoNoComma(getTotalAmount() + ""),
+                                "Cash",
+                                null,
+                                null,
+                                null,
+                                nextOrNumber + "",
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp()
+                        );
+                        TransactionPaymentDetailsDao.insert(connection, logs);
+                    }
+
+                } else {
+                    if (paymentUsed.equals("Check")) {
+                        if (checkLists.size() > 0) {
+                            for (int i=0; i<checkLists.size(); i++) {
+                                TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            transId,
+                                            ObjectHelpers.roundTwoNoComma(getTotalAmount()+ ""),
+                                            "Check",
+                                            null,
+                                            null,
+                                            null,
+                                            orNumberField.getText() + "",
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                    );
+                                TransactionPaymentDetailsDao.insert(connection, logs);
+                            }
+                        }
+                    }
+                }
+                        
+                
                 List<TransactionDetails> detailsList = new ArrayList<>(); // FOR PRINTING
                 TransactionDetails details = new TransactionDetails(
                         ObjectHelpers.generateIDandRandString(),
@@ -1265,6 +1321,22 @@ public class PrepaymentPanel extends javax.swing.JPanel {
                         activeAccount.getId()
                 );
                 DCRSummaryTransactionsDao.insert(connection, dcr);
+                
+                /**
+                * SAVE OR ASSIGNING
+                */
+                ORAssigning orNew = new ORAssigning(
+                   ObjectHelpers.generateIDandRandString(),
+                   orNumberField.getText(),
+                   login.getId(),
+                   ObjectHelpers.getSqlDate(),
+                   null,
+                   ObjectHelpers.getSqlTime(),
+                   office,
+                   ObjectHelpers.getCurrentTimestamp(),
+                   ObjectHelpers.getCurrentTimestamp()
+                );
+                ORAssigningDao.insert(connection, orNew);
 
                 /**
                  * PRINT HERE

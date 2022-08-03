@@ -1848,6 +1848,20 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                                         ObjectHelpers.getCurrentTimestamp()
                                 );
                                 TransactionPaymentDetailsDao.insert(connection, logs);
+                                
+                                TransactionPaymentDetails logx = new TransactionPaymentDetails(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            transId,
+                                            ObjectHelpers.roundTwoNoComma(getTotalCheckPayments()+ ""),
+                                            "Check",
+                                            null,
+                                            null,
+                                            null,
+                                            nextOrNumber + "",
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                    );
+                            TransactionPaymentDetailsDao.insert(connection, logx);
                             }       
                         } else if (paymentUsed.equals("Cash")) {
                             TransactionPaymentDetails logs = new TransactionPaymentDetails(
@@ -1865,14 +1879,17 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                             TransactionPaymentDetailsDao.insert(connection, logs);
                         }
                                                  
-                    }
-                    if (checkLists.size() > 0) {
-                        for (int i=0; i<checkLists.size(); i++) {
-                            TransactionPaymentDetails checkLogs = checkLists.get(i);
-                            checkLogs.setTransactionIndexId(transId);
-                            TransactionPaymentDetailsDao.insert(connection, checkLogs);
+                    } else {
+                        if (paymentUsed.equals("Check")) {
+                            if (checkLists.size() > 0) {
+                                for (int i=0; i<checkLists.size(); i++) {
+                                    TransactionPaymentDetails checkLogs = checkLists.get(i);
+                                    checkLogs.setTransactionIndexId(transId);
+                                    TransactionPaymentDetailsDao.insert(connection, checkLogs);
+                                }
+                            }
                         }
-                    }
+                    }                        
 
                     /**
                      * SAVE OR ASSIGNING

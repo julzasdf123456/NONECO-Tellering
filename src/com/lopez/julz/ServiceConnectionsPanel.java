@@ -799,6 +799,11 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         }
     }
     
+    public double getCashRemainFromCheck() {
+        double check = getTotalCheckPayments();
+        return (getOverallTotal()) - check;
+    }
+    
     public void updateOR() {
         fetchOR();
         getQueue();
@@ -1240,25 +1245,61 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                  * SAVE Transaction Logs
                  */
                 if (cashPaymentField.getValue() != null) {
-                    TransactionPaymentDetails logs = new TransactionPaymentDetails(
-                            ObjectHelpers.generateIDandRandString(),
-                            transId,
-                            cashPaymentField.getValue().toString(),
-                            "Cash",
-                            null,
-                            null,
-                            null,
-                            nextOrNumber + "",
-                            ObjectHelpers.getCurrentTimestamp(),
-                            ObjectHelpers.getCurrentTimestamp()
-                    );
-                    TransactionPaymentDetailsDao.insert(connection, logs);
-                }
-                if (checkLists.size() > 0) {
-                    for (int i=0; i<checkLists.size(); i++) {
-                        TransactionPaymentDetails checkLogs = checkLists.get(i);
-                        checkLogs.setTransactionIndexId(transId);
-                        TransactionPaymentDetailsDao.insert(connection, checkLogs);
+                    if (paymentUsed.equals("Cash and Check")) {                            
+                        if (getCashRemainFromCheck() > 0) {
+                            TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    transId,
+                                    ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() + ""),
+                                    "Cash",
+                                    null,
+                                    null,
+                                    null,
+                                    nextOrNumber + "",
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                            );
+                            TransactionPaymentDetailsDao.insert(connection, logs);
+
+                            TransactionPaymentDetails logx = new TransactionPaymentDetails(
+                                        ObjectHelpers.generateIDandRandString(),
+                                        transId,
+                                        ObjectHelpers.roundTwoNoComma(getTotalCheckPayments()+ ""),
+                                        "Check",
+                                        null,
+                                        null,
+                                        null,
+                                        nextOrNumber + "",
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                        TransactionPaymentDetailsDao.insert(connection, logx);
+                        }       
+                    } else if (paymentUsed.equals("Cash")) {
+                        TransactionPaymentDetails logs = new TransactionPaymentDetails(
+                                ObjectHelpers.generateIDandRandString(),
+                                transId,
+                                ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() + ""),
+                                "Cash",
+                                null,
+                                null,
+                                null,
+                                nextOrNumber + "",
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp()
+                        );
+                        TransactionPaymentDetailsDao.insert(connection, logs);
+                    }
+
+                } else {
+                    if (paymentUsed.equals("Check")) {
+                        if (checkLists.size() > 0) {
+                            for (int i=0; i<checkLists.size(); i++) {
+                                TransactionPaymentDetails checkLogs = checkLists.get(i);
+                                checkLogs.setTransactionIndexId(transId);
+                                TransactionPaymentDetailsDao.insert(connection, checkLogs);
+                            }
+                        }
                     }
                 }
 

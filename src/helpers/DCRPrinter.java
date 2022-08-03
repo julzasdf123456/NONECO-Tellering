@@ -343,7 +343,7 @@ public class DCRPrinter {
                 addTableCellLeftText(table, pb.getId(), false);
                 addTableCellCenterText(table, pb.getServicePeriod(), false);
                 addTableCellRightText(table, pb.getBillNumber(), false);
-                addTableCellRightText(table, pb.getKwhUsed(), false);
+                addTableCellRightText(table, pb.getKwhUsed()!=null ? pb.getKwhUsed() : "0", false);
                 addTableCellRightText(table, ObjectHelpers.roundTwo(pb.getNetAmount()), false);
                 pbTotal += pb.getNetAmount() != null ? Double.valueOf(pb.getNetAmount()) : 0;
                 kwhTotal += pb.getKwhUsed() != null ? Double.valueOf(pb.getKwhUsed()) : 0;

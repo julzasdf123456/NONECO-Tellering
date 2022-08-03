@@ -80,6 +80,17 @@ public class ObjectHelpers {
         }
     }
     
+    public static String roundFourNoComma(String doubleX) {
+        try {
+            Double num = Double.valueOf(doubleX);
+            DecimalFormat df = new DecimalFormat("#######.0000");
+            return df.format(num);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
     public static boolean isAfterDue(Bills bill) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

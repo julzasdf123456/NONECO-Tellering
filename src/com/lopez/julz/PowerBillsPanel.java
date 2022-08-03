@@ -60,7 +60,6 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
@@ -84,6 +83,8 @@ import pojos.ORAssigning;
 import pojos.PaidBills;
 import pojos.Server;
 import pojos.ServiceAccounts;
+import java.util.stream.IntStream;
+import java.util.Objects;
 
 /**
  *
@@ -665,7 +666,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             amountField.setPreferredSize(new Dimension(400, 36));
             amountField.setFont(new Font("Arial", Font.BOLD, 16)); 
             amountField.setHorizontalAlignment(JTextField.RIGHT);
-            amountField.setValue(totalAmountPayable + totalSurcharge);
+            amountField.setValue(getCashRemainFromCheck());
             amountField.addFocusListener(new FocusAdapter() {
                 @Override
                 public void focusGained(FocusEvent e) {
@@ -789,6 +790,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 @Override
                 public void windowClosing(WindowEvent e) {
                     if(getCashRemainFromCheck() > 0) {
+//                        addCheckButton.setEnabled(false);
                         cashPaymentField.setValue(getCashRemainFromCheck());
                     } 
                 }
@@ -796,6 +798,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     if(getCashRemainFromCheck() > 0) {
+//                        addCheckButton.setEnabled(false);
                         cashPaymentField.setValue(getCashRemainFromCheck());
                     }                     
                 }
@@ -814,6 +817,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         checkLists.clear();
         cashPaymentField.setValue(totalAmountPayable + totalSurcharge);
         totalAmountPaid.setValue(getTotalAmount());
+        addCheckButton.setEnabled(true);
         transactBtn.requestFocus();
         if (checkModel != null) {
             checkModel.getDataVector().removeAllElements();
@@ -989,7 +993,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 } else { 
                     data[i][0] = false;
                 }
-                double surcharge = Double.valueOf(ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(billsList.get(i)) + ""));
+                double surcharge = Double.valueOf(ObjectHelpers.roundFourNoComma(BillsDao.getSurcharge(billsList.get(i)) + ""));
                 billsList.get(i).setAdditionalKwh(surcharge + "");
                 data[i][1] = billsList.get(i).getBillNumber();
                 data[i][2] = billsList.get(i).getServicePeriod();
@@ -1348,12 +1352,12 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             office,
                             ObjectHelpers.getSqlDate(),
                             ObjectHelpers.getSqlTime(),
-                            ObjectHelpers.roundTwoNoComma(selectedBills.get(i).getAdditionalKwh()), // SURCHARGE
+                            ObjectHelpers.roundFourNoComma(selectedBills.get(i).getAdditionalKwh()), // SURCHARGE
                             bill.getEvat2Percent(),
                             bill.getEvat5Percent(),
                             bill.getAdditionalCharges(),
                             bill.getDeductions(),
-                            ObjectHelpers.roundTwoNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), Double.valueOf(selectedBills.get(i).getAdditionalKwh())) + ""),
+                            ObjectHelpers.roundFourNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), Double.valueOf(selectedBills.get(i).getAdditionalKwh())) + ""),
                             "MONTHLY BILL",
                             bill.getId(),
                             login.getId(),
@@ -1423,24 +1427,46 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     );
                     DCRSummaryTransactionsDao.insert(connection, dcr);
                     
-                    //ALL DCR
-                    saveDCR(bill);
-                }
-
-                if (successStream) {
+                    /**
+                     * =======================================
+                     * SAVE DCR FOR PRE PAYMENTS
+                     * =======================================
+                     */
+                    if(bill.getDeductedDeposit()!= null) {
+                        DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
+                                ObjectHelpers.generateIDandRandString(),
+                                "223-235-20",
+                                null,
+                                null,
+                                bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0",
+                                ObjectHelpers.getSqlDate(),
+                                ObjectHelpers.getSqlTime(),
+                                login.getId(),
+                                null,
+                                null,
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp(),
+                                orNumberField.getText(),
+                                "BOTH",
+                                office,
+                                activeAccount.getId()
+                        );
+                        DCRSummaryTransactionsDao.insert(connection, dcrDeduct);
+                    }
                     /**
                      * SAVE PAID BILL DETAILS
                      */
+                    double surcharge = paidBill.getSurcharge() != null ? Double.valueOf(paidBill.getSurcharge()) : 0;
                     if (cashPaymentField.getValue() != null) {
                         if (paymentUsed.equals("Cash and Check")) {
                             if (getCashRemainFromCheck() > 0) {
                                 CheckPayments details = new CheckPayments(
                                         ObjectHelpers.generateIDandRandString(),
                                         activeAccount.getId(),
-                                        null,
+                                        bill.getServicePeriod(),
                                         null,
                                         orNumberField.getText(),
-                                        ObjectHelpers.roundTwoNoComma(getCashRemainFromCheck() +""),
+                                        ObjectHelpers.roundFourNoComma((getCashRemainFromCheck()/selectedBills.size()) +""),
                                         "Cash",
                                         null,
                                         null, 
@@ -1450,15 +1476,27 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                         ObjectHelpers.getCurrentTimestamp()
                                 );
                                 PaidBillDetailsDao.insert(connection, details);
+                                
+                                if (i==0) {
+                                    if (checkLists.size() > 0) {
+                                        for(int x=0; x<checkLists.size(); x++) {
+                                            CheckPayments chk = checkLists.get(x);
+                                            chk.setId(ObjectHelpers.generateIDandRandString());
+                                            chk.setServicePeriod(bill.getServicePeriod());
+                                            chk.setAmount(chk.getAmount() + "");
+                                            PaidBillDetailsDao.insert(connection, chk);
+                                        }                                            
+                                    }
+                                }                                    
                             }                            
                         } else if (paymentUsed.equals("Cash")) {
                             CheckPayments details = new CheckPayments(
                                     ObjectHelpers.generateIDandRandString(),
                                     activeAccount.getId(),
-                                    null,
+                                    bill.getServicePeriod(),
                                     null,
                                     orNumberField.getText(),
-                                    ObjectHelpers.roundTwoNoComma((totalAmountPayable + totalSurcharge) + ""),
+                                    ObjectHelpers.roundFourNoComma((Double.valueOf(bill.getNetAmount()) + surcharge) + ""),
                                     "Cash",
                                     null,
                                     null, 
@@ -1468,14 +1506,29 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                     ObjectHelpers.getCurrentTimestamp()
                             );
                             PaidBillDetailsDao.insert(connection, details);
-                        }                            
-                    }
-                    if (checkLists.size() > 0) {
-                        for (int i=0; i<checkLists.size(); i++) {
-                            PaidBillDetailsDao.insert(connection, checkLists.get(i));
-                        }
+                        }                        
+                    } else {
+                        if (paymentUsed.equals("Check")) { 
+                            if (i==0) {
+                                if (checkLists.size() > 0) {
+                                    for(int x=0; x<checkLists.size(); x++) {
+                                        CheckPayments chk = checkLists.get(x);
+                                        chk.setId(ObjectHelpers.generateIDandRandString());
+                                        chk.setServicePeriod(bill.getServicePeriod());
+                                        chk.setAmount(chk.getAmount() + "");
+                                        PaidBillDetailsDao.insert(connection, chk);
+                                    }                                            
+                                }
+                            }   
+                        }   
                     }
                     
+                    //ALL DCR
+                    saveDCR(bill);
+                }
+
+                if (successStream) {                    
+                                        
                     /**
                      * SAVE OR ASSIGNING
                      */
@@ -1742,7 +1795,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             activeAccount.getId());
         DCRSummaryTransactionsDao.insert(connection, dcr);
         
-        // GETC UC-NPC Stranded Debt COLLECTION
+        // GETC UC-NPC Stranded Debt SALES
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-65",
@@ -2511,6 +2564,14 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                 billsList.get(tblSelIndex).setEvat5Percent(ObjectHelpers.roundTwoNoComma(evatAmount + ""));
                                 billsList.get(tblSelIndex).setNetAmount(ObjectHelpers.roundTwoNoComma((newAmount - surchargeAmnt) + ""));
                                 
+                                int selBillsIndex = getIndexOfSelectedList(billsList.get(tblSelIndex).getAccountNumber(), selectedBills);
+                                selectedBills.get(selBillsIndex).setAdditionalKwh(ObjectHelpers.roundTwoNoComma(surchargeAmnt + ""));
+                                selectedBills.get(selBillsIndex).setEvat2Percent(ObjectHelpers.roundTwoNoComma(ewtAmount + ""));
+                                selectedBills.get(selBillsIndex).setEvat5Percent(ObjectHelpers.roundTwoNoComma(evatAmount + ""));
+                                selectedBills.get(selBillsIndex).setNetAmount(ObjectHelpers.roundTwoNoComma((newAmount - surchargeAmnt) + ""));
+                                
+                                System.out.println("" + selectedBills.get(selBillsIndex).getAdditionalKwh());
+                                
                                 // UPDATE TABLE
                                 billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(originalAmount + ""), tblSelIndex, 4);
                                 billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(surchargeAmnt + ""), tblSelIndex, 5);
@@ -2540,6 +2601,20 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error waiving amount", e.getMessage());
+        }
+    }
+    
+    public int getIndexOfSelectedList(String regex, List<Bills> values) {
+        try {
+            int index = IntStream.range(0, values.size())
+                .filter(i -> Objects.equals(values.get(i).getAccountNumber(), regex))
+                .findFirst()
+                .orElse(-1);
+            
+            return index;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
         }
     }
 }

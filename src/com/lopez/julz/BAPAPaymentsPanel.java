@@ -106,7 +106,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     /**
      * Consumers table
      */
-    Object[] columnNames = {"", "Account No", "Consumer Name", "Status", "Kwh Used", "Billing Mo.", "Bill No.", "Amount Due", "Discount", "Net Amount Due"};
+    Object[] columnNames = {"", "Account No", "Consumer Name", "Status", "Kwh Used", "Billing Mo.", "Bill No.", "Amount Due", "Discount", "Surcharge", "Net Amount Due"};
     DefaultTableModel model;
 
     public BAPAPaymentsPanel(pojos.Login login, String orNumber) {
@@ -920,6 +920,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             int conSize = consumersList.size();
             Object data[][] = new Object[conSize][columnNames.length];
             for (int i=0; i<conSize; i++) {
+                Bills bill = BillsDao.getOneById(connection, consumersList.get(i).getBillId());
                 data[i][0] = (i+1) + "";
                 data[i][1] = consumersList.get(i).getOldAccountNo();
                 data[i][2] = consumersList.get(i).getServiceAccountName();
@@ -929,10 +930,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 data[i][6] = consumersList.get(i).getBillNumber();
                 data[i][7] = ObjectHelpers.roundTwo(consumersList.get(i).getNetAmount());
                 data[i][8] = ObjectHelpers.roundTwo(consumersList.get(i).getDiscountAmount());
-                data[i][9] = ObjectHelpers.roundTwo((Double.valueOf(consumersList.get(i).getNetAmount()) - Double.valueOf(consumersList.get(i).getDiscountAmount())) + "");
-                totalAmountPayable += Double.valueOf(consumersList.get(i).getNetAmount());
+                data[i][9] = bill != null ? ObjectHelpers.roundTwo(BillsDao.getSurcharge(bill) + "") : 0;
+                data[i][10] = ObjectHelpers.roundTwo((Double.valueOf(consumersList.get(i).getNetAmount()) - Double.valueOf(consumersList.get(i).getDiscountAmount())) + "");
+                totalAmountPayable += Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill);
                 discountTotal += Double.valueOf(consumersList.get(i).getDiscountAmount());
-                netAmountPayable += (Double.valueOf(consumersList.get(i).getNetAmount()) - Double.valueOf(consumersList.get(i).getDiscountAmount()));
+                netAmountPayable += ((Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill)) - Double.valueOf(consumersList.get(i).getDiscountAmount()));
             }
             
             model = new DefaultTableModel(data, columnNames) {
@@ -966,9 +968,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             bapaResultsTable.getColumnModel().getColumn(7).setMaxWidth(110);
             bapaResultsTable.getColumnModel().getColumn(8).setMaxWidth(110);
             bapaResultsTable.getColumnModel().getColumn(9).setMaxWidth(110);
+            bapaResultsTable.getColumnModel().getColumn(10).setMaxWidth(110);
             bapaResultsTable.getColumnModel().getColumn(7).setCellRenderer(rightRendererGreen);
             bapaResultsTable.getColumnModel().getColumn(8).setCellRenderer(rightRendererRed);
-            bapaResultsTable.getColumnModel().getColumn(9).setCellRenderer(rightRendererBlue);
+            bapaResultsTable.getColumnModel().getColumn(9).setCellRenderer(rightRendererRed);
+            bapaResultsTable.getColumnModel().getColumn(10).setCellRenderer(rightRendererBlue);
             
             /**
              * FETCH DETAILS
@@ -1017,12 +1021,12 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                 office,
                                 ObjectHelpers.getSqlDate(),
                                 ObjectHelpers.getSqlTime(),
-                                ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(bill) + ""),
+                                ObjectHelpers.roundFourNoComma(BillsDao.getSurcharge(bill) + ""),
                                 bill.getEvat2Percent(),
                                 bill.getEvat5Percent(),
                                 bill.getAdditionalCharges(),
                                 dsc + "",
-                                ObjectHelpers.roundTwoNoComma((ttl - dsc) + ""),
+                                ObjectHelpers.roundFourNoComma((ttl - dsc) + ""),
                                 "MONTHLY BILL",
                                 bill.getId(),
                                 login.getId(),
@@ -1083,13 +1087,40 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         );
                         DCRSummaryTransactionsDao.insert(connection, dcr);
                         
+                        /**
+                        * =======================================
+                        * SAVE DCR FOR PRE PAYMENTS
+                        * =======================================
+                        */
+                        if(bill.getDeductedDeposit()!= null) {
+                            DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    "223-235-20",
+                                    null,
+                                    null,
+                                    bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0",
+                                    ObjectHelpers.getSqlDate(),
+                                    ObjectHelpers.getSqlTime(),
+                                    login.getId(),
+                                    null,
+                                    null,
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    orNumberField.getText(),
+                                    "BOTH",
+                                    office,
+                                    account.getId()
+                            );
+                            DCRSummaryTransactionsDao.insert(connection, dcrDeduct);
+                        }
+                        
                         // DCR FOR DISCOUNTS
                         dcr = new DCRSummaryTransactions(
                                 ObjectHelpers.generateIDandRandString(),
                                 "312-452-00",
                                 null,
                                 null,
-                                "-" + ObjectHelpers.roundTwoNoComma(dsc + ""),
+                                "-" + ObjectHelpers.roundFourNoComma(dsc + ""),
                                 ObjectHelpers.getSqlDate(),
                                 ObjectHelpers.getSqlTime(),
                                 login.getId(),
@@ -1111,7 +1142,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         CheckPayments details = new CheckPayments(
                                 ObjectHelpers.generateIDandRandString(),
                                 bill.getAccountNumber(),
-                                null,
+                                bill.getServicePeriod(),
                                 null,
                                 nextOrNumber + "",
                                 paidBill.getNetAmount(),

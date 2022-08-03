@@ -5,13 +5,16 @@
  */
 package com.lopez.julz;
 
+import db.BillsDao;
 import db.DatabaseConnection;
 import db.ORAssigningDao;
 import db.PaidBillsDao;
+import db.ServiceAccountsDao;
 import helpers.Auth;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
 import helpers.ObjectHelpers;
+import helpers.PowerBillPrint;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -21,9 +24,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.print.Book;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
 import java.sql.Connection;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -38,9 +47,11 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.NumberFormatter;
+import pojos.Bills;
 import pojos.ORAssigning;
 import pojos.PaidBills;
 import pojos.Server;
+import pojos.ServiceAccounts;
 
 /**
  *
@@ -471,6 +482,11 @@ public class MainFrame extends javax.swing.JFrame {
         jMenu1.setText("Tools");
 
         reprintOR.setText("Re-Print OR");
+        reprintOR.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                reprintORActionPerformed(evt);
+            }
+        });
         jMenu1.add(reprintOR);
 
         jMenuBar1.add(jMenu1);
@@ -747,6 +763,163 @@ public class MainFrame extends javax.swing.JFrame {
         groupPayments.setBorder(new LineBorder(Color.decode("#00968b"), 1, true));
         dummyBtn = groupPayments;
     }//GEN-LAST:event_groupPaymentsActionPerformed
+
+    private void reprintORActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reprintORActionPerformed
+        JDialog reprintORDialog = new JDialog(this);
+        Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+        int x = (int) size.getWidth();
+        int y = (int) size.getHeight();
+        reprintORDialog.setTitle("Re-Print OR");
+
+        JPanel mainPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        JLabel fromLabel = new JLabel("From");
+        fromLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(fromLabel);
+        JTextField fromOr = new JTextField();
+        fromOr.setPreferredSize(new Dimension(120, 36));
+        fromOr.setFont(new Font("Arial", Font.BOLD, 16));         
+        mainPanel.add(fromOr);
+        
+        JLabel toLabel = new JLabel("To");
+        toLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(toLabel);
+        JTextField toOr = new JTextField();
+        toOr.setPreferredSize(new Dimension(120, 36));
+        toOr.setFont(new Font("Arial", Font.BOLD, 16));  
+        mainPanel.add(toOr);
+        
+        JLabel noOfPayments = new JLabel("No. of Payments");
+        noOfPayments.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(noOfPayments);
+        JTextField noOfPaymentsField = new JTextField();
+        noOfPaymentsField.setPreferredSize(new Dimension(120, 36));
+        noOfPaymentsField.setHorizontalAlignment(JTextField.RIGHT);
+        noOfPaymentsField.setFont(new Font("Arial", Font.BOLD, 16));  
+        noOfPaymentsField.setEnabled(false);
+        mainPanel.add(noOfPaymentsField);
+        
+        NumberFormat format = NumberFormat.getInstance();
+        format.setMinimumFractionDigits(2);
+        format.setMaximumFractionDigits(2);
+        format.setRoundingMode(RoundingMode.HALF_UP);
+        NumberFormatter formatter = new NumberFormatter(format);
+        formatter.setValueClass(Double.class);
+        formatter.setAllowsInvalid(false);
+        formatter.setCommitsOnValidEdit(true);
+        
+        JLabel totalAmount = new JLabel("Total Amount");
+        totalAmount.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(totalAmount);
+        JFormattedTextField totalAmountField = new JFormattedTextField(formatter);
+        totalAmountField.setPreferredSize(new Dimension(120, 36));
+        totalAmountField.setHorizontalAlignment(JTextField.RIGHT);
+        totalAmountField.setFont(new Font("Arial", Font.BOLD, 16));  
+        totalAmountField.setFocusable(false);
+        mainPanel.add(totalAmountField);
+        
+        JButton rePrintBtn = new JButton("RE-PRINT");
+        mainPanel.add(rePrintBtn);
+        
+        fromOr.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                
+            }
+            @Override
+            public void keyPressed(KeyEvent e) {
+                
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    toOr.setText(fromOr.getText().substring(0, 4));
+                    toOr.requestFocus();
+                }
+            }
+        });
+        
+        toOr.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                
+            }
+            @Override
+            public void keyPressed(KeyEvent e) {
+                
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    List<PaidBills> ors = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText());
+                    noOfPaymentsField.setText(ors.size() + "");
+                    totalAmountField.setValue(getSumOr(ors));
+                    rePrintBtn.requestFocus();
+                }
+            }
+        });
+        
+        rePrintBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (fromOr.getText().isEmpty() | toOr.getText().isEmpty()) {
+                    Notifiers.showErrorMessage("Invalid Data", "Supply the starting and ending OR to be printed!");
+                } else {
+                    if (JOptionPane.showConfirmDialog(rePrintBtn, "Are you sure you want to re-print these ORs?")==0) {                        
+                        try {
+                            List<PaidBills> paidBills = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText());
+                            int pbSize = paidBills.size();
+                            for (int i=0; i<pbSize; i++) {
+                                PaidBills pb = paidBills.get(i);
+                                Bills bill = BillsDao.getOneByAccountAndPeriod(connection, pb.getAccountNumber(), pb.getServicePeriod());
+                                pb.setBank(bill.getDueDate());
+                                ServiceAccounts account = ServiceAccountsDao.getOneById(connection, pb.getAccountNumber());
+                                List<PaidBills> billsList = new ArrayList<>();
+                                billsList.add(pb);
+
+                                PrinterJob job = PrinterJob.getPrinterJob();
+                                PageFormat pf = job.defaultPage();
+                                Paper paper = pf.getPaper();
+                                double width = 5d * 72d;
+                                double height = 4d * 72d;
+                                double margin = 0.1d * 72d;
+                                paper.setSize(width, height);
+                                paper.setImageableArea(
+                                        margin,
+                                        margin,
+                                        width - (margin * 2),
+                                        height - (margin * 2));
+                                pf.setPaper(paper);
+                                Book pBook = new Book();
+                                pBook.append(new PowerBillPrint(billsList, account, pb.getORNumber(), login.getUsername()), pf);
+                                job.setPageable(pBook);
+
+                        //            job.setPrintable(new PowerBillPrint(bills.get(i), account));
+                                try {
+                                    job.print();
+                                } catch (PrinterException ex) {
+                                    ex.printStackTrace();
+                                    Notifiers.showErrorMessage("Error Printing Payment", "Account No: " + account.getOldAccountNo() + "\n" + ex.getMessage());
+                                }
+                            }
+                            reprintORDialog.dispose();
+                        } catch (Exception er) {
+                            er.printStackTrace();
+                            Notifiers.showErrorMessage("Error Printing Transaction", er.getMessage());
+                        }
+                    }
+                } 
+            }
+        });
+        
+        reprintORDialog.add(mainPanel);        
+        reprintORDialog.setLocation(x/4, y/4);
+        reprintORDialog.pack();
+        reprintORDialog.setVisible(true);
+    }//GEN-LAST:event_reprintORActionPerformed
 
     /**
      * @param args the command line arguments

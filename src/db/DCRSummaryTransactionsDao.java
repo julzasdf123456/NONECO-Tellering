@@ -69,7 +69,7 @@ public class DCRSummaryTransactionsDao {
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenSubsidy())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenDiscountAndSubsidyAdjustment()));
             
-            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
+            return Double.valueOf(ObjectHelpers.roundFourNoComma(vat + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -171,7 +171,7 @@ public class DCRSummaryTransactionsDao {
             double vat = Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getTransmissionVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSystemLossVAT()));
-            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
+            return Double.valueOf(ObjectHelpers.roundFourNoComma(vat + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -184,7 +184,7 @@ public class DCRSummaryTransactionsDao {
             
             PreparedStatement ps = con.prepareStatement("SELECT GLCode, "
                     + "(SELECT Notes FROM Cashier_AccountGLCodes WHERE AccountCode=Cashier_DCRSummaryTransactions.GLCode) AS Description,"
-                    + "SUM(CAST(Amount AS DECIMAL(10,2))) AS Amount "
+                    + "SUM(CAST(Amount AS DECIMAL(25,4))) AS Amount "
                     + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND (ReportDestination='COLLECTION' OR ReportDestination='BOTH') "
                     + "GROUP BY GLCode ORDER BY GLCode");
             ps.setString(1, day);

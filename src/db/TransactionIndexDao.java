@@ -237,4 +237,40 @@ public class TransactionIndexDao {
             e.printStackTrace();
         }
     }
+    
+    public static double getSumOr(Connection con, String from, String to, String userid) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT SUM(TRY_CAST(Total AS DECIMAL(12,2))) AS Total FROM Cashier_TransactionIndex WHERE (ORNumber BETWEEN TRY_CAST('" + from + "' AS DECIMAL(20,2)) AND TRY_CAST('" + to + "' AS DECIMAL(20,2))) AND Status IS NULL AND UserId='" + userid + "'");
+   
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return Double.valueOf(rs.getString("Total"));
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public static int getSumOrCount(Connection con, String from, String to) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT COUNT(id) AS CountTotal FROM Cashier_TransactionIndex WHERE (ORNumber BETWEEN ? AND ?) AND Status IS NULL");
+   
+            ps.setString(1, from);
+            ps.setString(2, to);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return Integer.valueOf(rs.getString("CountTotal"));
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }

@@ -10,6 +10,7 @@ import db.DatabaseConnection;
 import db.ORAssigningDao;
 import db.PaidBillsDao;
 import db.ServiceAccountsDao;
+import db.TransactionIndexDao;
 import helpers.Auth;
 import helpers.ConfigFileHelpers;
 import helpers.Notifiers;
@@ -640,9 +641,11 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    List<PaidBills> ors = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText());
-                    noOfPaymentsField.setText(ors.size() + "");
-                    totalAmountField.setValue(getSumOr(ors));
+                    List<PaidBills> ors = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
+                    noOfPaymentsField.setText((ors.size() + TransactionIndexDao.getSumOrCount(connection, fromOr.getText(), toOr.getText())) + "");
+                    double pbtotal = getSumOr(ors);
+                    double tTotal = TransactionIndexDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
+                    totalAmountField.setValue(pbtotal + tTotal);
                     amountPaidField.requestFocus();
                 }
             }
@@ -854,7 +857,7 @@ public class MainFrame extends javax.swing.JFrame {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    List<PaidBills> ors = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText());
+                    List<PaidBills> ors = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
                     noOfPaymentsField.setText(ors.size() + "");
                     totalAmountField.setValue(getSumOr(ors));
                     rePrintBtn.requestFocus();
@@ -870,7 +873,7 @@ public class MainFrame extends javax.swing.JFrame {
                 } else {
                     if (JOptionPane.showConfirmDialog(rePrintBtn, "Are you sure you want to re-print these ORs?")==0) {                        
                         try {
-                            List<PaidBills> paidBills = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText());
+                            List<PaidBills> paidBills = PaidBillsDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
                             int pbSize = paidBills.size();
                             for (int i=0; i<pbSize; i++) {
                                 PaidBills pb = paidBills.get(i);

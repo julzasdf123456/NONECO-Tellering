@@ -5,6 +5,7 @@
  */
 package db;
 
+import helpers.ConfigFileHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -190,7 +191,8 @@ public class ServiceAccountsDao {
                     + accountsTableName + " LEFT JOIN " + 
                     townsTableName + " ON " + accountsTableName + ".Town = " + townsTableName + ".id LEFT JOIN " +
                     barangaysTableName + " ON " + accountsTableName + ".Barangay = " + barangaysTableName + ".id " +
-                    "WHERE OldAccountNo LIKE '%" + regex + "%' OR " + accountsTableName + ".id LIKE '%" + regex + "%' OR ServiceAccountName LIKE '%" + regex + "%'");
+                    "WHERE OldAccountNo LIKE '%" + regex + "%' OR " + accountsTableName + ".id LIKE '%" + regex + "%' OR ServiceAccountName LIKE '%" + regex + "%' "
+                            + "ORDER BY CASE WHEN Billing_ServiceAccounts.Town='" + ConfigFileHelpers.getOfficeCode() + "' THEN '1' ELSE Billing_ServiceAccounts.Town END DESC");
             
             ResultSet rs = ps.executeQuery();
             while(rs.next()) {

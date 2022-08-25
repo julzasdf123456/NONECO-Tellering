@@ -432,6 +432,9 @@
             <Property name="text" type="java.lang.String" value="Add Check"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addCheckButtonActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JFormattedTextField" name="totalAmountPaid">
           <Properties>
@@ -462,7 +465,6 @@
               <Image iconType="3" name="/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="Transact"/>
-            <Property name="focusable" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transactBtnActionPerformed"/>
@@ -481,6 +483,9 @@
             <Property name="text" type="java.lang.String" value="Clear Checks"/>
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearChecksBtnActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel13">
           <Properties>

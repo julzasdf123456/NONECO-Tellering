@@ -1513,7 +1513,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
             payablesModel = new DefaultTableModel(data, payableColNames) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    if (column == 5) {
+                    if (column == 5 || column == 1) {
                         return true;
                     } else {
                         return false;
@@ -1802,6 +1802,8 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                      */
                     for (int i=0; i<payablesList.size(); i++) {
                         payablesList.get(i).setTransactionIndexId(transId);
+                        String tblDescription = miscTable.getValueAt(i, 1).toString();
+                        payablesList.get(i).setParticular(tblDescription);
                         TransactionDetailsDao.insert(connection, payablesList.get(i));
 
                         /**

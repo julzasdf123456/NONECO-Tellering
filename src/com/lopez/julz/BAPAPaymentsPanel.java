@@ -33,6 +33,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
@@ -98,6 +100,13 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     double netAmountPayable = 0;
     double totalSurcharge = 0;
     
+    /**
+     * Checks
+     */
+    public List<CheckPayments> checkLists;
+    Object[] checkColNames = {"Bank", "Check No", "Amount"};
+    DefaultTableModel checkModel;
+    
     public List<BAPAAdjustmentDetails> consumersList;
     String dcrNum = "";
     
@@ -119,6 +128,8 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     
         db = new DatabaseConnection();
         connection = db.getDbConnectionFromDatabase(server);
+        
+        checkLists = new ArrayList<>();
         
         fillBillingMonths();
         fetchOR();
@@ -306,6 +317,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         addCheckButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/add_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         addCheckButton.setText("Add Check");
         addCheckButton.setEnabled(false);
+        addCheckButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addCheckButtonActionPerformed(evt);
+            }
+        });
 
         totalAmountPaid.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#,##0.##"))));
         totalAmountPaid.setHorizontalAlignment(javax.swing.JTextField.TRAILING);
@@ -318,7 +334,6 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         transactBtn.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         transactBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         transactBtn.setText("Transact");
-        transactBtn.setFocusable(false);
         transactBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 transactBtnActionPerformed(evt);
@@ -329,6 +344,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         clearChecksBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/delete_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         clearChecksBtn.setText("Clear Checks");
         clearChecksBtn.setEnabled(false);
+        clearChecksBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearChecksBtnActionPerformed(evt);
+            }
+        });
 
         jLabel13.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
         jLabel13.setText("No. of Consumers");
@@ -571,6 +591,200 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_netAmountDueKeyReleased
 
+    private void addCheckButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addCheckButtonActionPerformed
+        try {
+            cashPaymentField.setValue(null);
+            
+            JDialog checkDialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(getParent()));
+            Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+            int x = (int) size.getWidth();
+            int y = (int) size.getHeight();
+            checkDialog.setLocation(x/3, y/3);
+            checkDialog.setTitle("Add Check");
+            
+            JPanel mainPanel = new JPanel(new GridLayout(0, 1, 0, 5));
+            mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+            
+            mainPanel.add(new JLabel("Input Check Number"));
+            JTextField checkNoField = new JTextField();
+            checkNoField.setPreferredSize(new Dimension(400, 36));
+            checkNoField.setFont(new Font("Arial", Font.BOLD, 16));  
+            mainPanel.add(checkNoField);
+            
+            mainPanel.add(new JLabel("Input Check Amount"));
+            NumberFormat format = NumberFormat.getInstance();
+            format.setMinimumFractionDigits(2);
+            format.setMaximumFractionDigits(2);
+            format.setRoundingMode(RoundingMode.HALF_UP);
+            NumberFormatter formatter = new NumberFormatter(format);
+            formatter.setValueClass(Double.class);
+            formatter.setAllowsInvalid(false);
+            formatter.setCommitsOnValidEdit(true);
+            JFormattedTextField amountField = new JFormattedTextField(formatter);
+            amountField.setPreferredSize(new Dimension(400, 36));
+            amountField.setFont(new Font("Arial", Font.BOLD, 16)); 
+            amountField.setHorizontalAlignment(JTextField.RIGHT);
+            amountField.setValue(getCashRemainFromCheck());
+            amountField.addFocusListener(new FocusAdapter() {
+                @Override
+                public void focusGained(FocusEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            amountField.selectAll();
+                        }
+                    });                    
+                }                
+            });
+            mainPanel.add(amountField);
+            
+            mainPanel.add(new JLabel("Input Bank"));
+            JTextField checkBank = new JTextField();
+            checkBank.setPreferredSize(new Dimension(400, 36));
+            checkBank.setFont(new Font("Arial", Font.BOLD, 16));            
+            mainPanel.add(checkBank);
+            
+            JButton saveCheckBtn = new JButton("Add Check");
+            saveCheckBtn.setFont(new Font("Arial", Font.PLAIN, 12)); 
+            saveCheckBtn.setPreferredSize(new Dimension(100, 32));
+            saveCheckBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png")));
+            mainPanel.add(saveCheckBtn);
+            
+            
+            checkNoField.addKeyListener(new KeyListener() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        amountField.requestFocus();
+                    }
+                }
+
+                @Override
+                public void keyTyped(KeyEvent e) {                    
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+                }
+            });
+            
+            amountField.addKeyListener(new KeyListener() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        checkBank.requestFocus();
+                    }
+                }
+
+                @Override
+                public void keyTyped(KeyEvent e) {                    
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+                }
+            });
+            
+            checkBank.addKeyListener(new KeyListener() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        checkLists.add(new CheckPayments(
+                            ObjectHelpers.generateIDandRandString(),
+                            null,
+                            null,
+                            null,
+                            orNumberField.getText(),
+                            amountField.getValue().toString(),
+                            "Check",
+                            checkNoField.getText(),
+                            checkBank.getText(),
+                            null,
+                            login.getId(),
+                            ObjectHelpers.getCurrentTimestamp(),
+                            ObjectHelpers.getCurrentTimestamp()
+                        ));
+                    
+                        populateCheckTable();
+                        checkDialog.dispose();
+                        transactBtn.requestFocus();
+                        totalAmountPaid.setValue(getTotalAmount());
+                    }
+                }
+
+                @Override
+                public void keyTyped(KeyEvent e) {                    
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+                }
+            });
+            
+            saveCheckBtn.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    checkLists.add(new CheckPayments(
+                        ObjectHelpers.generateIDandRandString(),
+                        null,
+                        null,
+                        null,
+                        orNumberField.getText(),
+                        amountField.getValue().toString(),
+                        "Check",
+                        checkNoField.getText(),
+                        checkBank.getText(),
+                        null,
+                        login.getId(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp()
+                    ));
+                    
+                    populateCheckTable();
+                    checkDialog.dispose();
+                    transactBtn.requestFocus();
+                    totalAmountPaid.setValue(getTotalAmount());
+                }
+            });
+            
+            checkDialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    if(getCashRemainFromCheck() > 0) {
+//                        addCheckButton.setEnabled(false);
+                        cashPaymentField.setValue(getCashRemainFromCheck());
+                        transactBtn.requestFocus();
+                    } 
+                }
+
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    if(getCashRemainFromCheck() > 0) {
+//                        addCheckButton.setEnabled(false);
+                        cashPaymentField.setValue(getCashRemainFromCheck());
+                        transactBtn.requestFocus();
+                    }                     
+                }
+            });
+            
+            checkDialog.add(mainPanel);
+            checkDialog.pack();
+            checkDialog.setVisible(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Adding Check Payment", e.getMessage());
+        }                
+    }//GEN-LAST:event_addCheckButtonActionPerformed
+
+    private void clearChecksBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearChecksBtnActionPerformed
+        checkLists.clear();
+        cashPaymentField.setValue(netAmountPayable);
+        totalAmountPaid.setValue(getTotalAmount());
+        addCheckButton.setEnabled(true);
+        transactBtn.requestFocus();
+        if (checkModel != null) {
+            checkModel.getDataVector().removeAllElements();
+            checkModel.fireTableDataChanged();
+        }
+    }//GEN-LAST:event_clearChecksBtnActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addCheckButton;
@@ -738,11 +952,6 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 }
                 @Override
                 public void keyPressed(KeyEvent e) {
-
-                }
-
-                @Override
-                public void keyReleased(KeyEvent e) {
                     try {
                         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
                             transact();
@@ -757,6 +966,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                     } catch (ParseException ex) {
                         Logger.getLogger(PowerBillsPanel.class.getName()).log(Level.SEVERE, null, ex);
                     }
+                }
+
+                @Override
+                public void keyReleased(KeyEvent e) {
+                    
                 }
             });
 
@@ -786,7 +1000,8 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     
     public double getTotalAmount() {
         double cash = Double.valueOf(cashPaymentField.getValue() != null ? cashPaymentField.getValue().toString() : "0");
-        return cash;
+        double check = getTotalCheckPayments();
+        return cash + check;
     }
     
     public void bapaSearch() {
@@ -902,12 +1117,68 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         }
     }
     
+    public void populateCheckTable() {
+        try {
+            clearChecksBtn.setEnabled(true);
+            if (checkModel != null) {
+                checkModel.getDataVector().removeAllElements();
+                checkModel.fireTableDataChanged();
+            }
+            
+            int checklistsize = checkLists.size();
+            Object[][] data = new Object[checklistsize][checkColNames.length];
+            for (int i=0; i<checklistsize; i++) {
+                data[i][0] = checkLists.get(i).getBank();
+                data[i][1] = checkLists.get(i).getCheckNo();
+                data[i][2] = ObjectHelpers.roundTwo(checkLists.get(i).getAmount());
+            }
+            
+            // DISPLAY TO TABLE
+            checkModel = new DefaultTableModel(data, checkColNames);
+            DefaultTableCellRenderer rightRendererBlue = new DefaultTableCellRenderer();
+            rightRendererBlue.setHorizontalAlignment(JLabel.RIGHT);
+            rightRendererBlue.setFont(new Font("Arial", Font.BOLD, 14));
+            rightRendererBlue.setForeground(Color.BLUE);
+
+            checkTable.setModel(checkModel);
+            checkTable.setRowHeight(25);
+            checkTable.getColumnModel().getColumn(2).setCellRenderer(rightRendererBlue);
+            checkTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+            
+            transactBtn.requestFocus();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error Getting Bills", e.getMessage());
+        }
+    }
+ 
+    public double getTotalCheckPayments() {
+        try {
+             double ttl = 0;
+             for(int i=0; i<checkLists.size(); i++) {
+                ttl += Double.valueOf(checkLists.get(i).getAmount());
+             }
+             return ttl;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public double getCashRemainFromCheck() {
+        double check = getTotalCheckPayments();
+        return (netAmountPayable) - check;
+    }
+    
     public void getPayablesFromBillingMonth(String bapaName, String period) {
         try {
             // reset
             totalAmountPayable = 0;
             netAmountPayable = 0;
             discountTotal = 0;
+            
+            double totalWithoutSurcharge = 0;
             
             noOfConsumersField.setText("");
             totalAmount.setValue(null);
@@ -934,6 +1205,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 data[i][10] = ObjectHelpers.roundTwo((Double.valueOf(consumersList.get(i).getNetAmount()) - Double.valueOf(consumersList.get(i).getDiscountAmount())) + "");
                 totalAmountPayable += Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill);
                 discountTotal += Double.valueOf(consumersList.get(i).getDiscountAmount());
+                totalWithoutSurcharge += Double.valueOf(consumersList.get(i).getNetAmount());
                 netAmountPayable += ((Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill)) - Double.valueOf(consumersList.get(i).getDiscountAmount()));
             }
             
@@ -978,11 +1250,13 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
              * FETCH DETAILS
              */
             noOfConsumersField.setText(conSize + "");
-            totalAmount.setValue(totalAmountPayable);
+            totalAmount.setValue(totalWithoutSurcharge);
             discountAmount.setValue(discountTotal);
-            percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalAmountPayable) * 100) + "") + "%");
+            percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalWithoutSurcharge) * 100) + "") + "%");
             netAmountDue.setValue(netAmountPayable);
             cashPaymentField.setEnabled(true);
+            addCheckButton.setEnabled(true);
+            clearChecksBtn.setEnabled(true);
             cashPaymentField.setValue(netAmountPayable);
             cashPaymentField.requestFocus();
             SwingUtilities.invokeLater(new Runnable() {
@@ -1000,7 +1274,17 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     public void transact() {
         try {
             if (getTotalAmount() >= netAmountPayable) {
+                String paymentUsed = "";
+                if (cashPaymentField.getValue() != null && checkLists.size() > 0) {
+                    paymentUsed = "Cash and Check";
+                } else if (cashPaymentField.getValue() == null && checkLists.size() > 0) {
+                    paymentUsed = "Check";
+                } else {
+                    paymentUsed = "Cash";
+                }
+                
                 int consSize = consumersList.size();
+                double cashRemain = getCashRemainFromCheck();
                 dcrNum = "BAPA-" + ObjectHelpers.getTimeInMillis();
                 for (int i=0; i<consSize; i++) {
                     Bills bill = BillsDao.getOneById(connection, consumersList.get(i).getBillId());
@@ -1080,7 +1364,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                 null,
                                 ObjectHelpers.getCurrentTimestamp(),
                                 ObjectHelpers.getCurrentTimestamp(),
-                                orNumberField.getText(),
+                                nextOrNumber + "",
                                 "BOTH",
                                 office,
                                 account.getId()
@@ -1106,7 +1390,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                     null,
                                     ObjectHelpers.getCurrentTimestamp(),
                                     ObjectHelpers.getCurrentTimestamp(),
-                                    orNumberField.getText(),
+                                    nextOrNumber + "",
                                     "BOTH",
                                     office,
                                     account.getId()
@@ -1128,7 +1412,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                 null,
                                 ObjectHelpers.getCurrentTimestamp(),
                                 ObjectHelpers.getCurrentTimestamp(),
-                                orNumberField.getText(),
+                                nextOrNumber + "",
                                 "BOTH",
                                 office,
                                 account.getId()
@@ -1139,22 +1423,91 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         /**
                         * SAVE PAID BILL DETAILS
                         */
-                        CheckPayments details = new CheckPayments(
-                                ObjectHelpers.generateIDandRandString(),
-                                bill.getAccountNumber(),
-                                bill.getServicePeriod(),
-                                null,
-                                nextOrNumber + "",
-                                paidBill.getNetAmount(),
-                                "Cash",
-                                null,
-                                null, 
-                                null,
-                                login.getId(),
-                                ObjectHelpers.getCurrentTimestamp(),
-                                ObjectHelpers.getCurrentTimestamp()
-                        );
-                        PaidBillDetailsDao.insert(connection, details);
+                        if (cashPaymentField.getValue() != null) {
+                            if (paymentUsed.equals("Cash and Check")) {
+                                if (cashRemain > 0) {
+                                    CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            nextOrNumber +"",
+                                            ObjectHelpers.roundFourNoComma((cashRemain/consSize) +""),
+                                            "Cash",
+                                            null,
+                                            null, 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                    );
+                                    PaidBillDetailsDao.insert(connection, details);
+
+                                    if (i==0) {
+                                        if (checkLists.size() > 0) {
+                                            for(int x=0; x<checkLists.size(); x++) {
+                                                CheckPayments chk = checkLists.get(x);
+                                                chk.setId(ObjectHelpers.generateIDandRandString());
+                                                chk.setServicePeriod(bill.getServicePeriod());
+                                                chk.setAccountNumber(paidBill.getAccountNumber());
+                                                chk.setORNumber(nextOrNumber +"");
+                                                chk.setAmount(chk.getAmount() + "");
+                                                PaidBillDetailsDao.insert(connection, chk);
+                                            }                                            
+                                        }
+                                    }                                    
+                                }                            
+                            } else if (paymentUsed.equals("Cash")) {
+                                CheckPayments details = new CheckPayments(
+                                        ObjectHelpers.generateIDandRandString(),
+                                        bill.getAccountNumber(),
+                                        bill.getServicePeriod(),
+                                        null,
+                                        nextOrNumber +"",
+                                        ObjectHelpers.roundFourNoComma(Double.valueOf(paidBill.getNetAmount()) + ""),
+                                        "Cash",
+                                        null,
+                                        null, 
+                                        null,
+                                        login.getId(),
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                );
+                                PaidBillDetailsDao.insert(connection, details);
+                            }                        
+                        } else {
+                            if (paymentUsed.equals("Check")) { 
+                                if (i==0) {
+                                    if (checkLists.size() > 0) {
+                                        for(int x=0; x<checkLists.size(); x++) {
+                                            CheckPayments chk = checkLists.get(x);
+                                            chk.setId(ObjectHelpers.generateIDandRandString());
+                                            chk.setServicePeriod(bill.getServicePeriod());
+                                            chk.setAccountNumber(paidBill.getAccountNumber());
+                                            chk.setORNumber(nextOrNumber +"");
+                                            chk.setAmount(chk.getAmount() + "");
+                                            PaidBillDetailsDao.insert(connection, chk);
+                                        }                                            
+                                    }
+                                }   
+                            }   
+                        }
+//                        CheckPayments details = new CheckPayments(
+//                                ObjectHelpers.generateIDandRandString(),
+//                                bill.getAccountNumber(),
+//                                bill.getServicePeriod(),
+//                                null,
+//                                nextOrNumber + "",
+//                                paidBill.getNetAmount(),
+//                                "Cash",
+//                                null,
+//                                null, 
+//                                null,
+//                                login.getId(),
+//                                ObjectHelpers.getCurrentTimestamp(),
+//                                ObjectHelpers.getCurrentTimestamp()
+//                        );
+//                        PaidBillDetailsDao.insert(connection, details);
 
                        /**
                         * SAVE OR ASSIGNING
@@ -1191,6 +1544,16 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 percentage.setText("");
                 netAmountDue.setValue(null);
                 cashPaymentField.setValue(null);
+                addCheckButton.setEnabled(false);
+                clearChecksBtn.setEnabled(false);
+                if (checkModel != null) {
+                    checkModel.getDataVector().removeAllElements();
+                    checkModel.fireTableDataChanged();
+                }
+                if (model != null) {
+                    model.getDataVector().removeAllElements();
+                    model.fireTableDataChanged();
+                }
                 if (model != null) {
                     model.getDataVector().removeAllElements();
                     model.fireTableDataChanged();

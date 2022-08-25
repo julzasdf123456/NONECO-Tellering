@@ -973,6 +973,11 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             isBapa.setText(activeAccount.getOrganization());
             consumerAddress.setText(ServiceAccountsDao.getAddress(activeAccount));
             acctStatus.setText(activeAccount.getAccountStatus());
+            if (activeAccount.getAccountStatus() != null && !activeAccount.getAccountStatus().equals("ACTIVE")) {
+                acctStatus.setForeground(Color.red);
+            } else {
+                acctStatus.setForeground(Color.black);
+            }
             meterNumber.setText(activeAccount.getMeterDetailsId());
         } catch (Exception e) {
             e.printStackTrace();
@@ -996,7 +1001,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 double surcharge = Double.valueOf(ObjectHelpers.roundFourNoComma(BillsDao.getSurcharge(billsList.get(i)) + ""));
                 billsList.get(i).setAdditionalKwh(surcharge + "");
                 data[i][1] = billsList.get(i).getBillNumber();
-                data[i][2] = billsList.get(i).getServicePeriod();
+                data[i][2] = ObjectHelpers.formatReadableDate(billsList.get(i).getServicePeriod());
                 data[i][3] = billsList.get(i).getDueDate();
                 data[i][4] = ObjectHelpers.roundTwo(billsList.get(i).getNetAmount());
                 data[i][5] = ObjectHelpers.roundTwo(surcharge + "");

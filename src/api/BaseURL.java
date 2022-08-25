@@ -13,6 +13,6 @@ import helpers.ConfigFileHelpers;
  */
 public class BaseURL {
     public static String baseUrl() {
-        return "http://" + ConfigFileHelpers.getServerName() + "/crm-noneco/public/api/";
+        return "http://" + ConfigFileHelpers.getServerIp()+ "/crm-noneco/public/api/";
     }
 }

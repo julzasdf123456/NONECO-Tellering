@@ -5,7 +5,6 @@
  */
 package com.lopez.julz;
 
-import db.BAPAAdjustmentDetailsDao;
 import db.BillsDao;
 import db.CollectiblesDao;
 import db.DCRSummaryTransactionsDao;
@@ -20,10 +19,12 @@ import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import helpers.PowerBillPrint;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,6 +42,7 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
+import java.net.URI;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -53,12 +55,17 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
@@ -136,6 +143,8 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 getPayablesFromBillingMonth(groupid, item.toString());
             }
         });
+        
+        addTableRemovePopupMenu(bapaResultsTable);
     }
 
     /**
@@ -957,6 +966,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 data[i][7] = ObjectHelpers.roundTwo(surcharge + "");
                 data[i][8] = ObjectHelpers.roundTwo((Double.valueOf(billsList.get(i).getNetAmount()) + surcharge) + "");
                 totalAmountPayable += Double.valueOf(billsList.get(i).getNetAmount()) + surcharge;
+                billsList.get(i).setIsUnlockedForPayment(surcharge + ""); // SUDLANAN SURCHARGE
             }
             
             model = new DefaultTableModel(data, colNames) {
@@ -1010,6 +1020,63 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error getting payables", e.getMessage());
+        }
+    }
+    
+    public void addTableRemovePopupMenu(JTable table) {
+        try {
+            JPopupMenu popupMenu = new JPopupMenu();
+            JMenuItem remove = new JMenuItem("Remove");
+            remove.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int index = table.getSelectedRow();
+                    Bills bill = billsList.get(index);
+                    billsList.remove(index);
+                    ((DefaultTableModel)table.getModel()).removeRow(index);
+                    
+                    double amnt = Double.valueOf(bill.getNetAmount()) + (bill.getIsUnlockedForPayment() != null ? Double.valueOf(bill.getIsUnlockedForPayment()) : 0);
+                    
+                    totalAmountPayable = totalAmountPayable-amnt;
+                    
+                    totalAmountPaid.setValue(totalAmountPayable);  
+                    cashPaymentField.setValue(totalAmountPayable);
+                    netAmountDue.setValue(totalAmountPayable);
+                    noOfConsumersField.setText(billsList.size() + "");
+                }
+            });
+            
+            popupMenu.addPopupMenuListener(new PopupMenuListener() {
+                @Override
+                public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            int rowAtPoint = table.rowAtPoint(SwingUtilities.convertPoint(popupMenu, new Point(0, 0), table));
+                            if (rowAtPoint > -1) {
+                                table.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+                            }
+                        }
+                    });
+                }
+
+                @Override
+                public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+
+                @Override
+                public void popupMenuCanceled(PopupMenuEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+            });
+            popupMenu.add(remove);
+            table.setComponentPopupMenu(popupMenu);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
     

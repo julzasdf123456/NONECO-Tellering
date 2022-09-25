@@ -1166,7 +1166,6 @@ public class PrepaymentPanel extends javax.swing.JPanel {
     
     public void transact() {
         try {
-            System.out.println("" + getTotalAmount());
             if (getTotalAmount() > 0) {
                 PrepaymentBalanceDao.insertOrUpdate(connection, activeAccount.getId(), getTotalAmount()+"", orNumberField.getText(), login);
                 

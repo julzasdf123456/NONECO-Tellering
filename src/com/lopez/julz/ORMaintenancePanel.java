@@ -200,10 +200,10 @@ public class ORMaintenancePanel extends javax.swing.JPanel {
         try {
             if (source.equals("POWER BILL")) {
                 // UPDATE PaidBills, PaidBillsDetails, ORAssigning, DCRTransactionSummary                
-                PaidBillsDao.updateOR(connection, id, oldOr, newOr);
+                PaidBillsDao.updateOR(connection, id, oldOr, newOr, login.getId());
             } else {
                 // UPDATE TransactionIdnex, TransactionDetails, TransactionPaymentDetails, ORAssigning, DCRTransactionSummary
-                TransactionIndexDao.updateOR(connection, id, oldOr, newOr);
+                TransactionIndexDao.updateOR(connection, id, oldOr, newOr, login.getId());
             }
         } catch (Exception e) {
             e.printStackTrace();

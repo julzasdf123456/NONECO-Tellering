@@ -26,7 +26,8 @@ public class BillsDao {
             List<Bills> billsList = new ArrayList<>();
             
             PreparedStatement ps = con.prepareStatement("SELECT * FROM " + billsTableName + 
-                    " WHERE AccountNumber=? AND AccountNumber NOT IN (SELECT AccountNumber FROM " + paidBillsTableName + " WHERE AccountNumber IS NOT NULL AND AccountNumber=? AND (Status IS NULL OR Status='Application')) "
+                    " WHERE AccountNumber=? AND AccountNumber NOT IN "
+                            + "(SELECT AccountNumber FROM Cashier_PaidBills WHERE AccountNumber IS NOT NULL AND AccountNumber=? AND (Status IS NULL OR Status='Application') AND ServicePeriod=Billing_Bills.ServicePeriod) "
                             + "ORDER BY ServicePeriod DESC");
             ps.setString(1, accountId);
             ps.setString(2, accountId);

@@ -85,6 +85,7 @@ import pojos.Server;
 import pojos.ServiceAccounts;
 import java.util.stream.IntStream;
 import java.util.Objects;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -975,6 +976,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             acctStatus.setText(activeAccount.getAccountStatus());
             if (activeAccount.getAccountStatus() != null && !activeAccount.getAccountStatus().equals("ACTIVE")) {
                 acctStatus.setForeground(Color.red);
+                JOptionPane.showMessageDialog(null, "This Account is " + activeAccount.getAccountStatus(), "WARNING", JOptionPane.WARNING_MESSAGE);
             } else {
                 acctStatus.setForeground(Color.black);
             }
@@ -2558,7 +2560,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                 double originalEvat = bill.getEvat5Percent() != null ? Double.valueOf(bill.getEvat5Percent()) : 0;
                                 
                                 double originalAmount = bill.getNetAmount()!= null ? Double.valueOf(bill.getNetAmount()) : 0;
-                                originalAmount = (originalAmount + originalEvat + originalEwt); // ORIGINAL BILL AMOUNT MINUS THE EWT AND EVAT
+                                originalAmount = originalAmount + (originalEvat + originalEwt); // ORIGINAL BILL AMOUNT MINUS THE EWT AND EVAT
                                 
                                 double newAmount = originalAmount + surchargeAmnt - (evatAmount + ewtAmount);
                                 
@@ -2578,7 +2580,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                 System.out.println("" + selectedBills.get(selBillsIndex).getAdditionalKwh());
                                 
                                 // UPDATE TABLE
-                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(originalAmount + ""), tblSelIndex, 4);
+//                                billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(originalAmount + ""), tblSelIndex, 4);
                                 billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(surchargeAmnt + ""), tblSelIndex, 5);
                                 billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(ewtAmount + ""), tblSelIndex, 6);
                                 billsTable.getModel().setValueAt(ObjectHelpers.roundTwo(evatAmount + ""), tblSelIndex, 7);

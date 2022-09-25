@@ -97,7 +97,7 @@ public class TransactionIndexDao {
         }
     }
     
-    public static boolean updateOR(Connection con, String id, String oldOr, String newOr) {
+    public static boolean updateOR(Connection con, String id, String oldOr, String newOr, String tellerId) {
         try {
             // update transaction index
             String updateTransactionindex = "UPDATE Cashier_TransactionIndex SET ORNumber=? WHERE id=?";
@@ -116,18 +116,20 @@ public class TransactionIndexDao {
             ps.clearParameters();
             
             // update orassigning
-            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=?";
+            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=? AND UserId=?";
             ps = con.prepareStatement(updateOrAssigning);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
+            ps.setString(3, tellerId);
             ps.execute();
             ps.clearParameters();
             
             // update dcrtransactionsummary
-            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=?";
+            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=? AND Teller=?";
             ps = con.prepareStatement(updateDcr);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
+            ps.setString(3, tellerId);
             ps.execute();
             ps.clearParameters();
             

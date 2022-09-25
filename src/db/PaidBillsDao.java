@@ -170,7 +170,7 @@ public class PaidBillsDao {
         }
     }
     
-    public static boolean updateOR(Connection con, String id, String oldOr, String newOr) {
+    public static boolean updateOR(Connection con, String id, String oldOr, String newOr, String tellerId) {
         try {
             // update paidbills
             String updatePaidBills = "UPDATE Cashier_PaidBills SET ORNumber=? WHERE id=?";
@@ -181,26 +181,29 @@ public class PaidBillsDao {
             ps.clearParameters();
             
             // update paidbillsdetails
-            String updatePaidBillsDetails = "UPDATE Cashier_PaidBillsDetails SET ORNumber=? WHERE ORNumber=?";
+            String updatePaidBillsDetails = "UPDATE Cashier_PaidBillsDetails SET ORNumber=? WHERE ORNumber=? AND UserId=?";
             ps = con.prepareStatement(updatePaidBillsDetails);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
+            ps.setString(3, tellerId);
             ps.execute();
             ps.clearParameters();
             
             // update orassigning
-            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=?";
+            String updateOrAssigning = "UPDATE Cashier_ORAssigning SET ORNumber=? WHERE ORNumber=? AND UserId=?";
             ps = con.prepareStatement(updateOrAssigning);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
+            ps.setString(3, tellerId);
             ps.execute();
             ps.clearParameters();
             
             // update dcrtransactionsummary
-            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=?";
+            String updateDcr = "UPDATE Cashier_DCRSummaryTransactions SET ORNumber=? WHERE ORNumber=? AND Teller=?";
             ps = con.prepareStatement(updateDcr);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
+            ps.setString(3, tellerId);
             ps.execute();
             ps.clearParameters();
             

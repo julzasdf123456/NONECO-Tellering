@@ -90,7 +90,14 @@ public class PowerBillPrint implements Printable {
             g.drawString(ObjectHelpers.formatSlashedDate(bill.get(i).getBank()), 115, startPosY);
             g.drawString(ObjectHelpers.roundTwo("" + (Double.valueOf(bill.get(i).getNetAmount()) - Double.valueOf(bill.get(i).getSurcharge()))), 168, startPosY);
             g.drawString(ObjectHelpers.roundTwo(bill.get(i).getSurcharge()), 222, startPosY);
-            g.drawString(ObjectHelpers.roundTwo(bill.get(i).getNetAmount()), 290, startPosY);
+//            if (account.getOrganization() != null && account.getOrganization()=="BAPA") {
+//                
+//            } else {
+//                g.drawString(ObjectHelpers.roundTwo(bill.get(i).getNetAmount()), 290, startPosY);
+//                System.out.println("AMT: " + ObjectHelpers.roundTwo("" + (Double.valueOf(bill.get(i).getNetAmount()) - Double.valueOf(bill.get(i).getSurcharge()))));
+//            }
+            g.drawString(ObjectHelpers.roundTwo(getBapaGross(bill.get(i).getNetAmount(), bill.get(i).getDeductions()) + ""), 290, startPosY);
+            System.out.println("AMT: " + ObjectHelpers.roundTwo(getBapaGross(bill.get(i).getNetAmount(), bill.get(i).getDeductions()) + ""));
             
             startPosY += incrementPosY;
             totalPayments += Double.valueOf(bill.get(i).getNetAmount());
@@ -102,4 +109,23 @@ public class PowerBillPrint implements Printable {
         return PAGE_EXISTS;
     }
     
+    public double getBapaGross(String netAmount, String discount) {
+        try {
+            double amnt = 0;
+            if (netAmount != null) {
+                amnt = Double.valueOf(netAmount);
+            }
+            
+            double dsc = 0;
+            
+            if (discount != null) {
+                dsc = Double.valueOf(discount);
+            }
+            
+            return amnt + dsc;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }

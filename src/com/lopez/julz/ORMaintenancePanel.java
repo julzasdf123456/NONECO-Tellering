@@ -181,7 +181,8 @@ public class ORMaintenancePanel extends javax.swing.JPanel {
                         String source = td.getAmount();
                         String id = td.getVAT();
                         String oldOr = td.getId();
-                        updateORNumber(id, source, oldOr, orNew);
+                        String period = td.getCreated_at(); // SERVICE PERIOD
+                        updateORNumber(id, source, oldOr, orNew, period);
 //                        System.out.println(orNew + " - " + oldOr + " - " + " " + id);
                         orsList.get(selectedRow).setId(orNew);
                     } catch (Exception ex) {
@@ -196,11 +197,11 @@ public class ORMaintenancePanel extends javax.swing.JPanel {
         }
     }
     
-    public void updateORNumber(String id, String source, String oldOr, String newOr) {
+    public void updateORNumber(String id, String source, String oldOr, String newOr, String period) {
         try {
             if (source.equals("POWER BILL")) {
                 // UPDATE PaidBills, PaidBillsDetails, ORAssigning, DCRTransactionSummary                
-                PaidBillsDao.updateOR(connection, id, oldOr, newOr, login.getId());
+                PaidBillsDao.updateOR(connection, id, oldOr, newOr, login.getId(), period);
             } else {
                 // UPDATE TransactionIdnex, TransactionDetails, TransactionPaymentDetails, ORAssigning, DCRTransactionSummary
                 TransactionIndexDao.updateOR(connection, id, oldOr, newOr, login.getId());

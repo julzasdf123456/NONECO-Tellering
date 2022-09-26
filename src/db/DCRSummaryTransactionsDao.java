@@ -251,8 +251,8 @@ public class DCRSummaryTransactionsDao {
         try {
             List<TransactionDetails> checkList = new ArrayList<>();
             
-            String powerBillQry = "SELECT pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Teller='" + teller + "' AND ORDate='" + day + "'";
-            String othersQry = "SELECT td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed FROM Cashier_TransactionIndex td WHERE td.UserId='" + teller + "' AND td.ORDate='" + day + "'";
+            String powerBillQry = "SELECT pb.id, pb.ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.NetAmount, pb.PaymentUsed, pb.ServicePeriod FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.Teller='" + teller + "' AND ORDate='" + day + "'";
+            String othersQry = "SELECT td.id, td.ORNumber, td.AccountNumber, td.PayeeName, 'OTHERS' AS Source, td.Total, td.PaymentUsed, '1990-01-01' AS ServicePeriod FROM Cashier_TransactionIndex td WHERE td.UserId='" + teller + "' AND td.ORDate='" + day + "'";
             PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry + " ORDER BY ORNumber DESC");
             ResultSet rs = ps.executeQuery();
             
@@ -265,7 +265,7 @@ public class DCRSummaryTransactionsDao {
                         rs.getString("id"),
                         rs.getString("NetAmount"),
                         rs.getString("PaymentUsed"),
-                        null,
+                        rs.getString("ServicePeriod"),
                         null
                 ));
             }

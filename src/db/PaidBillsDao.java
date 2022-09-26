@@ -170,7 +170,7 @@ public class PaidBillsDao {
         }
     }
     
-    public static boolean updateOR(Connection con, String id, String oldOr, String newOr, String tellerId) {
+    public static boolean updateOR(Connection con, String id, String oldOr, String newOr, String tellerId, String period) {
         try {
             // update paidbills
             String updatePaidBills = "UPDATE Cashier_PaidBills SET ORNumber=? WHERE id=?";
@@ -181,11 +181,11 @@ public class PaidBillsDao {
             ps.clearParameters();
             
             // update paidbillsdetails
-            String updatePaidBillsDetails = "UPDATE Cashier_PaidBillsDetails SET ORNumber=? WHERE ORNumber=? AND UserId=?";
+            String updatePaidBillsDetails = "UPDATE Cashier_PaidBillsDetails SET ORNumber=? WHERE ORNumber=? AND ServicePeriod=?";
             ps = con.prepareStatement(updatePaidBillsDetails);
             ps.setString(1, newOr);
             ps.setString(2, oldOr);
-            ps.setString(3, tellerId);
+            ps.setString(3, period);
             ps.execute();
             ps.clearParameters();
             

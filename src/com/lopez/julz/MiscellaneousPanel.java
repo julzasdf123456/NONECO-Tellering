@@ -10,6 +10,7 @@ import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.ORAssigningDao;
 import db.ServiceAccountsDao;
+import db.TicketsDao;
 import db.TransactionDetailsDao;
 import db.TransactionIndexDao;
 import db.TransactionPaymentDetailsDao;
@@ -1827,7 +1828,12 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                                 "COLLECTION",
                                 office,
                                 null);
-                            DCRSummaryTransactionsDao.insert(connection, dcr);                           
+                            DCRSummaryTransactionsDao.insert(connection, dcr);    
+                            
+                            // CREATE TICKET IF RECONNECTION
+                            if (payablesList.get(i).getAccountCode().equals("312-456-00")) {
+                                TicketsDao.createReconnection(connection, activeAccount, login, office);
+                            }
                         }                            
                     }
 

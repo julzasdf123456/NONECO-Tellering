@@ -166,7 +166,7 @@ public class Bills {
         this.Evat2Percent = Evat2Percent;
         this.Evat5Percent = Evat5Percent;
         this.AdjustmentNumber = AdjustmentNumber;
-        this.AdjustedBy = AdjustedBy;
+        this.AdjustedBy = AdjustedBy; 
         this.DateAdjusted = DateAdjusted;
         this.ForCancellation = ForCancellation;
         this.CancelRequestedBy = CancelRequestedBy;

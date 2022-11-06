@@ -119,7 +119,7 @@ public class PaidBillsDao {
     public static List<PaidBills> getCashPowerBills(Connection con, String orDate, String teller) {
         try {
             List<PaidBills> paidBills = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(TRY_CAST(Amount AS DECIMAL(25,4))) FROM Cashier_PaidBillsDetails WHERE ServicePeriod=pb.ServicePeriod AND ORNumber=pb.ORNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
+            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(TRY_CAST(Amount AS DECIMAL(25,4))) FROM Cashier_PaidBillsDetails WHERE ServicePeriod=pb.ServicePeriod AND AccountNumber=pb.AccountNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
                     + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND pb.Status IS NULL AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
             
             ps.setString(1, teller);
@@ -374,7 +374,8 @@ public class PaidBillsDao {
             String statement = "SELECT b.*, a.ServiceAccountName, a.OldAccountNo FROM Billing_Bills b "
                     + "LEFT JOIN Billing_ServiceAccounts a ON a.id=b.AccountNumber "
                     + "WHERE b.ServicePeriod=? AND a.MemberConsumerId=? "
-                    + "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE ServicePeriod=? AND Status IS NULL)";
+                    + "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE AccountNumber IS NOT NULL AND ServicePeriod=? AND Status IS NULL) "
+                    + "ORDER BY a.OldAccountNo";
             PreparedStatement ps = con.prepareStatement(statement);
             ps.setString(1, period);
             ps.setString(2, groupId);

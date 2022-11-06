@@ -19,7 +19,6 @@ import helpers.Notifiers;
 import helpers.ObjectHelpers;
 import helpers.PowerBillPrint;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
@@ -42,7 +41,6 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.math.RoundingMode;
-import java.net.URI;
 import java.sql.Connection;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -106,11 +104,12 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
     boolean isOrLocked = true;
     
     double totalAmountPayable = 0;
+    double surchargeAmountPayable = 0;
     String dcrNum = "";
     
     public List<Bills> billsList;
     public DefaultTableModel model;
-    public Object colNames[] = {"", "Account No", "Consumer Name", "Kwh Used", "Billing Mo.", "Bill No.", "Amount Due", "Surcharge", "Net Amount Due"};
+    public Object colNames[] = {"", "Account No", "Consumer Name", "Kwh Used", "Billing Mo.", "Bill No.", "Amount Due", "2%", "5%", "Surcharge", "Net Amount Due"};
     
     public List<CheckPayments> checkLists;
     Object[] checkColNames = {"Bank", "Check No", "Amount"};
@@ -141,6 +140,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             public void actionPerformed(ActionEvent e) {
                 Object item = billingMonthDropdown.getSelectedItem();
                 getPayablesFromBillingMonth(groupid, item.toString());
+                removeSurcharges.setEnabled(true);
             }
         });
         
@@ -192,6 +192,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         noOfConsumersField = new javax.swing.JTextField();
         netAmountDue = new javax.swing.JFormattedTextField(formatter);
         jLabel17 = new javax.swing.JLabel();
+        removeSurcharges = new javax.swing.JButton();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mediation_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
@@ -255,7 +256,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(orNumberField, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)
+                .addComponent(orNumberField)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(unlockOrNumberBtn)
                 .addContainerGap())
@@ -370,7 +371,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                         .addGap(23, 23, 23)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -438,6 +439,16 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 .addContainerGap(101, Short.MAX_VALUE))
         );
 
+        removeSurcharges.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        removeSurcharges.setForeground(new java.awt.Color(255, 51, 51));
+        removeSurcharges.setText("Remove Surcharges");
+        removeSurcharges.setEnabled(false);
+        removeSurcharges.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeSurchargesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -447,22 +458,24 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(billingMonthDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 548, Short.MAX_VALUE)
                         .addComponent(bapaName, javax.swing.GroupLayout.PREFERRED_SIZE, 278, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(searchGroupAccount))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 657, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(billingMonthDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(removeSurcharges))
+                            .addComponent(jScrollPane1))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -478,7 +491,8 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(billingMonthDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(billingMonthDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(removeSurcharges))
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -714,6 +728,25 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         }             
     }//GEN-LAST:event_addCheckButtonActionPerformed
 
+    private void removeSurchargesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeSurchargesActionPerformed
+        try {
+            if (JOptionPane.showConfirmDialog(null, "Are you sure you want to remove surcharges on this group?", "Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+                int row = model.getRowCount();
+                surchargeAmountPayable = 0;
+                for (int i=0; i<row; i++) {
+                    model.setValueAt("0", i, 9);
+                    model.setValueAt(model.getValueAt(i, 6).toString(), i, 10);
+                    billsList.get(i).setIsUnlockedForPayment("0");
+                }
+                netAmountDue.setValue(getOverAllPayable());
+                cashPaymentField.setValue(getOverAllPayable());
+                removeSurcharges.setEnabled(false);
+            } 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_removeSurchargesActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addCheckButton;
@@ -740,6 +773,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField netAmountDue;
     private javax.swing.JTextField noOfConsumersField;
     private javax.swing.JTextField orNumberField;
+    private javax.swing.JButton removeSurcharges;
     private javax.swing.JButton searchGroupAccount;
     private javax.swing.JFormattedTextField totalAmountPaid;
     private javax.swing.JButton transactBtn;
@@ -917,6 +951,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         clearChecksBtn.setEnabled(true);
                         getPayablesFromBillingMonth(groupid, billingMonthDropdown.getSelectedItem().toString());
                         advancedSearchDialog.dispose();
+                        removeSurcharges.setEnabled(true);
                     }
                 }                
             });
@@ -942,6 +977,10 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         }            
     }
     
+    public double getOverAllPayable() {
+        return totalAmountPayable + surchargeAmountPayable;
+    }
+    
     public void getPayablesFromBillingMonth(String groupId, String period) {
         try {
             // reset
@@ -963,9 +1002,12 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 data[i][4] = billsList.get(i).getServicePeriod();
                 data[i][5] = billsList.get(i).getBillNumber();
                 data[i][6] = ObjectHelpers.roundTwo(billsList.get(i).getNetAmount());
-                data[i][7] = ObjectHelpers.roundTwo(surcharge + "");
-                data[i][8] = ObjectHelpers.roundTwo((Double.valueOf(billsList.get(i).getNetAmount()) + surcharge) + "");
-                totalAmountPayable += Double.valueOf(billsList.get(i).getNetAmount()) + surcharge;
+                data[i][7] = ObjectHelpers.roundTwo(billsList.get(i).getEvat2Percent());
+                data[i][8] = ObjectHelpers.roundTwo(billsList.get(i).getEvat5Percent());
+                data[i][9] = ObjectHelpers.roundTwo(surcharge + "");
+                data[i][10] = ObjectHelpers.roundTwo((Double.valueOf(billsList.get(i).getNetAmount()) + surcharge) + "");
+                totalAmountPayable += Double.valueOf(billsList.get(i).getNetAmount());
+                surchargeAmountPayable += surcharge;
                 billsList.get(i).setIsUnlockedForPayment(surcharge + ""); // SUDLANAN SURCHARGE
             }
             
@@ -1007,9 +1049,9 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
              * FETCH DETAILS
              */
             noOfConsumersField.setText(conSize + "");
-            netAmountDue.setValue(totalAmountPayable);
+            netAmountDue.setValue(getOverAllPayable());
             cashPaymentField.setEnabled(true);
-            cashPaymentField.setValue(totalAmountPayable);
+            cashPaymentField.setValue(getOverAllPayable());
             cashPaymentField.requestFocus();
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -1249,7 +1291,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                     Bills bill = BillsDao.getOneById(connection, billsList.get(i).getId());
                     if (bill != null) {
                         ServiceAccounts account = ServiceAccountsDao.getOneById(connection, bill.getAccountNumber());
-                        double ttl = Double.valueOf(ObjectHelpers.getTotals(Double.valueOf(bill.getNetAmount()), BillsDao.getSurcharge(bill)));
+                        double ttl = Double.valueOf(ObjectHelpers.getTotals(Double.valueOf(bill.getNetAmount()), Double.valueOf(billsList.get(i).getIsUnlockedForPayment())));
                         PaidBills paidBill = new PaidBills(
                                 ObjectHelpers.generateIDandRandString(),
                                 bill.getBillNumber(),
@@ -1263,7 +1305,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                                 office,
                                 ObjectHelpers.getSqlDate(),
                                 ObjectHelpers.getSqlTime(),
-                                ObjectHelpers.roundTwoNoComma(BillsDao.getSurcharge(bill) + ""),
+                                ObjectHelpers.roundTwoNoComma(billsList.get(i).getIsUnlockedForPayment()),
                                 bill.getEvat2Percent(),
                                 bill.getEvat5Percent(),
                                 bill.getAdditionalCharges(),

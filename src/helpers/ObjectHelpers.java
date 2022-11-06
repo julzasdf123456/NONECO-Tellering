@@ -97,8 +97,7 @@ public class ObjectHelpers {
             Date dueDate = sdf.parse(bill.getDueDate());
             String nowDate = sdf.format(new Date());
             Date now = sdf.parse(nowDate);
-            if (now.after(dueDate)) {
-                
+            if (now.after(dueDate)) {                
                 return true;
             } else {
                 return false;

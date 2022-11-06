@@ -5,10 +5,14 @@
  */
 package db;
 
+import helpers.ConfigFileHelpers;
 import helpers.ObjectHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import pojos.Bills;
@@ -226,6 +230,25 @@ public class BillsDao {
         }
     }
     
+    public static String getLatestBillingMonthFromRates(Connection con) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT TOP 1 ServicePeriod FROM Billing_Rates ORDER BY ServicePeriod DESC");
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String period = rs.getString("ServicePeriod");
+                ps.close();
+                rs.close();
+                return period;
+            }
+            ps.close();
+            rs.close();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public static Bills getOneByAccountAndPeriod(Connection con, String accountNo, String servicePeriod) {
         try {
             Bills bill;
@@ -343,15 +366,35 @@ public class BillsDao {
     public static double getSurcharge(Bills bill) {
         try {
             String acctType = getAccountType(bill.getConsumerType());
-            if (acctType.equals("RESIDENTIAL") | acctType.equals("PUBLIC BUILDING") | acctType.equals("PUBLIC BUILDING HIGH VOLTAGE")) {
+            if (acctType.equals("RESIDENTIAL") | acctType.equals("PUBLIC BUILDING") | acctType.equals("PUBLIC BUILDING HIGH VOLTAGE") | acctType.equals("STREET LIGHTS")) {
                 return 0;
             } else {
                 if (ObjectHelpers.isAfterDue(bill)) {
-                    return Double.valueOf(bill.getNetAmount()) * .05;
+                    return (Double.valueOf(bill.getNetAmount()) * .05) + getInterest(bill);
                 } else {
                     return 0;
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public static double getInterest(Bills bill) {
+        try {
+            DatabaseConnection db = new DatabaseConnection();
+            Connection con = db.getDbConnectionFromDatabase(ConfigFileHelpers.getServer());
+        
+            long months = ChronoUnit.MONTHS.between(
+                    LocalDate.parse(bill.getServicePeriod()).withDayOfMonth(1),
+                    LocalDate.parse(getLatestBillingMonthFromRates(con)).withDayOfMonth(1));
+            
+            if (months >= 2) {
+                return (Double.valueOf(bill.getNetAmount()) * .02) * (months-1);
+            } else {
+                return 0;
+            }            
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -372,5 +415,13 @@ public class BillsDao {
             e.printStackTrace();
             return -1;
         }
+    }
+    
+    public static void main(String[] args) {
+//        DatabaseConnection db = new DatabaseConnection();
+//        Connection connection = db.getDbConnectionFromDatabase(ConfigFileHelpers.getServer());
+//        Bills b = BillsDao.getOneById(connection, "1658446624390-PD5AV7RTO8PL4O2T5V");
+//        
+//        System.out.println(b.getNetAmount() + " - " + BillsDao.getSurcharge(b));
     }
 }

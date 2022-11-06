@@ -84,7 +84,7 @@ public class ServiceAccountsDao {
                     rs.getString("Contestable"),
                     rs.getString("NetMetered"),
                     rs.getString("Notes"),
-                    rs.getString("Migrated"),
+                    rs.getString("Barangay"),
                     rs.getString("MemberConsumerId"),
                     rs.getString("DistributionAccountCode"),
                     rs.getString("Town")

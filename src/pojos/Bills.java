@@ -88,11 +88,31 @@ public class Bills {
     private String ForCancellation;
     private String CancelRequestedBy;
     private String CancelApprovedBy;
+    private String KatasNgVat;
+    private String SolarImportPresent;
+    private String SolarImportPrevious;
+    private String SolarExportPresent;
+    private String SolarExportPrevious;
+    private String SolarImportKwh;
+    private String SolarExportKwh;
+    private String GenerationChargeSolarExport;
+    private String SolarResidualCredit; // IF NEGATIVE ANG AMOUNT
+    private String SolarDemandChargeKW;
+    private String SolarDemandChargeKWH;
+    private String SolarRetailCustomerCharge;
+    private String SolarSupplySystemCharge;
+    private String SolarMeteringRetailCharge;
+    private String SolarMeteringSystemCharge;
+    private String Item1; // CURRENT AMOUNT DU TO CUSTOMER / PARTIAL AMOUNT
+    private String Item2;
+    private String Item3;
+    private String Item4; // CURRENT AMOUNT CUSTOMER TO DU (Solar Gen - Residual sa Previous)
+    private String Item5;
 
     public Bills() {
     }
 
-    public Bills(String id, String BillNumber, String AccountNumber, String ServicePeriod, String Multiplier, String Coreloss, String KwhUsed, String PreviousKwh, String PresentKwh, String DemandPreviousKwh, String DemandPresentKwh, String AdditionalKwh, String AdditionalDemandKwh, String KwhAmount, String EffectiveRate, String AdditionalCharges, String Deductions, String NetAmount, String BillingDate, String ServiceDateFrom, String ServiceDateTo, String DueDate, String MeterNumber, String ConsumerType, String BillType, String GenerationSystemCharge, String TransmissionDeliveryChargeKW, String TransmissionDeliveryChargeKWH, String SystemLossCharge, String DistributionDemandCharge, String DistributionSystemCharge, String SupplyRetailCustomerCharge, String SupplySystemCharge, String MeteringRetailCustomerCharge, String MeteringSystemCharge, String RFSC, String LifelineRate, String InterClassCrossSubsidyCharge, String PPARefund, String SeniorCitizenSubsidy, String MissionaryElectrificationCharge, String EnvironmentalCharge, String StrandedContractCosts, String NPCStrandedDebt, String FeedInTariffAllowance, String MissionaryElectrificationREDCI, String GenerationVAT, String TransmissionVAT, String SystemLossVAT, String DistributionVAT, String RealPropertyTax, String Notes, String UserId, String BilledFrom, String AveragedCount, String MergedToCollectible, String OtherGenerationRateAdjustment, String OtherTransmissionCostAdjustmentKW, String OtherTransmissionCostAdjustmentKWH, String OtherSystemLossCostAdjustment, String OtherLifelineRateCostAdjustment, String SeniorCitizenDiscountAndSubsidyAdjustment, String FranchiseTax, String BusinessTax, String AdjustmentType, String Form2307Amount, String DeductedDeposit, String ExcessDeposit, String IsUnlockedForPayment, String UnlockedBy, String Evat2Percent, String Evat5Percent, String AdjustmentNumber, String AdjustedBy, String DateAdjusted, String ForCancellation, String CancelRequestedBy, String CancelApprovedBy) {
+    public Bills(String id, String BillNumber, String AccountNumber, String ServicePeriod, String Multiplier, String Coreloss, String KwhUsed, String PreviousKwh, String PresentKwh, String DemandPreviousKwh, String DemandPresentKwh, String AdditionalKwh, String AdditionalDemandKwh, String KwhAmount, String EffectiveRate, String AdditionalCharges, String Deductions, String NetAmount, String BillingDate, String ServiceDateFrom, String ServiceDateTo, String DueDate, String MeterNumber, String ConsumerType, String BillType, String GenerationSystemCharge, String TransmissionDeliveryChargeKW, String TransmissionDeliveryChargeKWH, String SystemLossCharge, String DistributionDemandCharge, String DistributionSystemCharge, String SupplyRetailCustomerCharge, String SupplySystemCharge, String MeteringRetailCustomerCharge, String MeteringSystemCharge, String RFSC, String LifelineRate, String InterClassCrossSubsidyCharge, String PPARefund, String SeniorCitizenSubsidy, String MissionaryElectrificationCharge, String EnvironmentalCharge, String StrandedContractCosts, String NPCStrandedDebt, String FeedInTariffAllowance, String MissionaryElectrificationREDCI, String GenerationVAT, String TransmissionVAT, String SystemLossVAT, String DistributionVAT, String RealPropertyTax, String Notes, String UserId, String BilledFrom, String AveragedCount, String MergedToCollectible, String OtherGenerationRateAdjustment, String OtherTransmissionCostAdjustmentKW, String OtherTransmissionCostAdjustmentKWH, String OtherSystemLossCostAdjustment, String OtherLifelineRateCostAdjustment, String SeniorCitizenDiscountAndSubsidyAdjustment, String FranchiseTax, String BusinessTax, String AdjustmentType, String Form2307Amount, String DeductedDeposit, String ExcessDeposit, String IsUnlockedForPayment, String UnlockedBy, String Evat2Percent, String Evat5Percent, String AdjustmentNumber, String AdjustedBy, String DateAdjusted, String ForCancellation, String CancelRequestedBy, String CancelApprovedBy, String KatasNgVat, String SolarImportPresent, String SolarImportPrevious, String SolarExportPresent, String SolarExportPrevious, String SolarImportKwh, String SolarExportKwh, String GenerationChargeSolarExport, String SolarResidualCredit, String SolarDemandChargeKW, String SolarDemandChargeKWH, String SolarRetailCustomerCharge, String SolarSupplySystemCharge, String SolarMeteringRetailCharge, String SolarMeteringSystemCharge, String Item1, String Item2, String Item3, String Item4, String Item5) {
         this.id = id;
         this.BillNumber = BillNumber;
         this.AccountNumber = AccountNumber;
@@ -166,12 +186,34 @@ public class Bills {
         this.Evat2Percent = Evat2Percent;
         this.Evat5Percent = Evat5Percent;
         this.AdjustmentNumber = AdjustmentNumber;
-        this.AdjustedBy = AdjustedBy; 
+        this.AdjustedBy = AdjustedBy;
         this.DateAdjusted = DateAdjusted;
         this.ForCancellation = ForCancellation;
         this.CancelRequestedBy = CancelRequestedBy;
         this.CancelApprovedBy = CancelApprovedBy;
+        this.KatasNgVat = KatasNgVat;
+        this.SolarImportPresent = SolarImportPresent;
+        this.SolarImportPrevious = SolarImportPrevious;
+        this.SolarExportPresent = SolarExportPresent;
+        this.SolarExportPrevious = SolarExportPrevious;
+        this.SolarImportKwh = SolarImportKwh;
+        this.SolarExportKwh = SolarExportKwh;
+        this.GenerationChargeSolarExport = GenerationChargeSolarExport;
+        this.SolarResidualCredit = SolarResidualCredit;
+        this.SolarDemandChargeKW = SolarDemandChargeKW;
+        this.SolarDemandChargeKWH = SolarDemandChargeKWH;
+        this.SolarRetailCustomerCharge = SolarRetailCustomerCharge;
+        this.SolarSupplySystemCharge = SolarSupplySystemCharge;
+        this.SolarMeteringRetailCharge = SolarMeteringRetailCharge;
+        this.SolarMeteringSystemCharge = SolarMeteringSystemCharge;
+        this.Item1 = Item1;
+        this.Item2 = Item2;
+        this.Item3 = Item3;
+        this.Item4 = Item4;
+        this.Item5 = Item5;
     }
+
+    
 
     public String getId() {
         return id;
@@ -796,6 +838,166 @@ public class Bills {
     public void setCancelApprovedBy(String CancelApprovedBy) {
         this.CancelApprovedBy = CancelApprovedBy;
     }
+
+    public String getKatasNgVat() {
+        return KatasNgVat;
+    }
+
+    public void setKatasNgVat(String KatasNgVat) {
+        this.KatasNgVat = KatasNgVat;
+    }
+
+    public String getSolarImportPresent() {
+        return SolarImportPresent;
+    }
+
+    public void setSolarImportPresent(String SolarImportPresent) {
+        this.SolarImportPresent = SolarImportPresent;
+    }
+
+    public String getSolarImportPrevious() {
+        return SolarImportPrevious;
+    }
+
+    public void setSolarImportPrevious(String SolarImportPrevious) {
+        this.SolarImportPrevious = SolarImportPrevious;
+    }
+
+    public String getSolarExportPresent() {
+        return SolarExportPresent;
+    }
+
+    public void setSolarExportPresent(String SolarExportPresent) {
+        this.SolarExportPresent = SolarExportPresent;
+    }
+
+    public String getSolarExportPrevious() {
+        return SolarExportPrevious;
+    }
+
+    public void setSolarExportPrevious(String SolarExportPrevious) {
+        this.SolarExportPrevious = SolarExportPrevious;
+    }
+
+    public String getSolarImportKwh() {
+        return SolarImportKwh;
+    }
+
+    public void setSolarImportKwh(String SolarImportKwh) {
+        this.SolarImportKwh = SolarImportKwh;
+    }
+
+    public String getSolarExportKwh() {
+        return SolarExportKwh;
+    }
+
+    public void setSolarExportKwh(String SolarExportKwh) {
+        this.SolarExportKwh = SolarExportKwh;
+    }
+
+    public String getGenerationChargeSolarExport() {
+        return GenerationChargeSolarExport;
+    }
+
+    public void setGenerationChargeSolarExport(String GenerationChargeSolarExport) {
+        this.GenerationChargeSolarExport = GenerationChargeSolarExport;
+    }
+
+    public String getSolarResidualCredit() {
+        return SolarResidualCredit;
+    }
+
+    public void setSolarResidualCredit(String SolarResidualCredit) {
+        this.SolarResidualCredit = SolarResidualCredit;
+    }
+
+    public String getSolarDemandChargeKW() {
+        return SolarDemandChargeKW;
+    }
+
+    public void setSolarDemandChargeKW(String SolarDemandChargeKW) {
+        this.SolarDemandChargeKW = SolarDemandChargeKW;
+    }
+
+    public String getSolarDemandChargeKWH() {
+        return SolarDemandChargeKWH;
+    }
+
+    public void setSolarDemandChargeKWH(String SolarDemandChargeKWH) {
+        this.SolarDemandChargeKWH = SolarDemandChargeKWH;
+    }
+
+    public String getSolarRetailCustomerCharge() {
+        return SolarRetailCustomerCharge;
+    }
+
+    public void setSolarRetailCustomerCharge(String SolarRetailCustomerCharge) {
+        this.SolarRetailCustomerCharge = SolarRetailCustomerCharge;
+    }
+
+    public String getSolarSupplySystemCharge() {
+        return SolarSupplySystemCharge;
+    }
+
+    public void setSolarSupplySystemCharge(String SolarSupplySystemCharge) {
+        this.SolarSupplySystemCharge = SolarSupplySystemCharge;
+    }
+
+    public String getSolarMeteringRetailCharge() {
+        return SolarMeteringRetailCharge;
+    }
+
+    public void setSolarMeteringRetailCharge(String SolarMeteringRetailCharge) {
+        this.SolarMeteringRetailCharge = SolarMeteringRetailCharge;
+    }
+
+    public String getSolarMeteringSystemCharge() {
+        return SolarMeteringSystemCharge;
+    }
+
+    public void setSolarMeteringSystemCharge(String SolarMeteringSystemCharge) {
+        this.SolarMeteringSystemCharge = SolarMeteringSystemCharge;
+    }
+
+    public String getItem1() {
+        return Item1;
+    }
+
+    public void setItem1(String Item1) {
+        this.Item1 = Item1;
+    }
+
+    public String getItem2() {
+        return Item2;
+    }
+
+    public void setItem2(String Item2) {
+        this.Item2 = Item2;
+    }
+
+    public String getItem3() {
+        return Item3;
+    }
+
+    public void setItem3(String Item3) {
+        this.Item3 = Item3;
+    }
+
+    public String getItem4() {
+        return Item4;
+    }
+
+    public void setItem4(String Item4) {
+        this.Item4 = Item4;
+    }
+
+    public String getItem5() {
+        return Item5;
+    }
+
+    public void setItem5(String Item5) {
+        this.Item5 = Item5;
+    }
     
-   
+    
 }

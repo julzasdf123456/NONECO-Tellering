@@ -118,7 +118,27 @@ public class BillsDao {
                             rs.getString("DateAdjusted"),
                             rs.getString("ForCancellation"),
                             rs.getString("CancelRequestedBy"),
-                            rs.getString("CancelApprovedBy")
+                            rs.getString("CancelApprovedBy"),
+                            rs.getString("KatasNgVat"),
+                            rs.getString("SolarImportPresent"),
+                            rs.getString("SolarImportPrevious"),
+                            rs.getString("SolarExportPresent"),
+                            rs.getString("SolarExportPrevious"),
+                            rs.getString("SolarImportKwh"),
+                            rs.getString("SolarExportKwh"),
+                            rs.getString("GenerationChargeSolarExport"),
+                            rs.getString("SolarResidualCredit"), // IF NEGATIVE ANG AMOUNT
+                            rs.getString("SolarDemandChargeKW"),
+                            rs.getString("SolarDemandChargeKWH"),
+                            rs.getString("SolarRetailCustomerCharge"),
+                            rs.getString("SolarSupplySystemCharge"),
+                            rs.getString("SolarMeteringRetailCharge"),
+                            rs.getString("SolarMeteringSystemCharge"),
+                            rs.getString("Item1"), // CURRENT AMOUNT DU TO CUSTOMER / PARTIAL AMOUNT
+                            rs.getString("Item2"),
+                            rs.getString("Item3"),
+                            rs.getString("Item4"), // CURRENT AMOUNT CUSTOMER TO DU (Solar Gen - Residual sa Previous)
+                            rs.getString("Item5")
                         )
                 );
             }
@@ -215,7 +235,27 @@ public class BillsDao {
                         rs.getString("DateAdjusted"),
                         rs.getString("ForCancellation"),
                         rs.getString("CancelRequestedBy"),
-                        rs.getString("CancelApprovedBy")
+                        rs.getString("CancelApprovedBy"),
+                        rs.getString("KatasNgVat"),
+                        rs.getString("SolarImportPresent"),
+                        rs.getString("SolarImportPrevious"),
+                        rs.getString("SolarExportPresent"),
+                        rs.getString("SolarExportPrevious"),
+                        rs.getString("SolarImportKwh"),
+                        rs.getString("SolarExportKwh"),
+                        rs.getString("GenerationChargeSolarExport"),
+                        rs.getString("SolarResidualCredit"), // IF NEGATIVE ANG AMOUNT
+                        rs.getString("SolarDemandChargeKW"),
+                        rs.getString("SolarDemandChargeKWH"),
+                        rs.getString("SolarRetailCustomerCharge"),
+                        rs.getString("SolarSupplySystemCharge"),
+                        rs.getString("SolarMeteringRetailCharge"),
+                        rs.getString("SolarMeteringSystemCharge"),
+                        rs.getString("Item1"), // CURRENT AMOUNT DU TO CUSTOMER / PARTIAL AMOUNT
+                        rs.getString("Item2"),
+                        rs.getString("Item3"),
+                        rs.getString("Item4"), // CURRENT AMOUNT CUSTOMER TO DU (Solar Gen - Residual sa Previous)
+                        rs.getString("Item5")
                 );
                 ps.close();
                 rs.close();
@@ -335,7 +375,27 @@ public class BillsDao {
                         rs.getString("DateAdjusted"),
                         rs.getString("ForCancellation"),
                         rs.getString("CancelRequestedBy"),
-                        rs.getString("CancelApprovedBy")
+                        rs.getString("CancelApprovedBy"),
+                        rs.getString("KatasNgVat"),
+                        rs.getString("SolarImportPresent"),
+                        rs.getString("SolarImportPrevious"),
+                        rs.getString("SolarExportPresent"),
+                        rs.getString("SolarExportPrevious"),
+                        rs.getString("SolarImportKwh"),
+                        rs.getString("SolarExportKwh"),
+                        rs.getString("GenerationChargeSolarExport"),
+                        rs.getString("SolarResidualCredit"), // IF NEGATIVE ANG AMOUNT
+                        rs.getString("SolarDemandChargeKW"),
+                        rs.getString("SolarDemandChargeKWH"),
+                        rs.getString("SolarRetailCustomerCharge"),
+                        rs.getString("SolarSupplySystemCharge"),
+                        rs.getString("SolarMeteringRetailCharge"),
+                        rs.getString("SolarMeteringSystemCharge"),
+                        rs.getString("Item1"), // CURRENT AMOUNT DU TO CUSTOMER / PARTIAL AMOUNT
+                        rs.getString("Item2"),
+                        rs.getString("Item3"),
+                        rs.getString("Item4"), // CURRENT AMOUNT CUSTOMER TO DU (Solar Gen - Residual sa Previous)
+                        rs.getString("Item5")
                 );
                 ps.close();
                 rs.close();

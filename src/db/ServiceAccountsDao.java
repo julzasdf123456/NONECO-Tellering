@@ -32,7 +32,7 @@ public class ServiceAccountsDao {
                     + accountsTableName + " LEFT JOIN " + 
                     townsTableName + " ON " + accountsTableName + ".Town = " + townsTableName + ".id LEFT JOIN " +
                     barangaysTableName + " ON " + accountsTableName + ".Barangay = " + barangaysTableName + ".id " +
-                    "WHERE OldAccountNo=?");
+                    "WHERE OldAccountNo=? AND AccountStatus NOT IN ('PULLOUT')");
             ps.setString(1, oldAccountNo);
             
             ResultSet rs = ps.executeQuery();

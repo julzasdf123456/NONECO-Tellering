@@ -2221,6 +2221,68 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             office,
             activeAccount.getId());
         DCRSummaryTransactionsDao.insert(connection, dcr);
+        
+        /**
+         * FOR NET METERING
+         */
+        if (activeAccount.getNetMetered() != null && activeAccount.getNetMetered().equals("Yes")) {
+            dcr = new DCRSummaryTransactions(
+                ObjectHelpers.generateIDandRandString(),
+                "311-442-00",
+                null,
+                null,
+                DCRSummaryTransactionsDao.getNetMeterCommercialSales(bill) + "",
+                ObjectHelpers.getSqlDate(),
+                ObjectHelpers.getSqlTime(),
+                login.getId(),
+                null,
+                null,
+                ObjectHelpers.getCurrentTimestamp(),
+                ObjectHelpers.getCurrentTimestamp(),
+                orNumberField.getText(),
+                "BOTH",
+                office,
+                activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+            
+            dcr = new DCRSummaryTransactions(
+                ObjectHelpers.generateIDandRandString(),
+                "412-555-00",
+                null,
+                null,
+                bill.getGenerationChargeSolarExport() != null ? ("-" + bill.getGenerationChargeSolarExport()) : "0",
+                ObjectHelpers.getSqlDate(),
+                ObjectHelpers.getSqlTime(),
+                login.getId(),
+                null,
+                null,
+                ObjectHelpers.getCurrentTimestamp(),
+                ObjectHelpers.getCurrentTimestamp(),
+                orNumberField.getText(),
+                "BOTH",
+                office,
+                activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+            
+//            dcr = new DCRSummaryTransactions(
+//                ObjectHelpers.generateIDandRandString(),
+//                "412-555-00",
+//                null,
+//                null,
+//                bill.getSolarResidualCredit()!= null ? ("-" + bill.getSolarResidualCredit()) : "0",
+//                ObjectHelpers.getSqlDate(),
+//                ObjectHelpers.getSqlTime(),
+//                login.getId(),
+//                null,
+//                null,
+//                ObjectHelpers.getCurrentTimestamp(),
+//                ObjectHelpers.getCurrentTimestamp(),
+//                orNumberField.getText(),
+//                "BOTH",
+//                office,
+//                activeAccount.getId());
+//            DCRSummaryTransactionsDao.insert(connection, dcr);
+        }
     }
     
     public void print(ServiceAccounts account, List<PaidBills> bills, String orNumber, String username) {

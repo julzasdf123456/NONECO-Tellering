@@ -69,7 +69,24 @@ public class DCRSummaryTransactionsDao {
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenSubsidy())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSeniorCitizenDiscountAndSubsidyAdjustment()));
             
-            return Double.valueOf(ObjectHelpers.roundFourNoComma(vat + ""));
+            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public static double getNetMeterCommercialSales(Bills bill) {
+        try {
+            double sales = Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarDemandChargeKW())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarDemandChargeKWH())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarRetailCustomerCharge())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarSupplySystemCharge())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarMeteringRetailCharge())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSolarMeteringSystemCharge())) +
+                    Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSupplyRetailCustomerCharge()));
+            
+            return Double.valueOf(ObjectHelpers.roundTwoNoComma(sales + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
@@ -171,7 +188,7 @@ public class DCRSummaryTransactionsDao {
             double vat = Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getGenerationVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getTransmissionVAT())) +
                     Double.valueOf(ObjectHelpers.validateNullNumbers(bill.getSystemLossVAT()));
-            return Double.valueOf(ObjectHelpers.roundFourNoComma(vat + ""));
+            return Double.valueOf(ObjectHelpers.roundTwoNoComma(vat + ""));
         } catch (Exception e) {
             e.printStackTrace();
             return 0;

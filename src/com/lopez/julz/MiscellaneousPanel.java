@@ -21,7 +21,6 @@ import helpers.TransactionsPrint;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
@@ -30,8 +29,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -349,7 +346,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         addCheckButton.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
         addCheckButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/add_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         addCheckButton.setText("Add Check");
-        addCheckButton.setEnabled(false);
         addCheckButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addCheckButtonActionPerformed(evt);
@@ -367,7 +363,6 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
         transactBtn.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         transactBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png"))); // NOI18N
         transactBtn.setText("Transact");
-        transactBtn.setEnabled(false);
         transactBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 transactBtnActionPerformed(evt);
@@ -630,7 +625,11 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
 
     private void cashPaymentFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cashPaymentFieldKeyReleased
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
-            showTransactConfirmation();
+            if (consumerNameField.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Please input Consumer Name/Payee Name.");
+            } else {
+                showTransactConfirmation();
+            }
         } else {
             totalAmountPaid.setValue(getTotalAmount());
         }
@@ -801,7 +800,11 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_addCheckButtonActionPerformed
 
     private void transactBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_transactBtnActionPerformed
-        showTransactConfirmation();
+        if (consumerNameField.getText().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Please input Consumer Name/Payee Name.");
+        } else {
+            showTransactConfirmation();
+        }
     }//GEN-LAST:event_transactBtnActionPerformed
 
     private void clearChecksBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearChecksBtnActionPerformed
@@ -845,7 +848,7 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_clearBtnActionPerformed
 
     private void miscTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_miscTableMouseClicked
-        if(SwingUtilities.isRightMouseButton(evt) == true && activeAccount != null) {
+        if(SwingUtilities.isRightMouseButton(evt) == true && !consumerNameField.getText().isEmpty()) {
             payableSearch();
         } 
     }//GEN-LAST:event_miscTableMouseClicked
@@ -1767,8 +1770,8 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                     TransactionIndex transaction = new TransactionIndex(
                             transId,
                             office + "-" + transId,
-                            activeAccount.getServiceAccountName(),
-                            "Payment of " + activeAccount.getServiceAccountName() + " from various items",
+                            consumerNameField.getText(),
+                            "Payment of " + consumerNameField.getText() + " from various items",
                             nextOrNumber + "",
                             ObjectHelpers.getSqlDate(),
                             0 + "",
@@ -1786,11 +1789,11 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                             null,
                             null,
                             null,
-                            activeAccount.getServiceAccountName(),
+                            consumerNameField.getText(),
                             null,
                             null, 
                             null,
-                            activeAccount.getId(),
+                            (activeAccount != null ? activeAccount.getId() : ""),
                             ObjectHelpers.getCurrentTimestamp(),
                             ObjectHelpers.getCurrentTimestamp()
                     );
@@ -1832,7 +1835,9 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                             
                             // CREATE TICKET IF RECONNECTION
                             if (payablesList.get(i).getAccountCode().equals("312-456-00")) {
-                                TicketsDao.createReconnection(connection, activeAccount, login, office);
+                                if (activeAccount != null) {
+                                    TicketsDao.createReconnection(connection, activeAccount, login, office);
+                                }                                
                             }
                         }                            
                     }
@@ -1939,15 +1944,16 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                     consumerAddress.setText("");
                     cashPaymentField.setValue(null);
                     cashPaymentField.setEnabled(false);
-                    addCheckButton.setEnabled(false);
+//                    addCheckButton.setEnabled(false);
                     clearChecksBtn.setEnabled(false);
                     totalPayableLabel.setText("0.0");
                     totalAmountPaid.setValue(null);
-                    transactBtn.setEnabled(false);
+//                    transactBtn.setEnabled(false);
                     if (checkModel != null) {
                         checkModel.getDataVector().removeAllElements();
                         checkModel.fireTableDataChanged();
                     }
+                    activeAccount = null;
                     fetchOR();
                 } else {
                     Notifiers.showErrorMessage("Invalid Amount", "The amount you inputted is less than the actual amount.");
@@ -1963,7 +1969,15 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
     
     public void print(TransactionIndex index, List<TransactionDetails> details, String username) {
         try {
-            ServiceAccounts account = ServiceAccountsDao.getOneById(connection, index.getAccountNumber());
+            ServiceAccounts account;
+            if (index.getAccountNumber().isEmpty()) {
+                account = new ServiceAccounts();
+                account.setServiceAccountName(index.getPayeeName());
+                account.setMeterDetailsId("-");
+                account.setOldAccountNo("-");
+            } else {
+                account = ServiceAccountsDao.getOneById(connection, index.getAccountNumber());
+            }
             
             PrinterJob job = PrinterJob.getPrinterJob();
             PageFormat pf = job.defaultPage();

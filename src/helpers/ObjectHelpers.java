@@ -210,6 +210,18 @@ public class ObjectHelpers {
         }
     }
     
+    public static String formatSqlDateddMMyyyy(String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
+            Date d = sdf.parse(date);
+            sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.format(d);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
     public static String formatORPrintDate(String date) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

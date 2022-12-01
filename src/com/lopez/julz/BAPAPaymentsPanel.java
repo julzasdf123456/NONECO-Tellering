@@ -825,7 +825,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
 
     public void fillBillingMonths() {
         try {
-            String[] billMonths = ObjectHelpers.getPreviousMonths(6);
+            String[] billMonths = ObjectHelpers.getPreviousMonths(15);
             for (int i=0; i<billMonths.length; i++) {
                 billingMonthDropdown.addItem(new MonthParser(billMonths[i], ObjectHelpers.formatReadableDate(billMonths[i])).toString());
             }

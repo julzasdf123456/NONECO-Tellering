@@ -558,7 +558,6 @@
               <Image iconType="3" name="/icons/add_FILL1_wght400_GRAD0_opsz20.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="Add Check"/>
-            <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="addCheckButtonActionPerformed"/>
@@ -595,7 +594,6 @@
               <Image iconType="3" name="/icons/check_circle_FILL1_wght400_GRAD0_opsz20.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="Transact"/>
-            <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="transactBtnActionPerformed"/>

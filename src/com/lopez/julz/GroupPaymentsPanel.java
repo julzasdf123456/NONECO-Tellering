@@ -782,7 +782,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
 
     public void fillBillingMonths() {
         try {
-            String[] billMonths = ObjectHelpers.getPreviousMonths(6);
+            String[] billMonths = ObjectHelpers.getPreviousMonths(15);
             for (int i=0; i<billMonths.length; i++) {
                 billingMonthDropdown.addItem(new MonthParser(billMonths[i], ObjectHelpers.formatReadableDate(billMonths[i])).toString());
             }
@@ -985,6 +985,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         try {
             // reset
             totalAmountPayable = 0;
+            surchargeAmountPayable = 0;
             
             noOfConsumersField.setText("");
             netAmountDue.setValue(null);
@@ -1068,9 +1069,10 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
     public void addTableRemovePopupMenu(JTable table) {
         try {
             JPopupMenu popupMenu = new JPopupMenu();
-            JMenuItem remove = new JMenuItem("Remove");
+            JMenuItem remove = new JMenuItem("Remove Account from Queue");
+            JMenuItem removeSurcharge = new JMenuItem("Remove Surcharge");
+            
             remove.addActionListener(new ActionListener() {
-
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     int index = table.getSelectedRow();
@@ -1078,14 +1080,39 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                     billsList.remove(index);
                     ((DefaultTableModel)table.getModel()).removeRow(index);
                     
-                    double amnt = Double.valueOf(bill.getNetAmount()) + (bill.getIsUnlockedForPayment() != null ? Double.valueOf(bill.getIsUnlockedForPayment()) : 0);
+                    double amnt = Double.valueOf(bill.getNetAmount());
                     
                     totalAmountPayable = totalAmountPayable-amnt;
                     
-                    totalAmountPaid.setValue(totalAmountPayable);  
-                    cashPaymentField.setValue(totalAmountPayable);
-                    netAmountDue.setValue(totalAmountPayable);
+                    double surchargeAdded = bill.getIsUnlockedForPayment() != null ? Double.valueOf(bill.getIsUnlockedForPayment()) : 0;
+                    surchargeAmountPayable = surchargeAmountPayable - surchargeAdded;
+                    //remove surcharge from queue
+                    bill.setIsUnlockedForPayment("0");
+                    
+                    totalAmountPaid.setValue(getOverAllPayable());  
+                    netAmountDue.setValue(getOverAllPayable());
+                    cashPaymentField.setValue(getOverAllPayable());
                     noOfConsumersField.setText(billsList.size() + "");
+                }
+            });
+            
+            removeSurcharge.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int index = table.getSelectedRow();
+                    //deduct from total
+                    double surchargeAdded = billsList.get(index).getIsUnlockedForPayment() != null ? Double.valueOf(billsList.get(index).getIsUnlockedForPayment()) : 0;
+                    surchargeAmountPayable = surchargeAmountPayable - surchargeAdded;
+                    //remove surcharge from queue
+                    billsList.get(index).setIsUnlockedForPayment("0");
+                    
+                    // UPDATE UI
+                    netAmountDue.setValue(getOverAllPayable());
+                    cashPaymentField.setValue(getOverAllPayable());
+                    cashPaymentField.requestFocus();
+                    totalAmountPaid.setValue(getOverAllPayable()); 
+                    table.getModel().setValueAt("0", index, 9);
+                    table.getModel().setValueAt(table.getValueAt(index, 6).toString(), index, 10);
                 }
             });
             
@@ -1116,6 +1143,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 }
             });
             popupMenu.add(remove);
+            popupMenu.add(removeSurcharge);
             table.setComponentPopupMenu(popupMenu);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1468,6 +1496,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 // RESET
                 fetchOR();
                 totalAmountPayable = 0;
+                surchargeAmountPayable = 0;
 
                 noOfConsumersField.setText("");
                 netAmountDue.setValue(null);

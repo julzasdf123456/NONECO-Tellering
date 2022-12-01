@@ -69,7 +69,7 @@ public class PaidBillsDao {
     public static List<PaidBills> getSumOr(Connection con, String from, String to, String userid) {
         try {
             List<PaidBills> paidBillses = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT * FROM " + paidBillsTableName + " WHERE (ORNumber BETWEEN TRY_CAST('" + from + "' AS DECIMAL(20,2)) AND TRY_CAST('" + to + "' AS DECIMAL(20,2))) AND Status IS NULL AND AccountNumber IS NOT NULL AND Teller='" + userid + "' ORDER BY ORNumber");
+            PreparedStatement ps = con.prepareStatement("SELECT * FROM " + paidBillsTableName + " WHERE (ORNumber BETWEEN '" + from + "' AND '" + to + "') AND Status IS NULL AND AccountNumber IS NOT NULL AND Teller='" + userid + "' ORDER BY ORNumber");
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
@@ -461,7 +461,28 @@ public class PaidBillsDao {
                             rs.getString("DateAdjusted"),
                             rs.getString("ForCancellation"),
                             rs.getString("CancelRequestedBy"),
-                            rs.getString("CancelApprovedBy"));
+                            rs.getString("CancelApprovedBy"),
+                            rs.getString("KatasNgVat"),
+                            rs.getString("SolarImportPresent"),
+                            rs.getString("SolarImportPrevious"),
+                            rs.getString("SolarExportPresent"),
+                            rs.getString("SolarExportPrevious"),
+                            rs.getString("SolarImportKwh"),
+                            rs.getString("SolarExportKwh"),
+                            rs.getString("GenerationChargeSolarExport"),
+                            rs.getString("SolarResidualCredit"), // IF NEGATIVE ANG AMOUNT
+                            rs.getString("SolarDemandChargeKW"),
+                            rs.getString("SolarDemandChargeKWH"),
+                            rs.getString("SolarRetailCustomerCharge"),
+                            rs.getString("SolarSupplySystemCharge"),
+                            rs.getString("SolarMeteringRetailCharge"),
+                            rs.getString("SolarMeteringSystemCharge"),
+                            rs.getString("Item1"), // CURRENT AMOUNT DU TO CUSTOMER / PARTIAL AMOUNT
+                            rs.getString("Item2"),
+                            rs.getString("Item3"),
+                            rs.getString("Item4"), // CURRENT AMOUNT CUSTOMER TO DU (Solar Gen - Residual sa Previous)
+                            rs.getString("Item5")
+                );
                 billsList.add(bill);
             }
             return billsList;

@@ -1364,7 +1364,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             bill.getEvat5Percent(),
                             bill.getAdditionalCharges(),
                             bill.getDeductions(),
-                            ObjectHelpers.roundFourNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), Double.valueOf(selectedBills.get(i).getAdditionalKwh())) + ""),
+                            ObjectHelpers.roundTwoNoComma(ObjectHelpers.getTotals(Double.valueOf(selectedBills.get(i).getNetAmount()), Double.valueOf(selectedBills.get(i).getAdditionalKwh())) + ""),
                             "MONTHLY BILL",
                             bill.getId(),
                             login.getId(),
@@ -1417,7 +1417,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                             ObjectHelpers.generateIDandRandString(),
                             "312-450-00",
-                            null,
+                            bill.getServicePeriod(),
                             null,
                             paidBill.getSurcharge() != null ? paidBill.getSurcharge() : "0",
                             ObjectHelpers.getSqlDate(),
@@ -1443,7 +1443,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                         DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
                                 ObjectHelpers.generateIDandRandString(),
                                 "223-235-20",
-                                null,
+                                bill.getServicePeriod(),
                                 null,
                                 bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0",
                                 ObjectHelpers.getSqlDate(),
@@ -1473,7 +1473,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                         bill.getServicePeriod(),
                                         null,
                                         orNumberField.getText(),
-                                        ObjectHelpers.roundFourNoComma((getCashRemainFromCheck()/selectedBills.size()) +""),
+                                        ObjectHelpers.roundTwoNoComma((getCashRemainFromCheck()/selectedBills.size()) +""),
                                         "Cash",
                                         null,
                                         null, 
@@ -1503,7 +1503,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                                     bill.getServicePeriod(),
                                     null,
                                     orNumberField.getText(),
-                                    ObjectHelpers.roundFourNoComma((Double.valueOf(bill.getNetAmount()) + surcharge) + ""),
+                                    ObjectHelpers.roundTwoNoComma((Double.valueOf(bill.getNetAmount()) + surcharge) + ""),
                                     "Cash",
                                     null,
                                     null, 
@@ -1532,6 +1532,11 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     
                     //ALL DCR
                     saveDCR(bill);
+                    
+                    /**
+                     * FIX DCR
+                     */
+                    fixDCR(login.getId(), paidBill.getAccountNumber(), paidBill.getORNumber(), ObjectHelpers.getSqlDate(), paidBill, bill.getServicePeriod());
                 }
 
                 if (successStream) {                    
@@ -1615,7 +1620,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         activeAccount.getDistributionAccountCode(),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) + "",
                         ObjectHelpers.getSqlDate(),
@@ -1638,7 +1643,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) + "",
                         ObjectHelpers.getSqlDate(),
@@ -1658,7 +1663,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersRPTCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         bill.getRealPropertyTax(),
                         ObjectHelpers.getSqlDate(),
@@ -1678,7 +1683,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         "140-143-30",
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         bill.getRealPropertyTax(),
                         ObjectHelpers.getSqlDate(),
@@ -1700,7 +1705,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         "311-448-00",
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1721,7 +1726,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1741,7 +1746,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getGLCodePerAccountType(BillsDao.getAccountType(bill.getConsumerType())),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1765,7 +1770,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                 ObjectHelpers.generateIDandRandString(),
                 DCRSummaryTransactionsDao.getARConsumersTermedPayments(activeAccount.getTownCode()),
-                null,
+                bill.getServicePeriod(),
                 null,
                 bill.getAdditionalCharges(),
                 ObjectHelpers.getSqlDate(),
@@ -1786,7 +1791,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         DCRSummaryTransactions dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-87",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getNPCStrandedDebt(),
             ObjectHelpers.getSqlDate(),
@@ -1806,7 +1811,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-65",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getNPCStrandedDebt(),
             ObjectHelpers.getSqlDate(),
@@ -1826,7 +1831,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-92",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getStrandedContractCosts(),
             ObjectHelpers.getSqlDate(),
@@ -1846,7 +1851,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-62",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getStrandedContractCosts(),
             ObjectHelpers.getSqlDate(),
@@ -1866,7 +1871,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-88",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getFeedInTariffAllowance(),
             ObjectHelpers.getSqlDate(),
@@ -1886,7 +1891,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-64",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getFeedInTariffAllowance(),
             ObjectHelpers.getSqlDate(),
@@ -1906,7 +1911,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-89",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationREDCI(),
             ObjectHelpers.getSqlDate(),
@@ -1926,7 +1931,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-63",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationREDCI(),
             ObjectHelpers.getSqlDate(),
@@ -1946,7 +1951,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-94",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getGenerationVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1966,7 +1971,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-95",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getTransmissionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1986,7 +1991,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-96",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getSystemLossVAT(),
             ObjectHelpers.getSqlDate(),
@@ -2006,7 +2011,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-97",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getDistributionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -2026,7 +2031,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "170-184-40",
-            null,
+            bill.getServicePeriod(),
             null,
             DCRSummaryTransactionsDao.getGenTransSyslossVatSales(bill) + "",
             ObjectHelpers.getSqlDate(),
@@ -2046,7 +2051,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "250-255-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getDistributionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -2066,7 +2071,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-98",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2086,7 +2091,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-60",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2106,7 +2111,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-99",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEnvironmentalCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2126,7 +2131,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-90",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEnvironmentalCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2146,7 +2151,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-93",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getRFSC(),
             ObjectHelpers.getSqlDate(),
@@ -2166,7 +2171,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "211-211-10",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getRFSC(),
             ObjectHelpers.getSqlDate(),
@@ -2186,7 +2191,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-160-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEvat2Percent() != null ? ("-" + bill.getEvat2Percent()) : "0",
             ObjectHelpers.getSqlDate(),
@@ -2206,7 +2211,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-170-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEvat5Percent() != null ? ("-" + bill.getEvat5Percent()) : "0",
             ObjectHelpers.getSqlDate(),
@@ -2229,7 +2234,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                 ObjectHelpers.generateIDandRandString(),
                 "311-442-00",
-                null,
+                bill.getServicePeriod(),
                 null,
                 DCRSummaryTransactionsDao.getNetMeterCommercialSales(bill) + "",
                 ObjectHelpers.getSqlDate(),
@@ -2248,7 +2253,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                 ObjectHelpers.generateIDandRandString(),
                 "412-555-00",
-                null,
+                bill.getServicePeriod(),
                 null,
                 bill.getGenerationChargeSolarExport() != null ? ("-" + bill.getGenerationChargeSolarExport()) : "0",
                 ObjectHelpers.getSqlDate(),
@@ -2267,7 +2272,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
 //            dcr = new DCRSummaryTransactions(
 //                ObjectHelpers.generateIDandRandString(),
 //                "412-555-00",
-//                null,
+//                bill.getServicePeriod(),
 //                null,
 //                bill.getSolarResidualCredit()!= null ? ("-" + bill.getSolarResidualCredit()) : "0",
 //                ObjectHelpers.getSqlDate(),
@@ -2684,6 +2689,40 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
+        }
+    }
+    
+    public void fixDCR(String userId, String accountNumber, String orNumber, String day, PaidBills paidBill, String period) {
+        try {
+            double netAmount = paidBill.getNetAmount() != null ? Double.valueOf(paidBill.getNetAmount()) : 0;
+            double dcrAmount = ObjectHelpers.roundTwoNoCommaDouble(DCRSummaryTransactionsDao.getDcr(connection, orNumber, userId, accountNumber, day, period));
+            
+            double diff = netAmount - dcrAmount;
+            
+            if (diff == 0) {
+                
+            } else {
+                DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                ObjectHelpers.generateIDandRandString(),
+                DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
+                paidBill.getServicePeriod(),
+                null,
+                ObjectHelpers.roundFourNoComma(diff) + "",
+                ObjectHelpers.getSqlDate(),
+                ObjectHelpers.getSqlTime(),
+                userId,
+                null,
+                "FIX",
+                ObjectHelpers.getCurrentTimestamp(),
+                ObjectHelpers.getCurrentTimestamp(),
+                orNumber,
+                "COLLECTION",
+                office,
+                accountNumber);
+                DCRSummaryTransactionsDao.insert(connection, dcr);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

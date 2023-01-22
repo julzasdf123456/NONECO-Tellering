@@ -201,7 +201,7 @@ public class DCRSummaryTransactionsDao {
             
             PreparedStatement ps = con.prepareStatement("SELECT GLCode, "
                     + "(SELECT Notes FROM Cashier_AccountGLCodes WHERE AccountCode=Cashier_DCRSummaryTransactions.GLCode) AS Description,"
-                    + "SUM(TRY_CAST(Amount AS DECIMAL(25,4))) AS Amount "
+                    + "SUM(TRY_CAST(Amount AS DECIMAL(25,2))) AS Amount "
                     + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND (ReportDestination='COLLECTION' OR ReportDestination='BOTH') "
                     + "GROUP BY GLCode ORDER BY GLCode");
             ps.setString(1, day);
@@ -359,6 +359,28 @@ public class DCRSummaryTransactionsDao {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    public static double getDcr(Connection con, String orNumber, String teller, String accountNumber, String day, String period) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT "
+                    + "SUM(TRY_CAST(Amount AS DECIMAL(25,4))) AS Amount "
+                    + "FROM Cashier_DCRSummaryTransactions WHERE Day=? AND Teller=? AND AccountNumber=? AND ORNumber=? AND NEACode=? AND (ReportDestination='COLLECTION' OR ReportDestination='BOTH')");
+            ps.setString(1, day);
+            ps.setString(2, teller);
+            ps.setString(3, accountNumber);
+            ps.setString(4, orNumber);
+            ps.setString(5, period);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("Amount") != null ? Double.valueOf(rs.getString("Amount")) : 0;
+            } else {
+                return 0;
+            }            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         }
     }
 }

@@ -25,7 +25,7 @@ public class BAPAAdjustmentDetailsDao {
                     + " FROM Cashier_BAPAAdjustmentDetails cb LEFT JOIN Billing_Bills b ON cb.BillId=b.id " +
                         "LEFT JOIN Billing_ServiceAccounts sa ON sa.id=cb.AccountNumber " +
                         "WHERE cb.ServicePeriod = '" + period + "' AND sa.OrganizationParentAccount='" + bapaName + "' " +
-                        "AND cb.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE ServicePeriod='" + period + "' AND AccountNumber IS NOT NULL AND Status IS NULL) ORDER BY sa.OldAccountNo"
+                        "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE ServicePeriod=b.ServicePeriod AND AccountNumber IS NOT NULL AND (Status IS NULL OR Status='Application')) ORDER BY sa.OldAccountNo"
                     );
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {

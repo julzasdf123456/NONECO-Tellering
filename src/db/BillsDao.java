@@ -430,7 +430,7 @@ public class BillsDao {
                 return 0;
             } else {
                 if (ObjectHelpers.isAfterDue(bill)) {
-                    return (Double.valueOf(bill.getNetAmount()) * .05) + getInterest(bill);
+                    return ObjectHelpers.roundTwoNoCommaDouble((Double.valueOf(bill.getNetAmount()) * .05) + getInterest(bill));
                 } else {
                     return 0;
                 }
@@ -445,10 +445,11 @@ public class BillsDao {
         try {
             DatabaseConnection db = new DatabaseConnection();
             Connection con = db.getDbConnectionFromDatabase(ConfigFileHelpers.getServer());
+            String latestRate = getLatestBillingMonthFromRates(con);
         
             long months = ChronoUnit.MONTHS.between(
                     LocalDate.parse(bill.getServicePeriod()).withDayOfMonth(1),
-                    LocalDate.parse(getLatestBillingMonthFromRates(con)).withDayOfMonth(1));
+                    LocalDate.parse(latestRate).withDayOfMonth(1));
             
             if (months >= 2) {
                 return (Double.valueOf(bill.getNetAmount()) * .02) * (months-1);

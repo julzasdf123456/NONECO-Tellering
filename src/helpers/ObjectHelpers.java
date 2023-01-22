@@ -80,6 +80,26 @@ public class ObjectHelpers {
         }
     }
     
+    public static String roundTwoNoComma(Double doubleX) {
+        try {
+            DecimalFormat df = new DecimalFormat("#######.00");
+            return df.format(doubleX);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
+    public static double roundTwoNoCommaDouble(Double doubleX) {
+        try {
+            DecimalFormat df = new DecimalFormat("#######.00");
+            return Double.valueOf(df.format(doubleX));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
     public static String roundFourNoComma(String doubleX) {
         try {
             Double num = Double.valueOf(doubleX);
@@ -88,6 +108,26 @@ public class ObjectHelpers {
         } catch (Exception e) {
             e.printStackTrace();
             return "";
+        }
+    }
+    
+//    public static String roundFourNoComma(Double doubleX) {
+//        try {
+//            DecimalFormat df = new DecimalFormat("#######.0000");
+//            return df.format(doubleX);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return "";
+//        }
+//    }
+    
+    public static double roundFourNoComma(Double doubleX) {
+        try {
+            DecimalFormat df = new DecimalFormat("#######.0000");
+            return Double.valueOf(df.format(doubleX));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         }
     }
     
@@ -114,7 +154,7 @@ public class ObjectHelpers {
             for (int i=0; i<values.length; i++) {
                 total += values[i];
             }
-            return total + "";
+            return roundTwoNoComma(total) + "";
         } catch (Exception e) {
             e.printStackTrace();
             return "0";
@@ -213,6 +253,18 @@ public class ObjectHelpers {
     public static String formatSqlDateddMMyyyy(String date) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy");
+            Date d = sdf.parse(date);
+            sdf = new SimpleDateFormat("yyyy-MM-dd");
+            return sdf.format(d);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+    
+    public static String formatSqlDateMMMddyyyy(String date) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
             Date d = sdf.parse(date);
             sdf = new SimpleDateFormat("yyyy-MM-dd");
             return sdf.format(d);

@@ -134,7 +134,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         serviceConnections = new ArrayList<>();
         serviceConnectionPayables = new ArrayList<>();
         
-        getQueue();
+        getQueue(null);
     }
 
     /**
@@ -184,6 +184,8 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         jLabel4 = new javax.swing.JLabel();
         jScrollPane4 = new javax.swing.JScrollPane();
         powerLoadPayables = new javax.swing.JTable();
+        jLabel5 = new javax.swing.JLabel();
+        searchField = new javax.swing.JTextField();
 
         jLabel1.setFont(new java.awt.Font("Arial", 1, 14)); // NOI18N
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/power_FILL1_wght400_GRAD0_opsz24.png"))); // NOI18N
@@ -375,7 +377,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                 .addComponent(jSeparator5, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(transactBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(172, Short.MAX_VALUE))
         );
 
         jLabel2.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
@@ -438,6 +440,16 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         powerLoadPayables.setRowHeight(28);
         jScrollPane4.setViewportView(powerLoadPayables);
 
+        jLabel5.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
+        jLabel5.setText("Search");
+
+        searchField.setFont(new java.awt.Font("Arial", 0, 14)); // NOI18N
+        searchField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                searchFieldKeyReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -450,9 +462,11 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
+                            .addComponent(jLabel3)
+                            .addComponent(jLabel5)
+                            .addComponent(searchField))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 457, Short.MAX_VALUE)
@@ -484,16 +498,21 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel2)
-                            .addComponent(jLabel3))
+                            .addComponent(jLabel5))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 674, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                                 .addGap(18, 18, 18)
                                 .addComponent(jLabel4)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(searchField, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane1)))))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -698,6 +717,21 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_totalAmounPayableKeyReleased
 
+    private void searchFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchFieldKeyReleased
+        try {
+            Object search = searchField.getText();
+            
+            if (search != null) {
+                getQueue(search);
+            } else {
+                getQueue(null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Notifiers.showErrorMessage("Error searching", e.getMessage());
+        }
+    }//GEN-LAST:event_searchFieldKeyReleased
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addCheckButton;
@@ -712,6 +746,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -726,6 +761,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     private javax.swing.JTable payablesTable;
     private javax.swing.JTable powerLoadPayables;
     private javax.swing.JTable queueTable;
+    private javax.swing.JTextField searchField;
     private javax.swing.JFormattedTextField totalAmounPayable;
     private javax.swing.JFormattedTextField totalAmountPaid;
     private javax.swing.JButton transactBtn;
@@ -806,15 +842,20 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
     
     public void updateOR() {
         fetchOR();
-        getQueue();
+        getQueue(searchField.getText());
         System.out.println("OR FETCHED FOR SERVICE CONNECTION PAYMENTS");
     }
     
-    public void getQueue() {
+    public void getQueue(Object regex) {
         try {
             serviceConnections.clear();
             
-            serviceConnections.addAll(ServiceConnectionsDao.getQueue(connection));
+            if(regex != null) {
+                serviceConnections.addAll(ServiceConnectionsDao.getQueueSearch(connection, regex.toString(), office));
+            } else {
+                serviceConnections.addAll(ServiceConnectionsDao.getQueueSearch(connection, "", office));
+            }
+            
             int qSize = serviceConnections.size();
             Object data[][] = new Object[qSize][columnNames.length];
             for (int i=0; i<qSize; i++) {
@@ -863,11 +904,13 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
             for (int i=0; i<serviceConnectionPayables.size(); i++) {
                 scpData[i][0] = serviceConnectionPayables.get(i).getParticularName();
                 scpData[i][1] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getAmount() != null ? serviceConnectionPayables.get(i).getAmount() : "0");
-                scpData[i][2] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
+//                scpData[i][2] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
+                scpData[i][2] = "0";
                 scpData[i][3] = ObjectHelpers.roundTwo(serviceConnectionPayables.get(i).getTotal() != null ? serviceConnectionPayables.get(i).getTotal() : "0");
                 serviceConnectionTotalPayable += Double.valueOf(serviceConnectionPayables.get(i).getTotal() != null ? serviceConnectionPayables.get(i).getTotal() : "0");
                 subTotal += Double.valueOf(serviceConnectionPayables.get(i).getAmount()!= null ? serviceConnectionPayables.get(i).getAmount() : "0");
-                totalVat += Double.valueOf(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
+//                totalVat += Double.valueOf(serviceConnectionPayables.get(i).getVat() != null ? serviceConnectionPayables.get(i).getVat() : "0");
+                totalVat += 0;
             }
             
             scpData[serviceConnectionPayables.size()][0] = "Over All Total";
@@ -1127,7 +1170,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                         nextOrNumber + "",
                         ObjectHelpers.getSqlDate(),
                         ObjectHelpers.roundTwoNoComma(subTotal + ""),
-                        ObjectHelpers.roundTwoNoComma(totalVat + ""),
+                        "0",
                         ObjectHelpers.roundTwoNoComma(getOverallTotal() + ""),
                         null,
                         login.getId(),
@@ -1166,7 +1209,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                             transId,
                             serviceConnectionPayables.get(i).getParticularName(),
                             serviceConnectionPayables.get(i).getAmount(),
-                            serviceConnectionPayables.get(i).getVat(),
+                            "0",
                             serviceConnectionPayables.get(i).getTotal(),
                             serviceConnectionPayables.get(i).getAccountCode(),
                             ObjectHelpers.getCurrentTimestamp(),
@@ -1302,6 +1345,11 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                         }
                     }
                 }
+                
+                /**
+                 * UPDATE PARTICULARS
+                 */
+                ParticularPaymentTransactionsDao.updateParticulars(connection, activeSvcCon.getId(), nextOrNumber + "");
 
                 /**
                  * SAVE OR ASSIGNING
@@ -1348,7 +1396,7 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                     checkModel.fireTableDataChanged();
                 }
                 fetchOR();
-                getQueue();
+                getQueue(searchField.getText());
                 totalAmounPayable.setValue(null);
                 cashPaymentField.setEnabled(false);
                 cashPaymentField.setValue(null);

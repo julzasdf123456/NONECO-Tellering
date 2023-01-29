@@ -5,6 +5,7 @@
  */
 package db;
 
+import helpers.ObjectHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,7 +23,7 @@ public class ParticularPaymentTransactionsDao {
             List<ParticularPaymentTransactions> payments = new ArrayList<>();
             PreparedStatement ps = con.prepareStatement("SELECT t.*, p.Particular AS ParticularName, p.AccountNumber FROM CRM_ServiceConnectionParticularPaymentsTransactions t "
                     + "LEFT JOIN CRM_ServiceConnectionPaymentParticulars p ON t.Particular=p.id "
-                    + "WHERE t.ServiceConnectionId=?");
+                    + "WHERE t.ServiceConnectionId=? AND (Vat IS NULL OR Vat='0.00')");
             ps.setString(1, svcId);
             ResultSet rs = ps.executeQuery();
             
@@ -45,6 +46,19 @@ public class ParticularPaymentTransactionsDao {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    public static void updateParticulars(Connection con, String svcId, String orno) {
+        try {
+            String query = "UPDATE CRM_ServiceConnectionParticularPaymentsTransactions SET Vat=?, updated_at=? WHERE Vat IS NULL AND ServiceConnectionId=?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, orno);
+            ps.setString(2, ObjectHelpers.getCurrentTimestamp());
+            ps.setString(3, svcId);
+            ps.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

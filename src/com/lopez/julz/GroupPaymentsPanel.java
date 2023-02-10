@@ -1195,6 +1195,14 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             });                
 
             mainPanel.add(cashAmountField);
+            
+            double checkAmountQ = 0;
+            if (checkLists.size() > 0) {
+                for(int j=0; j<checkLists.size(); j++) {
+                    CheckPayments chk = checkLists.get(j);
+                    checkAmountQ += chk.getAmount() != null ? Double.valueOf(chk.getAmount()) : 0;
+                }                                            
+            }
 
             // CHECK AMOUNT
             JLabel checkAmount = new JLabel("CHECK AMOUNT");
@@ -1205,7 +1213,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             totalCheckAmountField.setPreferredSize(new Dimension(250, 36));
             totalCheckAmountField.setFont(new Font("Arial", Font.BOLD, 19)); 
             totalCheckAmountField.setHorizontalAlignment(JTextField.RIGHT);
-            totalCheckAmountField.setValue(0);
+            totalCheckAmountField.setValue(checkAmountQ);
             totalCheckAmountField.setEnabled(false);
             mainPanel.add(totalCheckAmountField);
 
@@ -1301,6 +1309,11 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         }
     }
     
+    public double getCashRemainFromCheck() {
+        double check = getTotalCheckPayments();
+        return (totalAmountPayable) - check;
+    }
+    
     public void transact() {
         try {
             if (getTotalAmount() >= totalAmountPayable) {
@@ -1314,6 +1327,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 }
                 
                 int consSize = billsList.size();
+                double cashRemain = getCashRemainFromCheck();
                 dcrNum = "GROUP-" + ObjectHelpers.getTimeInMillis();
                 for (int i=0; i<consSize; i++) {
                     Bills bill = BillsDao.getOneById(connection, billsList.get(i).getId());
@@ -1382,7 +1396,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                                 ObjectHelpers.generateIDandRandString(),
                                 "312-450-00",
-                                null,
+                                bill.getServicePeriod(),
                                 null,
                                 paidBill.getSurcharge() != null ? paidBill.getSurcharge() : "0",
                                 ObjectHelpers.getSqlDate(),
@@ -1408,7 +1422,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                             DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
                                     ObjectHelpers.generateIDandRandString(),
                                     "223-235-20",
-                                    null,
+                                    bill.getServicePeriod(),
                                     null,
                                     bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0",
                                     ObjectHelpers.getSqlDate(),
@@ -1429,46 +1443,122 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         saveDCR(bill, account);
                         
                         /**
+                        * FIX DCR
+                        */
+                        fixDCR(login.getId(), account.getId(), nextOrNumber + "", ObjectHelpers.getSqlDate(), paidBill, account, bill.getServicePeriod());
+                        
+                        /**
                         * SAVE PAID BILL DETAILS
                         */
-                        if (paymentUsed=="Cash" || paymentUsed == "Cash and Check") {
-                            CheckPayments details = new CheckPayments(
-                                    ObjectHelpers.generateIDandRandString(),
-                                    bill.getAccountNumber(),
-                                    bill.getServicePeriod(),
-                                    null,
-                                    nextOrNumber + "",
-                                    paidBill.getNetAmount(),
-                                    "Cash",
-                                    null,
-                                    null, 
-                                    null,
-                                    login.getId(),
-                                    ObjectHelpers.getCurrentTimestamp(),
-                                    ObjectHelpers.getCurrentTimestamp()
-                            );
-                            PaidBillDetailsDao.insert(connection, details);
-                        } else { // CHECK
-                            // GET CHECK DETAILS
-                            if (checkLists.size() > 0) {                                
+                        if (cashPaymentField.getValue() != null) {
+                            if (paymentUsed.equals("Cash and Check")) {
+                                if (cashRemain > 0) {
+                                    CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            nextOrNumber +"",
+                                            ObjectHelpers.roundTwo((cashRemain/consSize) +""),
+                                            "Cash",
+                                            null,
+                                            null, 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                    );
+                                    PaidBillDetailsDao.insert(connection, details);
+
+                                    if (i==0) {
+                                        if (checkLists.size() > 0) {
+                                            for(int x=0; x<checkLists.size(); x++) {
+                                                CheckPayments chk = checkLists.get(x);
+                                                chk.setId(ObjectHelpers.generateIDandRandString());
+                                                chk.setServicePeriod(bill.getServicePeriod());
+                                                chk.setAccountNumber(paidBill.getAccountNumber());
+                                                chk.setORNumber(nextOrNumber +"");
+                                                chk.setAmount(chk.getAmount() + "");
+                                                PaidBillDetailsDao.insert(connection, chk);
+                                            }                                            
+                                        }
+                                    }                                    
+                                }                            
+                            } else if (paymentUsed.equals("Cash")) {
                                 CheckPayments details = new CheckPayments(
                                         ObjectHelpers.generateIDandRandString(),
                                         bill.getAccountNumber(),
                                         bill.getServicePeriod(),
                                         null,
-                                        nextOrNumber + "",
-                                        paidBill.getNetAmount(),
-                                        "Check",
-                                        checkLists.get(0).getCheckNo(),
-                                        checkLists.get(0).getBank(), 
+                                        nextOrNumber +"",
+                                        ObjectHelpers.roundTwoNoComma(Double.valueOf(paidBill.getNetAmount()) + ""),
+                                        "Cash",
+                                        null,
+                                        null, 
                                         null,
                                         login.getId(),
                                         ObjectHelpers.getCurrentTimestamp(),
                                         ObjectHelpers.getCurrentTimestamp()
                                 );
                                 PaidBillDetailsDao.insert(connection, details);
-                            }                                
-                        }                                                      
+                            }           
+                        } else {
+                            if (paymentUsed.equals("Check")) { 
+                                if (i==0) {
+                                    if (checkLists.size() > 0) {
+                                        for(int x=0; x<checkLists.size(); x++) {
+                                            CheckPayments chk = checkLists.get(x);
+                                            chk.setId(ObjectHelpers.generateIDandRandString());
+                                            chk.setServicePeriod(bill.getServicePeriod());
+                                            chk.setAccountNumber(paidBill.getAccountNumber());
+                                            chk.setORNumber(nextOrNumber +"");
+                                            chk.setAmount(chk.getAmount() + "");
+                                            PaidBillDetailsDao.insert(connection, chk);
+                                        }                                            
+                                    }
+                                }   
+                            }   
+                        }
+//                        if (paymentUsed=="Cash") {
+//                            CheckPayments details = new CheckPayments(
+//                                    ObjectHelpers.generateIDandRandString(),
+//                                    bill.getAccountNumber(),
+//                                    bill.getServicePeriod(),
+//                                    null,
+//                                    nextOrNumber + "",
+//                                    paidBill.getNetAmount(),
+//                                    "Cash",
+//                                    null,
+//                                    null, 
+//                                    null,
+//                                    login.getId(),
+//                                    ObjectHelpers.getCurrentTimestamp(),
+//                                    ObjectHelpers.getCurrentTimestamp()
+//                            );
+//                            PaidBillDetailsDao.insert(connection, details);
+//                        } else if (paymentUsed == "Cash and Check") {
+//                        
+//                        }else { // CHECK
+                            // GET CHECK DETAILS
+//                            if (checkLists.size() > 0) {                                
+//                                CheckPayments details = new CheckPayments(
+//                                        ObjectHelpers.generateIDandRandString(),
+//                                        bill.getAccountNumber(),
+//                                        bill.getServicePeriod(),
+//                                        null,
+//                                        nextOrNumber + "",
+//                                        paidBill.getNetAmount(),
+//                                        "Check",
+//                                        checkLists.get(0).getCheckNo(),
+//                                        checkLists.get(0).getBank(), 
+//                                        null,
+//                                        login.getId(),
+//                                        ObjectHelpers.getCurrentTimestamp(),
+//                                        ObjectHelpers.getCurrentTimestamp()
+//                                );
+//                                PaidBillDetailsDao.insert(connection, details);
+//                            }                                
+//                        }                                                      
 
                        /**
                         * SAVE OR ASSIGNING
@@ -1540,7 +1630,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                 DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         activeAccount.getDistributionAccountCode(),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) + "",
                         ObjectHelpers.getSqlDate(),
@@ -1563,7 +1653,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) + "",
                         ObjectHelpers.getSqlDate(),
@@ -1583,7 +1673,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersRPTCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         bill.getRealPropertyTax(),
                         ObjectHelpers.getSqlDate(),
@@ -1603,7 +1693,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         "140-143-30",
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         bill.getRealPropertyTax(),
                         ObjectHelpers.getSqlDate(),
@@ -1619,13 +1709,53 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         activeAccount.getId());
             DCRSummaryTransactionsDao.insert(connection, dcr);
             
+            // GET FRANCHISE TAX FOR DCR
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        DCRSummaryTransactionsDao.getARConsumersRPTCode(activeAccount.getTownCode()),
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getFranchiseTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "COLLECTION",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+
+            // GET FRANCHISE TAX FOR SALES
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        "140-143-30",
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getFranchiseTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "SALES",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+            
             // GET SALES AR BY CONSUMER TYPE 
             if (activeAccount.getOrganizationParentAccount() != null) {
                 // BAPA
                 dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         "311-448-00",
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1646,7 +1776,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                     dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1666,7 +1796,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                     dcr = new DCRSummaryTransactions(
                         ObjectHelpers.generateIDandRandString(),
                         DCRSummaryTransactionsDao.getGLCodePerAccountType(BillsDao.getAccountType(bill.getConsumerType())),
-                        null,
+                        bill.getServicePeriod(),
                         null,
                         DCRSummaryTransactionsDao.getARConsumers(bill) +"",
                         ObjectHelpers.getSqlDate(),
@@ -1690,7 +1820,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
             DCRSummaryTransactions dcr = new DCRSummaryTransactions(
                 ObjectHelpers.generateIDandRandString(),
                 DCRSummaryTransactionsDao.getARConsumersTermedPayments(activeAccount.getTownCode()),
-                null,
+                bill.getServicePeriod(),
                 null,
                 bill.getAdditionalCharges(),
                 ObjectHelpers.getSqlDate(),
@@ -1711,7 +1841,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         DCRSummaryTransactions dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-87",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getNPCStrandedDebt(),
             ObjectHelpers.getSqlDate(),
@@ -1731,7 +1861,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-65",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getNPCStrandedDebt(),
             ObjectHelpers.getSqlDate(),
@@ -1751,7 +1881,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-92",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getStrandedContractCosts(),
             ObjectHelpers.getSqlDate(),
@@ -1771,7 +1901,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-62",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getStrandedContractCosts(),
             ObjectHelpers.getSqlDate(),
@@ -1791,7 +1921,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-88",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getFeedInTariffAllowance(),
             ObjectHelpers.getSqlDate(),
@@ -1811,7 +1941,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-64",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getFeedInTariffAllowance(),
             ObjectHelpers.getSqlDate(),
@@ -1831,7 +1961,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-89",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationREDCI(),
             ObjectHelpers.getSqlDate(),
@@ -1851,7 +1981,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-63",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationREDCI(),
             ObjectHelpers.getSqlDate(),
@@ -1871,7 +2001,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-94",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getGenerationVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1891,7 +2021,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-95",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getTransmissionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1911,7 +2041,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-96",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getSystemLossVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1931,7 +2061,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-97",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getDistributionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1951,7 +2081,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "170-184-40",
-            null,
+            bill.getServicePeriod(),
             null,
             DCRSummaryTransactionsDao.getGenTransSyslossVatSales(bill) + "",
             ObjectHelpers.getSqlDate(),
@@ -1971,7 +2101,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "250-255-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getDistributionVAT(),
             ObjectHelpers.getSqlDate(),
@@ -1991,7 +2121,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-98",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2011,7 +2141,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-60",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getMissionaryElectrificationCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2031,7 +2161,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-160-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEvat2Percent() != null ? ("-" + bill.getEvat2Percent()) : "0",
             ObjectHelpers.getSqlDate(),
@@ -2051,7 +2181,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-170-00",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEvat5Percent() != null ? ("-" + bill.getEvat5Percent()) : "0",
             ObjectHelpers.getSqlDate(),
@@ -2071,7 +2201,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-99",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEnvironmentalCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2091,7 +2221,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "230-232-90",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getEnvironmentalCharge(),
             ObjectHelpers.getSqlDate(),
@@ -2111,7 +2241,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "140-142-93",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getRFSC(),
             ObjectHelpers.getSqlDate(),
@@ -2131,7 +2261,7 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
             "211-211-10",
-            null,
+            bill.getServicePeriod(),
             null,
             bill.getRFSC(),
             ObjectHelpers.getSqlDate(),
@@ -2188,6 +2318,40 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Printing Transaction", e.getMessage());
+        }
+    }
+    
+    public void fixDCR(String userId, String accountNumber, String orNumber, String day, PaidBills paidBill, ServiceAccounts activeAccount, String period) {
+        try {
+            double netAmount = paidBill.getNetAmount() != null ? Double.valueOf(paidBill.getNetAmount()) : 0;
+            double dcrAmount = ObjectHelpers.roundTwoNoCommaDouble(DCRSummaryTransactionsDao.getDcr(connection, orNumber, userId, accountNumber, day, period));
+            
+            double diff = netAmount - dcrAmount;
+            
+            if (diff == 0) {
+                
+            } else {
+                DCRSummaryTransactions dcr = new DCRSummaryTransactions(
+                ObjectHelpers.generateIDandRandString(),
+                DCRSummaryTransactionsDao.getARConsumersCode(activeAccount.getTownCode()),
+                paidBill.getServicePeriod(),
+                null,
+                ObjectHelpers.roundFourNoComma(diff) + "",
+                ObjectHelpers.getSqlDate(),
+                ObjectHelpers.getSqlTime(),
+                userId,
+                null,
+                "FIX",
+                ObjectHelpers.getCurrentTimestamp(),
+                ObjectHelpers.getCurrentTimestamp(),
+                orNumber,
+                "COLLECTION",
+                office,
+                accountNumber);
+                DCRSummaryTransactionsDao.insert(connection, dcr);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

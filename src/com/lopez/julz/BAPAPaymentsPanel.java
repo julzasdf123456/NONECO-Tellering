@@ -897,12 +897,20 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             JLabel checkAmount = new JLabel("CHECK AMOUNT");
             checkAmount.setFont(new Font("Arial", Font.BOLD, 16));
             mainPanel.add(checkAmount);
+            
+            double checkAmountQ = 0;
+            if (checkLists.size() > 0) {
+                for(int j=0; j<checkLists.size(); j++) {
+                    CheckPayments chk = checkLists.get(j);
+                    checkAmountQ += chk.getAmount() != null ? Double.valueOf(chk.getAmount()) : 0;
+                }                                            
+            }
 
             JFormattedTextField totalCheckAmountField = new JFormattedTextField(formatter);
             totalCheckAmountField.setPreferredSize(new Dimension(250, 36));
             totalCheckAmountField.setFont(new Font("Arial", Font.BOLD, 19)); 
             totalCheckAmountField.setHorizontalAlignment(JTextField.RIGHT);
-            totalCheckAmountField.setValue(0);
+            totalCheckAmountField.setValue(checkAmountQ);
             totalCheckAmountField.setEnabled(false);
             mainPanel.add(totalCheckAmountField);
 
@@ -1665,6 +1673,46 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         ObjectHelpers.getCurrentTimestamp(),
                         ObjectHelpers.getCurrentTimestamp(),
                         nextOrNumber+"",
+                        "SALES",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+            
+            // GET FRANCHISE TAX FOR DCR
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        DCRSummaryTransactionsDao.getARConsumersRPTCode(activeAccount.getTownCode()),
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getFranchiseTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "COLLECTION",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+
+            // GET FRANCHISE TAX FOR SALES
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        "140-143-30",
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getFranchiseTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
                         "SALES",
                         office,
                         activeAccount.getId());

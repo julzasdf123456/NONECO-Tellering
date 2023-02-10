@@ -28,7 +28,6 @@ import com.itextpdf.layout.property.AreaBreakType;
 import com.itextpdf.layout.property.TabAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import static helpers.PowerBillPrint.SAXFONT;
-import java.awt.Desktop;
 import java.awt.print.PrinterJob;
 import java.io.File;
 import java.util.ArrayList;

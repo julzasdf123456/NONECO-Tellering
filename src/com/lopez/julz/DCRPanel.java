@@ -589,7 +589,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 dcrSummaryModel.fireTableDataChanged();
             }
             
-            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
             int dcrSize = dcrSummary.size();
             double dcrSummaryTotal = 0;
             Object[][] data = new Object[dcrSize][dcrSummaryColNames.length];
@@ -638,7 +638,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 powerBillsModel.fireTableDataChanged();
             }
             
-            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
             int powerBillsSize = powerBills.size();
             double powerBillsTotal = 0;
             Object[][] data = new Object[powerBillsSize][powerBillsColNames.length];
@@ -734,7 +734,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 nonPowerBillsModel.fireTableDataChanged();
             }
             
-            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
             int npbSize = nonPowerBills.size();
             double nonPowerBillsTotal = 0;
             Object[][] data = new Object[npbSize][nonPowerBillsColNames.length];
@@ -798,7 +798,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkPaymentsModel.fireTableDataChanged();
             }
             
-            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkPayments.size();
             double checkPaymentsTotal = 0;
             Object[][] data = new Object[checkSize][checkPaymentsColNames.length];
@@ -873,7 +873,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 cancelledORsModel.fireTableDataChanged();
             }
             
-            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
             int size = cancelledORs.size();
             Object[][] data = new Object[size][cancelledORsColNames.length];
             for (int i=0; i<size; i++) {
@@ -1106,8 +1106,7 @@ public class DCRPanel extends javax.swing.JPanel {
 
                 @Override
                 public void popupMenuCanceled(PopupMenuEvent e) {
-                    // TODO Auto-generated method stub
-
+                    
                 }
             });
             popupMenu.add(cancel);

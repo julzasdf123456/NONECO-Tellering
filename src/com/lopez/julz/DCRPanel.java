@@ -60,7 +60,7 @@ public class DCRPanel extends javax.swing.JPanel {
     
     public List<PaidBills> powerBills;
     public DefaultTableModel powerBillsModel;
-    public Object[] powerBillsColNames = {"OR Number", "OR Date", "Account No", "Consumer Name", "Billing Mo", "Payment Time", "Kwh Used", "2%", "5%", "Surcharges", "OCL", "Deductions", "Amount Due"};
+    public Object[] powerBillsColNames = {"OR Number", "OR Date", "Account No", "Consumer Name", "Billing Mo", "Payment Time", "Kwh Used", "2%", "5%", "Surcharges", "OCL", "Deductions", "Amount Paid"};
     
     public List<TransactionDetails> nonPowerBills;
     public DefaultTableModel nonPowerBillsModel;
@@ -301,7 +301,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Power Bills Payments", powerBillsTab);
+        jTabbedPane1.addTab("Cash Power Bills Payments", powerBillsTab);
 
         nonPowerBillsTab.setFont(new java.awt.Font("Arial", 0, 12)); // NOI18N
 
@@ -353,7 +353,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Non-Power Bills Payments", nonPowerBillsTab);
+        jTabbedPane1.addTab("Cash Non-Power Bills Payments", nonPowerBillsTab);
 
         checkPaymentsTotalLabel.setFont(new java.awt.Font("Arial", 1, 17)); // NOI18N
         checkPaymentsTotalLabel.setForeground(new java.awt.Color(204, 51, 0));
@@ -589,7 +589,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 dcrSummaryModel.fireTableDataChanged();
             }
             
-            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int dcrSize = dcrSummary.size();
             double dcrSummaryTotal = 0;
             Object[][] data = new Object[dcrSize][dcrSummaryColNames.length];
@@ -638,25 +638,31 @@ public class DCRPanel extends javax.swing.JPanel {
                 powerBillsModel.fireTableDataChanged();
             }
             
-            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int powerBillsSize = powerBills.size();
             double powerBillsTotal = 0;
             Object[][] data = new Object[powerBillsSize][powerBillsColNames.length];
             for (int i=0; i<powerBillsSize; i++) {
-                data[i][0] = powerBills.get(i).getORNumber();
-                data[i][1] = powerBills.get(i).getORDate();
-                data[i][2] = powerBills.get(i).getAccountNumber();
-                data[i][3] = powerBills.get(i).getId(); // CONSUMER NAME
-                data[i][4] = powerBills.get(i).getServicePeriod();
-                data[i][5] = powerBills.get(i).getPostingTime();
-                data[i][6] = powerBills.get(i).getKwhUsed();
-                data[i][7] = powerBills.get(i).getForm2307TwoPercent() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getForm2307TwoPercent()) : "0";
-                data[i][8] = powerBills.get(i).getForm2307FivePercent() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getForm2307FivePercent()) : "0";
-                data[i][9] = powerBills.get(i).getSurcharge() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getSurcharge()) : "0";
-                data[i][10] = powerBills.get(i).getAdditionalCharges() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getAdditionalCharges()) : "0";
-                data[i][11] = powerBills.get(i).getDeductions() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getDeductions()) : "0";
-                data[i][12] = powerBills.get(i).getNetAmount() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getNetAmount()) : "0";
-                powerBillsTotal += (powerBills.get(i).getNetAmount() != null ? Double.valueOf(powerBills.get(i).getNetAmount()) : 0);                  
+                double amntNet = powerBills.get(i).getNetAmount() != null ? Double.valueOf(powerBills.get(i).getNetAmount()) : 0;
+                System.out.println("" + powerBills.get(i).getPaymentUsed());
+                if (amntNet == 0) {
+                    
+                } else {
+                    data[i][0] = powerBills.get(i).getORNumber();
+                    data[i][1] = powerBills.get(i).getORDate();
+                    data[i][2] = powerBills.get(i).getAccountNumber();
+                    data[i][3] = powerBills.get(i).getId(); // CONSUMER NAME
+                    data[i][4] = powerBills.get(i).getServicePeriod();
+                    data[i][5] = powerBills.get(i).getPostingTime();
+                    data[i][6] = powerBills.get(i).getKwhUsed();
+                    data[i][7] = powerBills.get(i).getForm2307TwoPercent() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getForm2307TwoPercent()) : "0";
+                    data[i][8] = powerBills.get(i).getForm2307FivePercent() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getForm2307FivePercent()) : "0";
+                    data[i][9] = powerBills.get(i).getSurcharge() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getSurcharge()) : "0";
+                    data[i][10] = powerBills.get(i).getAdditionalCharges() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getAdditionalCharges()) : "0";
+                    data[i][11] = powerBills.get(i).getDeductions() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getDeductions()) : "0";
+                    data[i][12] = powerBills.get(i).getNetAmount() != null ? ObjectHelpers.roundTwo(powerBills.get(i).getNetAmount()) : "0";
+                    powerBillsTotal += (powerBills.get(i).getNetAmount() != null ? Double.valueOf(powerBills.get(i).getNetAmount()) : 0);   
+                }                                   
             }
             powerBillsModel = new DefaultTableModel(data, powerBillsColNames) {
                 @Override
@@ -734,7 +740,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 nonPowerBillsModel.fireTableDataChanged();
             }
             
-            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int npbSize = nonPowerBills.size();
             double nonPowerBillsTotal = 0;
             Object[][] data = new Object[npbSize][nonPowerBillsColNames.length];
@@ -798,7 +804,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkPaymentsModel.fireTableDataChanged();
             }
             
-            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkPayments.size();
             double checkPaymentsTotal = 0;
             Object[][] data = new Object[checkSize][checkPaymentsColNames.length];
@@ -841,7 +847,7 @@ public class DCRPanel extends javax.swing.JPanel {
             
             checkPaymentsTable.setModel(checkPaymentsModel);
             checkPaymentsTable.setRowHeight(28);
-            checkPaymentsTable.getColumnModel().getColumn(0).setMaxWidth(60);
+            checkPaymentsTable.getColumnModel().getColumn(0).setMaxWidth(170);
             checkPaymentsTable.getColumnModel().getColumn(0).setMinWidth(50);
             checkPaymentsTable.getColumnModel().getColumn(1).setMaxWidth(130);
             checkPaymentsTable.getColumnModel().getColumn(1).setMinWidth(120);
@@ -873,7 +879,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 cancelledORsModel.fireTableDataChanged();
             }
             
-            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int size = cancelledORs.size();
             Object[][] data = new Object[size][cancelledORsColNames.length];
             for (int i=0; i<size; i++) {
@@ -1130,12 +1136,13 @@ public class DCRPanel extends javax.swing.JPanel {
                 public void actionPerformed(ActionEvent e) {
                     String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
                     String source = table.getValueAt(table.getSelectedRow(), 6).toString();
+                    String account = table.getValueAt(table.getSelectedRow(), 1).toString();
                     
                     if (orNumber != null) {
                         String reason = JOptionPane.showInputDialog(cancelledORsTable, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
                         if (reason != null) {
                             if (source != null && source.equals("POWER BILL")) {
-                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                                PaidBills pb = PaidBillsDao.getOneByORAndAccount(connection, orNumber, account);
                             
                                 if (pb != null) {
                                     PaidBillsDao.requesetCancelOR(connection, pb, reason, login);
@@ -1183,8 +1190,7 @@ public class DCRPanel extends javax.swing.JPanel {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         Notifiers.showErrorMessage("Error Showing Details to Browser", ex.getMessage());
-                    }
-                    
+                    }                    
                 }
             });
             

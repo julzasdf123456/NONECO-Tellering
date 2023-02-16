@@ -146,7 +146,7 @@ public class PaidBillsDao {
                         rs.getString("Form2307FivePercent"),
                         rs.getString("AdditionalCharges"),
                         rs.getString("Deductions"),
-                        rs.getString("CashPaid"),
+                        (rs.getString("CashPaid") != null ? rs.getString("CashPaid") : "0"),
                         null,
                         null,
                         null,
@@ -158,7 +158,7 @@ public class PaidBillsDao {
                         null,
                         null,
                         null,
-                        null,
+                        rs.getString("PaymentUsed"),
                         null,
                         null
                 ));   
@@ -319,6 +319,62 @@ public class PaidBillsDao {
         }
     }
     
+    public static PaidBills getOneByORAndAccount(Connection con, String orNumber, String acctNo) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT p.* FROM Cashier_PaidBills p LEFT JOIN Billing_ServiceAccounts a ON p.AccountNumber=a.id WHERE ORNumber=? AND a.OldAccountNo=?");
+            ps.setString(1, orNumber);
+            ps.setString(2, acctNo);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                PaidBills paidBill = new PaidBills(
+                    rs.getString("id"),
+                    rs.getString("BillNumber"),
+                    rs.getString("AccountNumber"),
+                    rs.getString("ServicePeriod"),
+                    rs.getString("ORNumber"),
+                    rs.getString("ORDate"),
+                    rs.getString("DCRNumber"),
+                    rs.getString("KwhUsed"),
+                    rs.getString("Teller"),
+                    rs.getString("OfficeTransacted"),
+                    rs.getString("PostingDate"),
+                    rs.getString("PostingTime"),
+                    rs.getString("Surcharge"),
+                    rs.getString("Form2307TwoPercent"),
+                    rs.getString("Form2307FivePercent"),
+                    rs.getString("AdditionalCharges"),
+                    rs.getString("Deductions"),
+                    rs.getString("NetAmount"),
+                    rs.getString("Source"),
+                    rs.getString("ObjectSourceId"),
+                    rs.getString("UserId"),
+                    rs.getString("created_at"),
+                    rs.getString("updated_at"),
+                    rs.getString("Status"),
+                    rs.getString("FiledBy"),
+                    rs.getString("ApprovedBy"),
+                    rs.getString("AuditedBy"),
+                    rs.getString("Notes"),
+                    rs.getString("CheckNo"),
+                    rs.getString("Bank"),
+                    rs.getString("CheckExpiration"),
+                    rs.getString("PaymentUsed")
+                );
+                ps.close();
+                rs.close();
+                return paidBill;
+            }
+            
+            ps.close();
+            rs.close();
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
     public static void requesetCancelOR(Connection con, PaidBills pb, String reason, pojos.Login login) {
         try {
             PreparedStatement ps = con.prepareStatement("UPDATE Cashier_PaidBills SET Status='PENDING CANCEL', FiledBy=?, Notes=? WHERE ORNumber=?");
@@ -352,14 +408,17 @@ public class PaidBillsDao {
             ps.clearParameters();
             
             // REMOVE FROM DCR SUMMARY
-            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE ORNumber=?");
+            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE ORNumber=? AND AccountNumber=?");
             ps.setString(1, pb.getORNumber());
+            ps.setString(2, pb.getAccountNumber());
             ps.execute();
             ps.clearParameters();
             
             // REMOVE FROM DETALIS
-            ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ORNumber=?");
+            ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ORNumber=? AND AccountNumber=? AND ServicePeriod=?");
             ps.setString(1, pb.getORNumber());
+            ps.setString(2, pb.getAccountNumber());
+            ps.setString(3, pb.getServicePeriod());
             ps.execute();
             
             ps.close();

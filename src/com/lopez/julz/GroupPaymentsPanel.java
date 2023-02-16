@@ -1749,6 +1749,46 @@ public class GroupPaymentsPanel extends javax.swing.JPanel {
                         activeAccount.getId());
             DCRSummaryTransactionsDao.insert(connection, dcr);
             
+            // GET BUSINESS TAX FOR DCR
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        DCRSummaryTransactionsDao.getARConsumersRPTCode(activeAccount.getTownCode()),
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getBusinessTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "COLLECTION",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+
+            // GET BUSINESS TAX FOR SALES
+            dcr = new DCRSummaryTransactions(
+                        ObjectHelpers.generateIDandRandString(),
+                        "140-143-30",
+                        bill.getServicePeriod(),
+                        null,
+                        bill.getBusinessTax(),
+                        ObjectHelpers.getSqlDate(),
+                        ObjectHelpers.getSqlTime(),
+                        login.getId(),
+                        null,
+                        null,
+                        ObjectHelpers.getCurrentTimestamp(),
+                        ObjectHelpers.getCurrentTimestamp(),
+                        orNumberField.getText(),
+                        "SALES",
+                        office,
+                        activeAccount.getId());
+            DCRSummaryTransactionsDao.insert(connection, dcr);
+            
             // GET SALES AR BY CONSUMER TYPE 
             if (activeAccount.getOrganizationParentAccount() != null) {
                 // BAPA

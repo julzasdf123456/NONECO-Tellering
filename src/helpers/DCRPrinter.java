@@ -56,7 +56,8 @@ public class DCRPrinter {
     private static PageSize defPageSize;
     
     public static void printDcr(pojos.Login l, String date, List<DCRSummaryTransactions> list,
-            List<PaidBills> powerBills, List<TransactionDetails> nonPowerBills, List<TransactionDetails> checkPayments, List<TransactionDetails> cancelledOrs) {
+            List<PaidBills> powerBills, List<TransactionDetails> nonPowerBills, List<TransactionDetails> checkPayments, List<TransactionDetails> cancelledOrs,
+            List<PaidBills> checkSummary) {
         try {
             String filename = ConfigFileHelpers.REPORTS_FOLDER + "DCR-" + ObjectHelpers.getSqlDate() + "-" + l.getUsername() + ".pdf";
             
@@ -135,6 +136,16 @@ public class DCRPrinter {
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
             populateCancelledOrsTable(font, document, cancelledOrs, l, date, width);
+            
+            addLeftParagraph(document, "\nPrepared By:\n\n", font);
+            addCenteredParagraphSignatory(document, null, width, l.getName(), font);
+            
+            /**
+             * START CHECK SUMMARY
+             */
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+            
+            populateCheckSummaryTable(font, document, checkSummary, l, date, width);
             
             addLeftParagraph(document, "\nPrepared By:\n\n", font);
             addCenteredParagraphSignatory(document, null, width, l.getName(), font);
@@ -609,5 +620,74 @@ public class DCRPrinter {
             tableItemIndex += numberOfLinestoBreak;
         }
         
+    }
+    
+    public static void populateCheckSummaryTable(PdfFont font, Document doc, List<PaidBills> checks, pojos.Login l, String date, float width) {
+        float [] pointColumnWidths = {145F, 145F, 130F};   
+        
+        int size = checks.size();
+        int numberOfLinestoBreak = 50;
+        int pageNo = (size < numberOfLinestoBreak) ? 1 : size/numberOfLinestoBreak;
+        if ((size % numberOfLinestoBreak) > 0 && size > numberOfLinestoBreak) {
+            pageNo += 1;
+        }
+        
+        int tableItemIndex = 0;
+        double overAllAmountTotal = 0;
+        for (int pg=0; pg<pageNo; pg++) {
+            addLeftParagraph(doc, "Page " + (pg+1) + " of " + pageNo , font);
+            
+            Table table = new Table(pointColumnWidths);   
+            table.setFont(font).setFontSize(FONT_SIZE);
+            addCenteredParagraph(doc, null, width, COMPANY, font);  
+            addCenteredParagraph(doc, null, width, COMPANY_ADDRESS, font);  
+            addCenteredParagraph(doc, null, width, "SUMMARY OF CHECKS", font);  
+
+            addLeftParagraph(doc, "TELLER:             " + l.getName(), font);
+            addLeftParagraph(doc, "COLLECTION DATE:    " + date + "\n", font);
+
+            // Adding cells to the table       
+            addTableCellHeaderBordered(table, TextAlignment.CENTER, "Bank", false);
+            addTableCellHeaderBordered(table, TextAlignment.LEFT, "Check No", false);
+            addTableCellHeaderBordered(table, TextAlignment.RIGHT, "Amount", false);
+
+            double pbTotal = 0;
+            int localCounter = 0;
+            for (int i=tableItemIndex; i<size; i++) {
+                PaidBills td = checks.get(i);
+                addTableCellLeftText(table, td.getBank(), false);
+                addTableCellLeftText(table, td.getCheckNo(), false);
+                addTableCellRightText(table, ObjectHelpers.roundTwo(td.getNetAmount()), false);
+                pbTotal += td.getNetAmount()!= null ? Double.valueOf(td.getNetAmount()) : 0;
+                  
+                if (localCounter == numberOfLinestoBreak-1) {
+                    break;
+                }
+                localCounter++;
+            }
+            
+            overAllAmountTotal += pbTotal;
+
+            Cell ttl = new Cell(0, 2);
+            ttl.add("Total");
+            ttl.setHeight(13f);          
+            ttl.setMargin(-2);        
+            table.addCell(ttl);
+
+            ttl = new Cell();
+            ttl.add(ObjectHelpers.roundTwo(overAllAmountTotal + ""));
+            ttl.setHeight(13f);          
+            ttl.setMargin(-2);
+            ttl.setTextAlignment(TextAlignment.RIGHT);
+            table.addCell(ttl);
+            
+            doc.add(table);
+        
+            if (pg < pageNo-1) {
+                doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE)); 
+            }                       
+            
+            tableItemIndex += numberOfLinestoBreak;
+        }
     }
 }

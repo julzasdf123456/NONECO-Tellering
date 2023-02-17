@@ -609,6 +609,28 @@ public class MainFrame extends javax.swing.JFrame {
         changeField.setEnabled(false);
         mainPanel.add(changeField);
         
+        JLabel cash = new JLabel("Cash Amount");
+        cash.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(cash);
+        JFormattedTextField cashField = new JFormattedTextField(formatter);
+        cashField.setPreferredSize(new Dimension(120, 36));
+        cashField.setHorizontalAlignment(JTextField.RIGHT);
+        cashField.setForeground(Color.red);
+        cashField.setFont(new Font("Arial", Font.BOLD, 16));
+        cashField.setEnabled(false);
+        mainPanel.add(cashField);
+        
+        JLabel check = new JLabel("Check Amount");
+        check.setFont(new Font("Arial", Font.BOLD, 14));
+        mainPanel.add(check);
+        JFormattedTextField checkField = new JFormattedTextField(formatter);
+        checkField.setPreferredSize(new Dimension(120, 36));
+        checkField.setHorizontalAlignment(JTextField.RIGHT);
+        checkField.setForeground(Color.red);
+        checkField.setFont(new Font("Arial", Font.BOLD, 16));
+        checkField.setEnabled(false);
+        mainPanel.add(checkField);
+        
         fromOr.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -647,6 +669,8 @@ public class MainFrame extends javax.swing.JFrame {
                     double tTotal = TransactionIndexDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
                     totalAmountField.setValue(pbtotal + tTotal);
                     amountPaidField.requestFocus();
+                    checkField.setValue(PaidBillsDao.getSumORCheckTotal(connection, fromOr.getText(), toOr.getText(), login.getId()));
+                    cashField.setValue(PaidBillsDao.getSumORCashTotal(connection, fromOr.getText(), toOr.getText(), login.getId()));
                 }
             }
         });

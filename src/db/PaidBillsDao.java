@@ -158,9 +158,9 @@ public class PaidBillsDao {
                         null,
                         null,
                         null,
-                        rs.getString("PaymentUsed"),
                         null,
-                        null
+                        null,
+                        rs.getString("PaymentUsed")
                 ));   
             }
             return paidBills;
@@ -548,6 +548,103 @@ public class PaidBillsDao {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    public static List<PaidBills> getCheckSummary(Connection con, String orDate, String teller) {
+        try {
+            List<PaidBills> paidBills = new ArrayList<>();
+            PreparedStatement ps = con.prepareStatement("SELECT pd.CheckNo, pd.Bank, SUM(TRY_CAST(Amount AS DECIMAL(12,2))) AS Total FROM Cashier_PaidBillsDetails pd LEFT JOIN Cashier_PaidBills p ON pd.AccountNumber=p.AccountNumber AND pd.ServicePeriod=pd.ServicePeriod "
+                    + " WHERE pd.PaymentUsed='Check' AND p.PostingDate = ? AND p.Teller = ? GROUP BY pd.CheckNo, pd.Bank");
+            
+            ps.setString(1, orDate);
+            ps.setString(2, teller);
+            ResultSet rs = ps.executeQuery();
+            
+            while (rs.next()) {
+                paidBills.add(new PaidBills(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        (rs.getString("Total") != null ? rs.getString("Total") : "0"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        rs.getString("CheckNo"),
+                        rs.getString("Bank"),
+                        null,
+                        null
+                ));   
+            }
+            return paidBills;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static double getSumORCheckTotal(Connection con, String from, String to, String teller) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT SUM(TRY_CAST(Amount AS DECIMAL(12,2))) AS Total FROM Cashier_PaidBillsDetails pd LEFT JOIN Cashier_PaidBills p ON pd.AccountNumber=p.AccountNumber AND pd.ServicePeriod=pd.ServicePeriod "
+                    + " WHERE pd.PaymentUsed='Check' AND (p.ORNumber BETWEEN '" + from + "' AND '" + to + "') AND pd.UserId = ? AND TRY_CAST(pd.created_at AS DATE) = ?");
+            
+            ps.setString(1, teller);
+            ps.setString(2, ObjectHelpers.getSqlDate());
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return (rs.getString("Total") != null ? Double.valueOf(rs.getString("Total")) : 0); 
+            }
+            
+            ps.close();
+            rs.close();
+            return 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public static double getSumORCashTotal(Connection con, String from, String to, String teller) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT SUM(TRY_CAST(Amount AS DECIMAL(12,2))) AS Total FROM Cashier_PaidBillsDetails pd LEFT JOIN Cashier_PaidBills p ON pd.AccountNumber=p.AccountNumber AND pd.ServicePeriod=pd.ServicePeriod "
+                    + " WHERE pd.PaymentUsed='Cash' AND (p.ORNumber BETWEEN '" + from + "' AND '" + to + "') AND pd.UserId = ? AND TRY_CAST(pd.created_at AS DATE) = ?");
+            
+            ps.setString(1, teller);
+            ps.setString(2, ObjectHelpers.getSqlDate());
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return (rs.getString("Total") != null ? Double.valueOf(rs.getString("Total")) : 0); 
+            }
+            
+            ps.close();
+            rs.close();
+            return 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
         }
     }
 }

@@ -669,8 +669,11 @@ public class MainFrame extends javax.swing.JFrame {
                     double tTotal = TransactionIndexDao.getSumOr(connection, fromOr.getText(), toOr.getText(), login.getId());
                     totalAmountField.setValue(pbtotal + tTotal);
                     amountPaidField.requestFocus();
-                    checkField.setValue(PaidBillsDao.getSumORCheckTotal(connection, fromOr.getText(), toOr.getText(), login.getId()));
-                    cashField.setValue(PaidBillsDao.getSumORCashTotal(connection, fromOr.getText(), toOr.getText(), login.getId()));
+                    
+                    double cashTtl = PaidBillsDao.getSumORCashTotal(connection, fromOr.getText(), toOr.getText(), login.getId()) + TransactionIndexDao.getSumOrCashTotal(connection, fromOr.getText(), toOr.getText(), login.getId());
+                    double checkTtl = PaidBillsDao.getSumORCheckTotal(connection, fromOr.getText(), toOr.getText(), login.getId()) + TransactionIndexDao.getSumOrCheckTotal(connection, fromOr.getText(), toOr.getText(), login.getId());
+                    checkField.setValue(checkTtl);
+                    cashField.setValue(cashTtl);
                 }
             }
         });

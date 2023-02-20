@@ -238,8 +238,8 @@ public class DCRSummaryTransactionsDao {
         try {
             List<TransactionDetails> checkList = new ArrayList<>();
             
-            String powerBillQry = "SELECT ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.Amount, pb.CheckNo, pb.Bank FROM Cashier_PaidBillsDetails pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.UserId='" + teller + "' AND CAST(pb.created_at AS DATE)='" + day + "' AND PaymentUsed LIKE '%Check%'";
-            String othersQry = "SELECT t.ORNumber, t.AccountNumber, t.PayeeName, 'OTHERS' AS Source, td.Amount, td.CheckNo, td.Bank FROM Cashier_TransactionPaymentDetails td LEFT JOIN Cashier_TransactionIndex t ON t.ORNumber=td.ORNumber WHERE t.UserId='" + teller + "' AND t.ORDate='" + day + "' AND td.PaymentUsed LIKE '%Check%'";
+            String powerBillQry = "SELECT ORNumber, sa.OldAccountNo as AccountNumber, sa.ServiceAccountName, 'POWER BILL' AS Source, pb.Amount, pb.CheckNo, pb.Bank, pb.ServicePeriod FROM Cashier_PaidBillsDetails pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id WHERE pb.UserId='" + teller + "' AND CAST(pb.created_at AS DATE)='" + day + "' AND PaymentUsed LIKE '%Check%'";
+            String othersQry = "SELECT t.ORNumber, t.AccountNumber, t.PayeeName, 'OTHERS' AS Source, td.Amount, td.CheckNo, td.Bank, '1970-01-01' AS ServicePeriod FROM Cashier_TransactionPaymentDetails td LEFT JOIN Cashier_TransactionIndex t ON t.ORNumber=td.ORNumber WHERE t.UserId='" + teller + "' AND t.ORDate='" + day + "' AND td.PaymentUsed LIKE '%Check%'";
             PreparedStatement ps = con.prepareStatement(powerBillQry + " UNION " + othersQry);
             ResultSet rs = ps.executeQuery();
             
@@ -252,7 +252,7 @@ public class DCRSummaryTransactionsDao {
                         rs.getString("CheckNo"),
                         rs.getString("Amount"),
                         rs.getString("Bank"),
-                        null,
+                        rs.getString("ServicePeriod"),
                         null
                 ));
             }

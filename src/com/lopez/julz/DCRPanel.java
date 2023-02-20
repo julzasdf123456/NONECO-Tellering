@@ -69,7 +69,7 @@ public class DCRPanel extends javax.swing.JPanel {
     
     public List<TransactionDetails> checkPayments;
     public DefaultTableModel checkPaymentsModel;
-    public Object[] checkPaymentsColNames = {"OR Number", "Account No", "Payee Name", "Check No", "Bank", "Amount", "Source"};
+    public Object[] checkPaymentsColNames = {"OR Number", "Account No", "Payee Name", "Billing Month", "Check No", "Bank", "Amount", "Source"};
     
     public List<TransactionDetails> cancelledORs;
     public DefaultTableModel cancelledORsModel;
@@ -634,7 +634,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 dcrSummaryModel.fireTableDataChanged();
             }
             
-            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int dcrSize = dcrSummary.size();
             double dcrSummaryTotal = 0;
             Object[][] data = new Object[dcrSize][dcrSummaryColNames.length];
@@ -683,7 +683,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 powerBillsModel.fireTableDataChanged();
             }
             
-            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             Iterator<PaidBills> itr = powerBills.listIterator();
             while (itr.hasNext()) {
                 PaidBills pb = itr.next();
@@ -788,7 +788,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 nonPowerBillsModel.fireTableDataChanged();
             }
             
-            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int npbSize = nonPowerBills.size();
             double nonPowerBillsTotal = 0;
             Object[][] data = new Object[npbSize][nonPowerBillsColNames.length];
@@ -852,7 +852,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkPaymentsModel.fireTableDataChanged();
             }
             
-            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkPayments.size();
             double checkPaymentsTotal = 0;
             Object[][] data = new Object[checkSize][checkPaymentsColNames.length];
@@ -861,10 +861,11 @@ public class DCRPanel extends javax.swing.JPanel {
                 data[i][0] = checkPayments.get(i).getId(); // OR NUMBER
                 data[i][1] = checkPayments.get(i).getTransactionIndexId(); // ACCOUNT NUMBER
                 data[i][2] = checkPayments.get(i).getParticular(); // PAYEE NAME/ACCOUNT NAME
-                data[i][3] = checkPayments.get(i).getVAT(); // CHECK NO
-                data[i][4] = checkPayments.get(i).getAccountCode(); // BANK
-                data[i][5] = ObjectHelpers.roundTwo(checkPayments.get(i).getTotal());
-                data[i][6] = checkPayments.get(i).getAmount();
+                data[i][3] = checkPayments.get(i).getCreated_at() == null || checkPayments.get(i).getCreated_at().equals("1970-01-01") ? "" : checkPayments.get(i).getCreated_at(); // BILLING MONTH
+                data[i][4] = checkPayments.get(i).getVAT(); // CHECK NO
+                data[i][5] = checkPayments.get(i).getAccountCode(); // BANK
+                data[i][6] = ObjectHelpers.roundTwo(checkPayments.get(i).getTotal());
+                data[i][7] = checkPayments.get(i).getAmount();
                 checkPaymentsTotal += Double.valueOf(checkPayments.get(i).getTotal());   
                 prev = prevHolder;                
             }
@@ -927,7 +928,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkSummaryModel.fireTableDataChanged();
             }
             
-            checkSummary.addAll(PaidBillsDao.getCheckSummary(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkSummary.addAll(PaidBillsDao.getCheckSummary(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkSummary.size();
             Object[][] data = new Object[checkSize][checkSummaryColNames.length];
             for (int i=0; i<checkSize; i++) {
@@ -981,7 +982,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 cancelledORsModel.fireTableDataChanged();
             }
             
-            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDateddMMyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int size = cancelledORs.size();
             Object[][] data = new Object[size][cancelledORsColNames.length];
             for (int i=0; i<size; i++) {
@@ -1237,7 +1238,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
-                    String source = table.getValueAt(table.getSelectedRow(), 6).toString();
+                    String source = table.getValueAt(table.getSelectedRow(), 7).toString();
                     String account = table.getValueAt(table.getSelectedRow(), 1).toString();
                     
                     if (orNumber != null) {

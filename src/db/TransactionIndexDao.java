@@ -275,4 +275,38 @@ public class TransactionIndexDao {
             return 0;
         }
     }
+    
+    public static double getSumOrCheckTotal(Connection con, String from, String to, String userid) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT SUM(TRY_CAST(pd.Amount AS DECIMAL(12,2))) AS Total FROM Cashier_TransactionIndex p LEFT JOIN Cashier_TransactionPaymentDetails pd ON p.id=pd.TransactionIndexId WHERE (p.ORNumber BETWEEN TRY_CAST('" + from + "' AS DECIMAL(20,2)) AND TRY_CAST('" + to + "' AS DECIMAL(20,2))) AND p.Status IS NULL AND p.UserId='" + userid + "' AND pd.PaymentUsed='Check'");
+   
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return Double.valueOf(rs.getString("Total"));
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    public static double getSumOrCashTotal(Connection con, String from, String to, String userid) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT SUM(TRY_CAST(pd.Amount AS DECIMAL(12,2))) AS Total FROM Cashier_TransactionIndex p LEFT JOIN Cashier_TransactionPaymentDetails pd ON p.id=pd.TransactionIndexId WHERE (p.ORNumber BETWEEN TRY_CAST('" + from + "' AS DECIMAL(20,2)) AND TRY_CAST('" + to + "' AS DECIMAL(20,2))) AND p.Status IS NULL AND p.UserId='" + userid + "' AND pd.PaymentUsed='Cash'");
+   
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                return Double.valueOf(rs.getString("Total"));
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
 }

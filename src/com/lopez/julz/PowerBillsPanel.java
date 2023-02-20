@@ -1331,10 +1331,27 @@ public class PowerBillsPanel extends javax.swing.JPanel {
         try {
             if (getTotalAmount() >= (totalAmountPayable + totalSurcharge)) {
                 String paymentUsed = "";
+                double[] checksRemains = new double[0];
+                int checkIndex = 0;
+                int checkSize = 0;
+                double cashAmount = 0;
                 if (cashPaymentField.getValue() != null && checkLists.size() > 0) {
                     paymentUsed = "Cash and Check";
+                    
+                    checkSize = checkLists.size();
+                    checksRemains = new double[checkSize];
+                    for (int x=0; x<checkSize; x++) {
+                        checksRemains[x] = Double.valueOf(checkLists.get(x).getAmount());
+                    }
+                    cashAmount = getCashRemainFromCheck();
                 } else if (cashPaymentField.getValue() == null && checkLists.size() > 0) {
                     paymentUsed = "Check";
+                    
+                    checkSize = checkLists.size();
+                    checksRemains = new double[checkSize];
+                    for (int x=0; x<checkSize; x++) {
+                        checksRemains[x] = Double.valueOf(checkLists.get(x).getAmount());
+                    }
                 } else {
                     paymentUsed = "Cash";
                 }
@@ -1466,36 +1483,146 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                     double surcharge = paidBill.getSurcharge() != null ? Double.valueOf(paidBill.getSurcharge()) : 0;
                     if (cashPaymentField.getValue() != null) {
                         if (paymentUsed.equals("Cash and Check")) {
-                            if (getCashRemainFromCheck() > 0) {
-                                CheckPayments details = new CheckPayments(
-                                        ObjectHelpers.generateIDandRandString(),
-                                        activeAccount.getId(),
-                                        bill.getServicePeriod(),
-                                        null,
-                                        orNumberField.getText(),
-                                        ObjectHelpers.roundTwoNoComma((getCashRemainFromCheck()/selectedBills.size()) +""),
-                                        "Cash",
-                                        null,
-                                        null, 
-                                        null,
-                                        login.getId(),
-                                        ObjectHelpers.getCurrentTimestamp(),
-                                        ObjectHelpers.getCurrentTimestamp()
-                                );
-                                PaidBillDetailsDao.insert(connection, details);
+                            double netAmnt = Double.valueOf(paidBill.getNetAmount());
                                 
-                                if (i==0) {
-                                    if (checkLists.size() > 0) {
-                                        for(int x=0; x<checkLists.size(); x++) {
-                                            CheckPayments chk = checkLists.get(x);
-                                            chk.setId(ObjectHelpers.generateIDandRandString());
-                                            chk.setServicePeriod(bill.getServicePeriod());
-                                            chk.setAmount(chk.getAmount() + "");
-                                            PaidBillDetailsDao.insert(connection, chk);
-                                        }                                            
+                                // TRANSACT CASH FIRST IF THERE IS CASH INPUTTED
+                                if (cashAmount > 0) {
+                                    // TRANSACT CASH FIRST
+                                    if (cashAmount < netAmnt) {
+                                        double excessCash = netAmnt - cashAmount;
+                                        // SAVE FIRST EXCESS CASH
+                                        CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            paidBill.getORNumber(),
+                                            ObjectHelpers.roundTwoNoComma(cashAmount + ""),
+                                            "Cash",
+                                            null,
+                                            null, 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                        );
+                                        PaidBillDetailsDao.insert(connection, details);
+
+                                        cashAmount = 0;
+
+                                        // SAVE CHECK
+                                        details = new CheckPayments(
+                                                ObjectHelpers.generateIDandRandString(),
+                                                bill.getAccountNumber(),
+                                                bill.getServicePeriod(),
+                                                null,
+                                                paidBill.getORNumber(),
+                                                ObjectHelpers.roundTwoNoComma(excessCash + ""),
+                                                "Check",
+                                                checkLists.get(checkIndex).getCheckNo(),
+                                                checkLists.get(checkIndex).getBank(), 
+                                                null,
+                                                login.getId(),
+                                                ObjectHelpers.getCurrentTimestamp(),
+                                                ObjectHelpers.getCurrentTimestamp()
+                                            );
+                                        PaidBillDetailsDao.insert(connection, details);
+
+                                        // DEDUCT THE EXCESS
+                                        checksRemains[checkIndex] = checksRemains[checkIndex] - excessCash;
+                                    } else {
+                                        // SAVE CASH NORMALLY
+                                        CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            paidBill.getORNumber(),
+                                            ObjectHelpers.roundTwoNoComma(netAmnt + ""),
+                                            "Cash",
+                                            null,
+                                            null, 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                        );
+                                        PaidBillDetailsDao.insert(connection, details);
+                                        
+                                        cashAmount = cashAmount - netAmnt;
+                                    }    
+                                } else {
+                                    // START CHECK TRANSACTION
+                                    if (checksRemains[checkIndex] < netAmnt) {
+                                        // GET FIRST THE EXCESS AMOUNT OF THE BILL AMOUNT AND SAVE PARTIALLY
+                                        double excess = netAmnt - checksRemains[checkIndex];
+                                        CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            paidBill.getORNumber(),
+                                            ObjectHelpers.roundTwoNoComma(checksRemains[checkIndex] + ""),
+                                            "Check",
+                                            checkLists.get(checkIndex).getCheckNo(),
+                                            checkLists.get(checkIndex).getBank(), 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                        );
+                                        PaidBillDetailsDao.insert(connection, details);
+
+                                        checksRemains[checkIndex] = 0;
+                                        // MOVE TO THE NEXT CHECK
+                                        checkIndex++;
+                                        if (checkIndex < checkSize) {
+                                            // DEDUCT THE EXCESS TO THE NEXT CHECK
+                                            checksRemains[checkIndex] = checksRemains[checkIndex] - excess;
+
+                                            // SAVE THE EXCESS
+                                            details = new CheckPayments(
+                                                ObjectHelpers.generateIDandRandString(),
+                                                bill.getAccountNumber(),
+                                                bill.getServicePeriod(),
+                                                null,
+                                                paidBill.getORNumber(),
+                                                ObjectHelpers.roundTwoNoComma(excess + ""),
+                                                "Check",
+                                                checkLists.get(checkIndex).getCheckNo(),
+                                                checkLists.get(checkIndex).getBank(), 
+                                                null,
+                                                login.getId(),
+                                                ObjectHelpers.getCurrentTimestamp(),
+                                                ObjectHelpers.getCurrentTimestamp()
+                                            );
+                                            PaidBillDetailsDao.insert(connection, details);
+                                        } else {
+    //                                        Notifiers.showErrorMessage("Error", "Check amount insufficient!");
+    //                                        break;
+                                        }                                    
+                                    } else {
+                                        // SAVE NORMALLY
+                                        checksRemains[checkIndex] = checksRemains[checkIndex] - netAmnt;
+
+                                        CheckPayments details = new CheckPayments(
+                                            ObjectHelpers.generateIDandRandString(),
+                                            bill.getAccountNumber(),
+                                            bill.getServicePeriod(),
+                                            null,
+                                            paidBill.getORNumber(),
+                                            ObjectHelpers.roundTwoNoComma(netAmnt + ""),
+                                            "Check",
+                                            checkLists.get(checkIndex).getCheckNo(),
+                                            checkLists.get(checkIndex).getBank(), 
+                                            null,
+                                            login.getId(),
+                                            ObjectHelpers.getCurrentTimestamp(),
+                                            ObjectHelpers.getCurrentTimestamp()
+                                        );
+                                        PaidBillDetailsDao.insert(connection, details);
                                     }
-                                }                                    
-                            }                            
+                                }                                        
                         } else if (paymentUsed.equals("Cash")) {
                             CheckPayments details = new CheckPayments(
                                     ObjectHelpers.generateIDandRandString(),
@@ -1516,17 +1643,88 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                         }                        
                     } else {
                         if (paymentUsed.equals("Check")) { 
-                            if (i==0) {
-                                if (checkLists.size() > 0) {
-                                    for(int x=0; x<checkLists.size(); x++) {
-                                        CheckPayments chk = checkLists.get(x);
-                                        chk.setId(ObjectHelpers.generateIDandRandString());
-                                        chk.setServicePeriod(bill.getServicePeriod());
-                                        chk.setAmount(chk.getAmount() + "");
-                                        PaidBillDetailsDao.insert(connection, chk);
-                                    }                                            
-                                }
-                            }   
+//                            if (i==0) {
+//                                if (checkLists.size() > 0) {
+//                                    for(int x=0; x<checkLists.size(); x++) {
+//                                        CheckPayments chk = checkLists.get(x);
+//                                        chk.setId(ObjectHelpers.generateIDandRandString());
+//                                        chk.setServicePeriod(bill.getServicePeriod());
+//                                        chk.setAmount(chk.getAmount() + "");
+//                                        PaidBillDetailsDao.insert(connection, chk);
+//                                    }                                            
+//                                }
+//                            }  
+                            double netAmnt = Double.valueOf(paidBill.getNetAmount());
+                                
+                            if (checksRemains[checkIndex] < netAmnt) {
+                                // GET FIRST THE EXCESS AMOUNT OF THE BILL AMOUNT AND SAVE PARTIALLY
+                                double excess = netAmnt - checksRemains[checkIndex];
+                                CheckPayments details = new CheckPayments(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    bill.getAccountNumber(),
+                                    bill.getServicePeriod(),
+                                    null,
+                                    paidBill.getORNumber(),
+                                    ObjectHelpers.roundTwoNoComma(checksRemains[checkIndex] + ""),
+                                    "Check",
+                                    checkLists.get(checkIndex).getCheckNo(),
+                                    checkLists.get(checkIndex).getBank(), 
+                                    null,
+                                    login.getId(),
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                                );
+                                PaidBillDetailsDao.insert(connection, details);
+
+                                checksRemains[checkIndex] = 0;
+                                // MOVE TO THE NEXT CHECK
+                                checkIndex++;
+                                if (checkIndex < checkSize) {
+                                    // DEDUCT THE EXCESS TO THE NEXT CHECK
+                                    checksRemains[checkIndex] = checksRemains[checkIndex] - excess;
+
+                                    // SAVE THE EXCESS
+                                    details = new CheckPayments(
+                                        ObjectHelpers.generateIDandRandString(),
+                                        bill.getAccountNumber(),
+                                        bill.getServicePeriod(),
+                                        null,
+                                        paidBill.getORNumber(),
+                                        ObjectHelpers.roundTwoNoComma(excess + ""),
+                                        "Check",
+                                        checkLists.get(checkIndex).getCheckNo(),
+                                        checkLists.get(checkIndex).getBank(), 
+                                        null,
+                                        login.getId(),
+                                        ObjectHelpers.getCurrentTimestamp(),
+                                        ObjectHelpers.getCurrentTimestamp()
+                                    );
+                                    PaidBillDetailsDao.insert(connection, details);
+                                } else {
+//                                        Notifiers.showErrorMessage("Error", "Check amount insufficient!");
+//                                        break;
+                                }                                    
+                            } else {
+                                // SAVE NORMALLY
+                                checksRemains[checkIndex] = checksRemains[checkIndex] - netAmnt;
+
+                                CheckPayments details = new CheckPayments(
+                                    ObjectHelpers.generateIDandRandString(),
+                                    bill.getAccountNumber(),
+                                    bill.getServicePeriod(),
+                                    null,
+                                    paidBill.getORNumber(),
+                                    ObjectHelpers.roundTwoNoComma(netAmnt + ""),
+                                    "Check",
+                                    checkLists.get(checkIndex).getCheckNo(),
+                                    checkLists.get(checkIndex).getBank(), 
+                                    null,
+                                    login.getId(),
+                                    ObjectHelpers.getCurrentTimestamp(),
+                                    ObjectHelpers.getCurrentTimestamp()
+                                );
+                                PaidBillDetailsDao.insert(connection, details);
+                            }
                         }   
                     }
                     
@@ -1556,6 +1754,30 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                             ObjectHelpers.getCurrentTimestamp()
                     );
                     ORAssigningDao.insert(connection, orNew);
+                    
+                    /*
+                     * SAVE EXCESS CHECKS
+                     */
+                    for (int y=0; y<checkSize; y++) {
+                        if (checksRemains[y] > 0) {
+                            CheckPayments details = new CheckPayments(
+                                ObjectHelpers.generateIDandRandString(),
+                                null,
+                                null,
+                                null,
+                                "EXCESS CHECK PAYMENT",
+                                ObjectHelpers.roundTwoNoComma(checksRemains[y] + ""),
+                                "Check",
+                                checkLists.get(y).getCheckNo(),
+                                checkLists.get(y).getBank(), 
+                                null,
+                                login.getId(),
+                                ObjectHelpers.getCurrentTimestamp(),
+                                ObjectHelpers.getCurrentTimestamp()
+                            );
+                            PaidBillDetailsDao.insert(connection, details);
+                        }
+                    }
                     
                     /**
                      * ===============================

@@ -32,7 +32,7 @@ public class BillsDao {
             PreparedStatement ps = con.prepareStatement("SELECT * FROM " + billsTableName + 
                     " WHERE AccountNumber=? AND AccountNumber NOT IN "
                             + "(SELECT AccountNumber FROM Cashier_PaidBills WHERE AccountNumber IS NOT NULL AND AccountNumber=? AND (Status IS NULL OR Status='Application') AND ServicePeriod=Billing_Bills.ServicePeriod) "
-                            + "ORDER BY ServicePeriod DESC");
+                            + "ORDER BY ServicePeriod");
             ps.setString(1, accountId);
             ps.setString(2, accountId);
             ps.executeQuery();
@@ -426,7 +426,7 @@ public class BillsDao {
     public static double getSurcharge(Bills bill) {
         try {
             String acctType = getAccountType(bill.getConsumerType());
-            if (acctType.equals("RESIDENTIAL") | acctType.equals("PUBLIC BUILDING") | acctType.equals("PUBLIC BUILDING HIGH VOLTAGE") | acctType.equals("STREET LIGHTS")) {
+            if (acctType.equals("RESIDENTIAL") | acctType.equals("PUBLIC BUILDING") | acctType.equals("PUBLIC BUILDING HIGH VOLTAGE") | acctType.equals("STREET LIGHTS") | acctType.equals("IRRIGATION/WATER SYSTEMS")) {
                 return 0;
             } else {
                 if (ObjectHelpers.isAfterDue(bill)) {

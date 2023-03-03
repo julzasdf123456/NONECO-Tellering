@@ -81,6 +81,8 @@ public class DCRPanel extends javax.swing.JPanel {
     
     double cashTotal = 0;
     double checkTotal = 0;
+    double dcrSummaryTotal = 0;
+    double dcrCorrected = 0;
    
     public DCRPanel(pojos.Login login) {
         this.login = login;
@@ -541,7 +543,7 @@ public class DCRPanel extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         pojos.Login l = UsersDao.getLogin(connection, login.getId());
-        DCRPrinter.printDcr(l, dcrDate.getFormattedTextField().getText(), dcrSummary, powerBills, nonPowerBills, checkPayments, cancelledORs, checkSummary);
+        DCRPrinter.printDcr(l, dcrDate.getFormattedTextField().getText(), dcrSummary, powerBills, nonPowerBills, checkPayments, cancelledORs, checkSummary, dcrCorrected);
     }//GEN-LAST:event_jButton1ActionPerformed
 
 
@@ -620,6 +622,17 @@ public class DCRPanel extends javax.swing.JPanel {
             };            
             summaryTable.setModel(df);
             summaryTable.getColumnModel().getColumn(1).setCellRenderer(rightRendererBlue);
+            
+            // RECORRECT DCR
+            double ttl = checkTotal + cashTotal;
+            double dif = ttl - dcrSummaryTotal;
+            
+            if (dif > -10 && dif < 10) {
+                totalDcrSummaryLabel.setText(ObjectHelpers.roundTwo(ttl + ""));
+                dcrCorrected = ttl;
+            } else {
+                dcrCorrected = dcrSummaryTotal;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Notifiers.showErrorMessage("Error Getting Summary", e.getMessage());
@@ -636,7 +649,7 @@ public class DCRPanel extends javax.swing.JPanel {
             
             dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateToboso(dcrDate.getFormattedTextField().getText()), login.getId()));
             int dcrSize = dcrSummary.size();
-            double dcrSummaryTotal = 0;
+            dcrSummaryTotal = 0;
             Object[][] data = new Object[dcrSize][dcrSummaryColNames.length];
             int tbIndex = 0;
             for (int i=0; i<dcrSize; i++) {
@@ -1025,11 +1038,12 @@ public class DCRPanel extends javax.swing.JPanel {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    String account = table.getValueAt(table.getSelectedRow(), 2).toString();
                     
                     if (orNumber != null) {
                         String reason = JOptionPane.showInputDialog(cancelledORsTable, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
                         if (reason != null) {
-                            PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                            PaidBills pb = PaidBillsDao.getOneByORAndAccount(connection, orNumber, account);
                             
                             if (pb != null) {
                                 PaidBillsDao.requesetCancelOR(connection, pb, reason, login);

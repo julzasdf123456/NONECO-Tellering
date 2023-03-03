@@ -408,15 +408,15 @@ public class PaidBillsDao {
             ps.clearParameters();
             
             // REMOVE FROM DCR SUMMARY
-            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE ORNumber=? AND AccountNumber=?");
-            ps.setString(1, pb.getORNumber());
+            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE NEACode=? AND AccountNumber=?");
+            ps.setString(1, pb.getServicePeriod());
             ps.setString(2, pb.getAccountNumber());
             ps.execute();
             ps.clearParameters();
             
             // REMOVE FROM DETALIS
-            ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ORNumber=? AND AccountNumber=?");
-            ps.setString(1, pb.getORNumber());
+            ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ServicePeriod=? AND AccountNumber=?");
+            ps.setString(1, pb.getServicePeriod());
             ps.setString(2, pb.getAccountNumber());
             ps.execute();
             

@@ -57,7 +57,7 @@ public class DCRPrinter {
     
     public static void printDcr(pojos.Login l, String date, List<DCRSummaryTransactions> list,
             List<PaidBills> powerBills, List<TransactionDetails> nonPowerBills, List<TransactionDetails> checkPayments, List<TransactionDetails> cancelledOrs,
-            List<PaidBills> checkSummary) {
+            List<PaidBills> checkSummary, double dcrTotalCorrected) {
         try {
             String filename = ConfigFileHelpers.REPORTS_FOLDER + "DCR-" + ObjectHelpers.getSqlDate() + "-" + l.getUsername() + ".pdf";
             
@@ -95,7 +95,7 @@ public class DCRPrinter {
             addLeftParagraph(document, "COLLECTION CENTER:  " + ConfigFileHelpers.getOffice(), font);
             addLeftParagraph(document, "COLLECTION DATE:    " + date + "\n", font);
             
-            populateDcrTable(dcrPage, font, document, list);
+            populateDcrTable(dcrPage, font, document, list, dcrTotalCorrected);
             
             addLeftParagraph(document, "\nPrepared By:\n\n", font);
             addCenteredParagraphSignatory(document, null, width, l.getName(), font);
@@ -266,7 +266,7 @@ public class DCRPrinter {
         table.addCell(c1);
     }
     
-    public static void populateDcrTable(PdfPage page, PdfFont font, Document doc, List<DCRSummaryTransactions> list) {
+    public static void populateDcrTable(PdfPage page, PdfFont font, Document doc, List<DCRSummaryTransactions> list, Double dcrCorrected) {
         float [] pointColumnWidths = {80F, 210F, 80F};   
         Table table = new Table(pointColumnWidths);   
         table.setFont(font).setFontSize(FONT_SIZE);
@@ -301,7 +301,7 @@ public class DCRPrinter {
         table.addCell(ttl);
         
         ttl = new Cell();
-        ttl.add(ObjectHelpers.roundTwo(dcrSummaryTotal + ""));
+        ttl.add(ObjectHelpers.roundTwo(dcrCorrected + ""));
         ttl.setBold();
         ttl.setHeight(13f);          
         ttl.setMargin(-2);

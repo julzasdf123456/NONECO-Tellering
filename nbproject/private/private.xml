@@ -3,11 +3,16 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/pojos/PaidBills.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/helpers/DCRPrinter.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/PaidBillsDao.java</file>
-            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/MainFrame.java</file>
             <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/BillsDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/TransactionIndexDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/DCRSummaryTransactionsDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/MainFrame.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/pojos/TransactionDetails.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/MiscellaneousPanel.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/TicketsDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/db/PaidBillsDao.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/DCRPanel.java</file>
+            <file>file:/C:/Users/Julio%20Lopez/Documents/NetBeansProjects/Tellering/src/com/lopez/julz/PowerBillsPanel.java</file>
         </group>
     </open-files>
 </project-private>

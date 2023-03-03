@@ -8,6 +8,7 @@ package db;
 import helpers.ObjectHelpers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import pojos.Login;
 import pojos.ServiceAccounts;
 
@@ -18,8 +19,21 @@ import pojos.ServiceAccounts;
 public class TicketsDao {
     public static void createReconnection(Connection con, ServiceAccounts accounts, Login login, String office) {
         try {
-            String sql = "INSERT INTO CRM_Tickets(id, AccountNumber, ConsumerName, Town, Barangay, Sitio, Ticket, Reason, GeoLocation, Status, UserId, Office, created_at, updated_at) VALUES "
-                    + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            String mtr = "SELECT * FROM Billing_Meters WHERE ServiceAccountId=? ORDER BY created_at DESC";
+            PreparedStatement psMtr = con.prepareStatement(mtr);
+            psMtr.setString(1, accounts.getId());
+            ResultSet rsMtr = psMtr.executeQuery();
+            String meterNo = "", meterBrand = "";
+            if (rsMtr.next()) {
+                meterNo = rsMtr.getString("SerialNumber");
+                meterBrand = rsMtr.getString("Brand");
+            } else {
+                meterNo = "-";
+                meterBrand = "-";
+            }
+            
+            String sql = "INSERT INTO CRM_Tickets(id, AccountNumber, ConsumerName, Town, Barangay, Sitio, Ticket, Reason, GeoLocation, Status, UserId, Office, created_at, updated_at, CurrentMeterNo, CurrentMeterBrand) VALUES "
+                    + "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement ps = con.prepareStatement(sql);
             
             String id = ObjectHelpers.generateIDandRandString();
@@ -38,6 +52,8 @@ public class TicketsDao {
             ps.setString(12, office);
             ps.setString(13, ObjectHelpers.getCurrentTimestamp());
             ps.setString(14, ObjectHelpers.getCurrentTimestamp());
+            ps.setString(15, meterNo);
+            ps.setString(16, meterBrand);
             
             ps.execute();
             

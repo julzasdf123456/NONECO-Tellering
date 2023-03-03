@@ -2570,25 +2570,7 @@ public class PowerBillsPanel extends javax.swing.JPanel {
                 office,
                 activeAccount.getId());
             DCRSummaryTransactionsDao.insert(connection, dcr);
-            
-//            dcr = new DCRSummaryTransactions(
-//                ObjectHelpers.generateIDandRandString(),
-//                "412-555-00",
-//                bill.getServicePeriod(),
-//                null,
-//                bill.getSolarResidualCredit()!= null ? ("-" + bill.getSolarResidualCredit()) : "0",
-//                ObjectHelpers.getSqlDate(),
-//                ObjectHelpers.getSqlTime(),
-//                login.getId(),
-//                null,
-//                null,
-//                ObjectHelpers.getCurrentTimestamp(),
-//                ObjectHelpers.getCurrentTimestamp(),
-//                orNumberField.getText(),
-//                "BOTH",
-//                office,
-//                activeAccount.getId());
-//            DCRSummaryTransactionsDao.insert(connection, dcr);
+   
         }
     }
     

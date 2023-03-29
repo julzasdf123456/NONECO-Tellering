@@ -377,10 +377,11 @@ public class PaidBillsDao {
     
     public static void requesetCancelOR(Connection con, PaidBills pb, String reason, pojos.Login login) {
         try {
-            PreparedStatement ps = con.prepareStatement("UPDATE Cashier_PaidBills SET Status='PENDING CANCEL', FiledBy=?, Notes=? WHERE ORNumber=?");
+            PreparedStatement ps = con.prepareStatement("UPDATE Cashier_PaidBills SET Status='PENDING CANCEL', FiledBy=?, Notes=? WHERE ORNumber=? AND AccountNumber=?");
             ps.setString(1, login.getId());
             ps.setString(2, reason);
             ps.setString(3, pb.getORNumber());
+            ps.setString(4, pb.getAccountNumber());
             ps.execute();            
             ps.clearParameters();
             
@@ -432,12 +433,11 @@ public class PaidBillsDao {
             String statement = "SELECT b.*, a.ServiceAccountName, a.OldAccountNo FROM Billing_Bills b "
                     + "LEFT JOIN Billing_ServiceAccounts a ON a.id=b.AccountNumber "
                     + "WHERE b.ServicePeriod=? AND a.MemberConsumerId=? "
-                    + "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE AccountNumber IS NOT NULL AND ServicePeriod=? AND Status IS NULL) "
+                    + "AND b.AccountNumber NOT IN (SELECT AccountNumber FROM Cashier_PaidBills WHERE AccountNumber IS NOT NULL AND AccountNumber=b.AccountNumber AND ServicePeriod=b.ServicePeriod AND (Status IS NULL OR Status='Application')) "
                     + "ORDER BY a.OldAccountNo";
             PreparedStatement ps = con.prepareStatement(statement);
             ps.setString(1, period);
             ps.setString(2, groupId);
-            ps.setString(3, period);
             ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {

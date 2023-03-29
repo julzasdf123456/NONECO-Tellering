@@ -261,13 +261,15 @@ public class ORCancellationPanel extends javax.swing.JPanel {
                 public void actionPerformed(ActionEvent e) {
                     String orNumber = table.getValueAt(table.getSelectedRow(), 0).toString();
                     String source = table.getValueAt(table.getSelectedRow(), 4).toString();
+                    String account = table.getValueAt(table.getSelectedRow(), 1).toString();
                     
                     if (orNumber != null) {
                         String reason = JOptionPane.showInputDialog(table, "Provide any reason upon this cancellation", "Cancellation Confirmation", JOptionPane.QUESTION_MESSAGE);
                         if (reason != null) {
                             if (source != null && source.equals("POWER BILL")) {
-                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
-                            
+//                                PaidBills pb = PaidBillsDao.getOneByOR(connection, orNumber);
+                                PaidBills pb = PaidBillsDao.getOneByORAndAccount(connection, orNumber, account);
+                                System.out.println(pb.getAccountNumber() + " | " + pb.getORNumber());
                                 if (pb != null) {
                                     PaidBillsDao.requesetCancelOR(connection, pb, reason, login);
                                     if (orNumberSearch.getText() != null) {

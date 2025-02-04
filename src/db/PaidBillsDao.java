@@ -119,8 +119,12 @@ public class PaidBillsDao {
     public static List<PaidBills> getCashPowerBills(Connection con, String orDate, String teller) {
         try {
             List<PaidBills> paidBills = new ArrayList<>();
-            PreparedStatement ps = con.prepareStatement("SELECT pb.*, (SELECT SUM(TRY_CAST(Amount AS DECIMAL(25,4))) FROM Cashier_PaidBillsDetails WHERE ServicePeriod=pb.ServicePeriod AND AccountNumber=pb.AccountNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, sa.ServiceAccountName, sa.OldAccountNo FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
-                    + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND pb.Status IS NULL AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
+            PreparedStatement ps = con.prepareStatement("SELECT pb.*, "
+                    + "(SELECT SUM(TRY_CAST(Amount AS DECIMAL(25,4))) FROM Cashier_PaidBillsDetails WHERE ServicePeriod=pb.ServicePeriod AND AccountNumber=pb.AccountNumber AND PaymentUsed='Cash' AND UserId=?) AS CashPaid, "
+                    + "sa.ServiceAccountName, "
+                    + "sa.OldAccountNo "
+                    + "FROM Cashier_PaidBills pb LEFT JOIN Billing_ServiceAccounts sa ON pb.AccountNumber=sa.id "
+                    + "WHERE pb.PostingDate = ? AND pb.Teller = ? AND (pb.Status IS NULL OR pb.Status='Application') AND pb.PaymentUsed LIKE '%Cash%' ORDER BY pb.ORNumber");
             
             ps.setString(1, teller);
             ps.setString(2, orDate);
@@ -321,7 +325,8 @@ public class PaidBillsDao {
     
     public static PaidBills getOneByORAndAccount(Connection con, String orNumber, String acctNo) {
         try {
-            PreparedStatement ps = con.prepareStatement("SELECT p.* FROM Cashier_PaidBills p LEFT JOIN Billing_ServiceAccounts a ON p.AccountNumber=a.id WHERE ORNumber=? AND a.OldAccountNo=?");
+            PreparedStatement ps = con.prepareStatement("SELECT p.* FROM Cashier_PaidBills p LEFT JOIN Billing_ServiceAccounts a ON p.AccountNumber=a.id "
+                    + "WHERE ORNumber=? AND a.OldAccountNo=?");
             ps.setString(1, orNumber);
             ps.setString(2, acctNo);
             ResultSet rs = ps.executeQuery();
@@ -409,8 +414,8 @@ public class PaidBillsDao {
             ps.clearParameters();
             
             // REMOVE FROM DCR SUMMARY
-            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE NEACode=? AND AccountNumber=?");
-            ps.setString(1, pb.getServicePeriod());
+            ps = con.prepareStatement("DELETE FROM Cashier_DCRSummaryTransactions WHERE ORNumber=? AND AccountNumber=?"); // ORNumber is once NEACode
+            ps.setString(1, pb.getORNumber()); // previously account number
             ps.setString(2, pb.getAccountNumber());
             ps.execute();
             ps.clearParameters();
@@ -418,6 +423,12 @@ public class PaidBillsDao {
             // REMOVE FROM DETALIS
             ps = con.prepareStatement("DELETE FROM Cashier_PaidBillsDetails WHERE ServicePeriod=? AND AccountNumber=?");
             ps.setString(1, pb.getServicePeriod());
+            ps.setString(2, pb.getAccountNumber());
+            ps.execute();
+            
+            // REMOVE FROM CASHIER BILLS
+            ps = con.prepareStatement("DELETE FROM Cashier_Bills WHERE ORNumber=? AND AccountNumber=?");
+            ps.setString(1, pb.getORNumber());
             ps.setString(2, pb.getAccountNumber());
             ps.execute();
             

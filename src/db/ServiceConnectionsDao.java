@@ -81,14 +81,14 @@ public class ServiceConnectionsDao {
             if (regex.equals("") || regex.isEmpty()) {
                 query = "SELECT sc.*, t.Town as TownName, b.Barangay as BarangayName FROM CRM_ServiceConnections sc "
                     + "LEFT JOIN CRM_Towns t ON sc.Town=t.id LEFT JOIN CRM_Barangays b ON sc.Barangay=b.id "
-                    + "WHERE sc.Status IN ('Approved', 'For Inspection') AND Trash IS NULL AND sc.Office='" + office + "' AND "
+                    + "WHERE sc.Status IN ('Approved', 'For Inspection') AND Trash IS NULL AND sc.Office='" + office + "' AND ORNumber IS NULL AND ORDate IS NULL AND "
                     + "sc.id IN (SELECT ServiceConnectionId FROM CRM_ServiceConnectionParticularPaymentsTransactions WHERE (Vat IS NULL OR Vat='0.00') GROUP BY ServiceConnectionId) "
                     + "ORDER BY sc.created_at DESC";
             } else {
                 query = "SELECT sc.*, t.Town as TownName, b.Barangay as BarangayName FROM CRM_ServiceConnections sc "
                     + "LEFT JOIN CRM_Towns t ON sc.Town=t.id LEFT JOIN CRM_Barangays b ON sc.Barangay=b.id "
                     + "WHERE sc.ServiceAccountName LIKE '%" + regex + "%'"
-                    + "AND sc.Status IN ('Approved', 'For Inspection') AND Trash IS NULL AND "
+                    + "AND sc.Status IN ('Approved', 'For Inspection') AND Trash IS NULL AND ORNumber IS NULL AND ORDate IS NULL AND "
                     + "sc.id IN (SELECT ServiceConnectionId FROM CRM_ServiceConnectionParticularPaymentsTransactions WHERE (Vat IS NULL OR Vat='0.00') GROUP BY ServiceConnectionId) "
                     + "ORDER BY sc.created_at DESC";
             }

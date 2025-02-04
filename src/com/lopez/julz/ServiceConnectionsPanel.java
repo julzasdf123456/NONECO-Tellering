@@ -1238,7 +1238,8 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                             nextOrNumber + "",
                             "COLLECTION",
                             office,
-                            null);
+                            null,
+                            "MISCELLANEOUS");
                         DCRSummaryTransactionsDao.insert(connection, dcr);                           
                     }                            
                 }
@@ -1280,7 +1281,8 @@ public class ServiceConnectionsPanel extends javax.swing.JPanel {
                             nextOrNumber + "",
                             "COLLECTION",
                             office,
-                            null);
+                            null,
+                            "MISCELLANEOUS");
                         DCRSummaryTransactionsDao.insert(connection, dcr); 
                 }
 

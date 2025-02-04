@@ -8,6 +8,7 @@ package com.lopez.julz;
 import db.DCRSummaryTransactionsDao;
 import db.BAPAAdjustmentDetailsDao;
 import db.BillsDao;
+import db.CashierBillsDao;
 import db.CollectiblesDao;
 import db.DatabaseConnection;
 import db.OCLMonthlyDao;
@@ -53,7 +54,6 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -65,6 +65,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
 import pojos.BAPAAdjustmentDetails;
 import pojos.Bills;
+import pojos.CashierBills;
 import pojos.CheckPayments;
 import pojos.Collectibles;
 import pojos.DCRSummaryTransactions;
@@ -101,6 +102,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
     double netAmountPayable = 0;
     double totalSurcharge = 0;
     double totalWithoutSurcharge = 0;
+    double totalDiscountable = 0;
     
     /**
      * Checks
@@ -1226,7 +1228,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 hasChecks = false;
                  
                 discountAmount.setValue(discountTotal);
-                percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalWithoutSurcharge) * 100) + "") + "%");
+                percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalDiscountable) * 100) + "") + "%");
                 netAmountDue.setValue(netAmountPayable);
             }
              
@@ -1250,6 +1252,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             discountTotal = 0;
             
             totalWithoutSurcharge = 0;
+            totalDiscountable = 0;
             
             noOfConsumersField.setText("");
             totalAmount.setValue(null);
@@ -1277,6 +1280,20 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                 totalAmountPayable += Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill);
                 discountTotal += Double.valueOf(consumersList.get(i).getDiscountAmount());
                 totalWithoutSurcharge += Double.valueOf(consumersList.get(i).getNetAmount());
+                totalDiscountable += Double.valueOf(ObjectHelpers.getTotals(ObjectHelpers.doubleFromString(bill.getGenerationSystemCharge()),
+                    ObjectHelpers.doubleFromString(bill.getTransmissionDeliveryChargeKW()),
+                    ObjectHelpers.doubleFromString(bill.getTransmissionDeliveryChargeKWH()),
+                    ObjectHelpers.doubleFromString(bill.getSystemLossCharge()),
+                    ObjectHelpers.doubleFromString(bill.getDistributionDemandCharge()),
+                    ObjectHelpers.doubleFromString(bill.getDistributionSystemCharge()),
+                    ObjectHelpers.doubleFromString(bill.getSupplyRetailCustomerCharge()),
+                    ObjectHelpers.doubleFromString(bill.getSupplySystemCharge()),
+                    ObjectHelpers.doubleFromString(bill.getMeteringRetailCustomerCharge()),
+                    ObjectHelpers.doubleFromString(bill.getMeteringSystemCharge()),
+                    ObjectHelpers.doubleFromString(bill.getOtherGenerationRateAdjustment()),
+                    ObjectHelpers.doubleFromString(bill.getOtherTransmissionCostAdjustmentKW()),
+                    ObjectHelpers.doubleFromString(bill.getOtherTransmissionCostAdjustmentKWH()),
+                    ObjectHelpers.doubleFromString(bill.getOtherSystemLossCostAdjustment())));
                 netAmountPayable += ((Double.valueOf(consumersList.get(i).getNetAmount()) + BillsDao.getSurcharge(bill)) - Double.valueOf(consumersList.get(i).getDiscountAmount()));
             }
             
@@ -1323,7 +1340,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
             noOfConsumersField.setText(conSize + "");
             totalAmount.setValue(totalWithoutSurcharge);
             discountAmount.setValue(discountTotal);
-            percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalWithoutSurcharge) * 100) + "") + "%");
+            percentage.setText(ObjectHelpers.roundTwo(((discountTotal / totalDiscountable) * 100) + "") + "%");
             netAmountDue.setValue(netAmountPayable);
             cashPaymentField.setEnabled(true);
             addCheckButton.setEnabled(true);
@@ -1412,6 +1429,17 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                                 null,
                                 paymentUsed
                         );
+                        
+                        /**
+                        * ====================================================================================
+                        * NEW DCR INIT
+                        * ====================================================================================
+                        */
+                        CashierBills cb = CashierBillsDao.bridgeFromBills(bill);
+                        cb.setORNumber(paidBill.getORNumber());
+                        cb.setORDate(paidBill.getORDate());
+                        cb.setSurcharges(paidBill.getSurcharge() != null ? paidBill.getSurcharge() : "0");
+                        cb.setItem5(office);
                                                 
                         /*
                          * UPDATE OCL TO PAID
@@ -1461,6 +1489,11 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         * =======================================
                         */
                         if(bill.getDeductedDeposit()!= null) {
+                            /**
+                             * NEW DCR
+                             */
+                            cb.setPrepayment(bill.getDeductedDeposit() != null ? ("-" + bill.getDeductedDeposit()) : "0");
+                            
                             DCRSummaryTransactions dcrDeduct = new DCRSummaryTransactions(
                                     ObjectHelpers.generateIDandRandString(),
                                     "223-235-20",
@@ -1483,6 +1516,12 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                         }
                         
                         if (!hasChecks) {
+                            /**
+                             * NEW DCR
+                             * BAPA DISCOUNT
+                             */
+                            cb.setBAPADiscount("-" + ObjectHelpers.roundTwoNoComma(dsc + ""));
+                            
                             // DCR FOR DISCOUNTS
                             dcr = new DCRSummaryTransactions(
                                     ObjectHelpers.generateIDandRandString(),
@@ -1513,6 +1552,15 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
                          * FIX DCR
                          */
                         fixDCR(login.getId(), account.getId(), nextOrNumber + "", ObjectHelpers.getSqlDate(), paidBill, account, bill.getServicePeriod());
+                        
+                        /**
+                        * ====================================================================================
+                        * NEW DCR SAVE
+                        * ====================================================================================
+                        */
+                        cb.setUserId(paidBill.getUserId()); // teller
+                        cb.setBilledFrom(office); // office
+                        CashierBillsDao.insert(connection, cb);
                         
                         /**
                         * SAVE PAID BILL DETAILS
@@ -2451,7 +2499,7 @@ public class BAPAPaymentsPanel extends javax.swing.JPanel {
         // GET EWT 5% COLLECTION
         dcr = new DCRSummaryTransactions(
             ObjectHelpers.generateIDandRandString(),
-            "140-170-00",
+            "140-180-00",
             bill.getServicePeriod(),
             null,
             bill.getEvat5Percent() != null ? ("-" + bill.getEvat5Percent()) : "0",

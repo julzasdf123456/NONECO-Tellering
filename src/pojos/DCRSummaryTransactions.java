@@ -26,10 +26,31 @@ public class DCRSummaryTransactions {
     private String AccountNumber;
     private String created_at;
     private String updated_at;
+    private String Source;
 
     public DCRSummaryTransactions() {
     }
 
+    public DCRSummaryTransactions(String id, String GLCode, String NEACode, String Description, String Amount, String Day, String Time, String Teller, String DCRNumber, String Status, String created_at, String updated_at, String ORNumber, String ReportDestination, String Office, String AccountNumber, String Source) {
+        this.id = id;
+        this.GLCode = GLCode;
+        this.NEACode = NEACode;
+        this.Description = Description;
+        this.Amount = Amount;
+        this.Day = Day;
+        this.Time = Time;
+        this.Teller = Teller;
+        this.DCRNumber = DCRNumber;
+        this.Status = Status;
+        this.ORNumber = ORNumber;
+        this.ReportDestination = ReportDestination;
+        this.Office = Office;
+        this.AccountNumber = AccountNumber;
+        this.created_at = created_at;
+        this.updated_at = updated_at;
+        this.Source = Source;
+    }
+    
     public DCRSummaryTransactions(String id, String GLCode, String NEACode, String Description, String Amount, String Day, String Time, String Teller, String DCRNumber, String Status, String created_at, String updated_at, String ORNumber, String ReportDestination, String Office, String AccountNumber) {
         this.id = id;
         this.GLCode = GLCode;
@@ -176,4 +197,14 @@ public class DCRSummaryTransactions {
     public void setUpdated_at(String updated_at) {
         this.updated_at = updated_at;
     }
+
+    public String getSource() {
+        return Source;
+    }
+
+    public void setSource(String Source) {
+        this.Source = Source;
+    }
+    
+    
 }

@@ -298,6 +298,19 @@ public class ObjectHelpers {
         }
     }
     
+    public static Double doubleFromString(Object doublex) {
+        try {
+            if (doublex != null) {
+                return Double.valueOf(doublex.toString());
+            } else {
+                return 0.0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0.0;
+        }
+    }
+    
     public static void main(String[] args) {
         
     }

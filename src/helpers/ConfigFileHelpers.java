@@ -24,8 +24,8 @@ public class ConfigFileHelpers {
     public static String OTHER_CONFIG = System.getProperty("user.dir") + SEPARATOR + "config" + SEPARATOR + "otherconfig.txt";
     public static String REPORTS_FOLDER = System.getProperty("user.dir") + SEPARATOR + "reports" + SEPARATOR;
     
-    public static String OR_VIEW_URL = "http://" + getServerIp() + ":8000/transaction_indices/browse-ors-view/";
-    public static String VIEW_ACCOUNT_URL = "http://" + getServerIp() + ":8000/serviceAccounts/";
+    public static String OR_VIEW_URL = "http://" + getServerIp() + "/crm-noneco/public/index.php?transaction_indices/browse-ors-view/";
+    public static String VIEW_ACCOUNT_URL = "http://" + getServerIp() + "/crm-noneco/public/index.php?serviceAccounts/";
     
     public static String getOffice () {
         try {

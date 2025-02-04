@@ -1830,7 +1830,8 @@ public class MiscellaneousPanel extends javax.swing.JPanel {
                                 nextOrNumber + "",
                                 "COLLECTION",
                                 office,
-                                null);
+                                null,
+                                "MISCELLANEOUS");
                             DCRSummaryTransactionsDao.insert(connection, dcr);    
                             
                             // CREATE TICKET IF RECONNECTION

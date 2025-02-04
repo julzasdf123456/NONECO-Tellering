@@ -5,6 +5,7 @@
  */
 package com.lopez.julz;
 
+import db.CashierBillsDao;
 import db.DCRSummaryTransactionsDao;
 import db.DatabaseConnection;
 import db.PaidBillsDao;
@@ -24,8 +25,10 @@ import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -627,7 +630,7 @@ public class DCRPanel extends javax.swing.JPanel {
             double ttl = checkTotal + cashTotal;
             double dif = ttl - dcrSummaryTotal;
             
-            if (dif > -10 && dif < 10) {
+            if (dif > -40 && dif < 40) {
                 totalDcrSummaryLabel.setText(ObjectHelpers.roundTwo(ttl + ""));
                 dcrCorrected = ttl;
             } else {
@@ -647,7 +650,12 @@ public class DCRPanel extends javax.swing.JPanel {
                 dcrSummaryModel.fireTableDataChanged();
             }
             
-            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+//            dcrSummary.addAll(DCRSummaryTransactionsDao.getDcrSummary(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
+            /**
+             * UPDATED NEW DCR
+             */
+            dcrSummary.addAll(getNewDCR());
+            dcrSummary = sumSameAccounts(dcrSummary);
             int dcrSize = dcrSummary.size();
             dcrSummaryTotal = 0;
             Object[][] data = new Object[dcrSize][dcrSummaryColNames.length];
@@ -664,6 +672,9 @@ public class DCRPanel extends javax.swing.JPanel {
             dcrSummaryModel = new DefaultTableModel(data, dcrSummaryColNames) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
+                    if (column == 1) {
+                        return true;
+                    }
                     return false;
                 }                
             };
@@ -696,7 +707,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 powerBillsModel.fireTableDataChanged();
             }
             
-            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            powerBills.addAll(PaidBillsDao.getCashPowerBills(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             Iterator<PaidBills> itr = powerBills.listIterator();
             while (itr.hasNext()) {
                 PaidBills pb = itr.next();
@@ -801,7 +812,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 nonPowerBillsModel.fireTableDataChanged();
             }
             
-            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            nonPowerBills.addAll(TransactionIndexDao.getDcr(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int npbSize = nonPowerBills.size();
             double nonPowerBillsTotal = 0;
             Object[][] data = new Object[npbSize][nonPowerBillsColNames.length];
@@ -865,7 +876,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkPaymentsModel.fireTableDataChanged();
             }
             
-            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkPayments.addAll(DCRSummaryTransactionsDao.getCheckPayments(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkPayments.size();
             double checkPaymentsTotal = 0;
             Object[][] data = new Object[checkSize][checkPaymentsColNames.length];
@@ -941,7 +952,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 checkSummaryModel.fireTableDataChanged();
             }
             
-            checkSummary.addAll(PaidBillsDao.getCheckSummary(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            checkSummary.addAll(PaidBillsDao.getCheckSummary(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int checkSize = checkSummary.size();
             Object[][] data = new Object[checkSize][checkSummaryColNames.length];
             for (int i=0; i<checkSize; i++) {
@@ -995,7 +1006,7 @@ public class DCRPanel extends javax.swing.JPanel {
                 cancelledORsModel.fireTableDataChanged();
             }
             
-            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDateMMMddyyyy(dcrDate.getFormattedTextField().getText()), login.getId()));
+            cancelledORs.addAll(DCRSummaryTransactionsDao.getCancelledORs(connection, ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()), login.getId()));
             int size = cancelledORs.size();
             Object[][] data = new Object[size][cancelledORsColNames.length];
             for (int i=0; i<size; i++) {
@@ -1247,6 +1258,7 @@ public class DCRPanel extends javax.swing.JPanel {
             JMenuItem cancel = new JMenuItem("Cancel This OR");
             JMenuItem viewOR = new JMenuItem("View In Full Detail");
             JMenuItem viewConsumer = new JMenuItem("View This Consumer");
+            
             cancel.addActionListener(new ActionListener() {
 
                 @Override
@@ -1379,6 +1391,71 @@ public class DCRPanel extends javax.swing.JPanel {
             table.setComponentPopupMenu(popupMenu);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+    
+    public List<DCRSummaryTransactions> getNewDCR() {
+        try {
+            List<DCRSummaryTransactions> nDcrList = CashierBillsDao.getARDCR(connection, login.getId(), ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText()));
+            nDcrList.addAll(CashierBillsDao.getRPTandBusinessTaxDCR(connection, login.getId(), ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText())));
+            nDcrList.addAll(CashierBillsDao.getTermedPaymentsDCR(connection, login.getId(), ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText())));
+            nDcrList.addAll(CashierBillsDao.getOtherPowerBillDcr(connection, login.getId(), ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText())));
+            nDcrList.addAll(CashierBillsDao.getOtherDCR(connection, login.getId(), ObjectHelpers.formatSqlDate(dcrDate.getFormattedTextField().getText())));
+            
+            List<DCRSummaryTransactions> returnDCRList = new ArrayList<>();
+            
+            for (int i=0; i<nDcrList.size(); i++) {
+                DCRSummaryTransactions dcr = nDcrList.get(i);
+                if (dcr.getAmount() != null && ObjectHelpers.doubleFromString(dcr.getAmount()) != 0) {
+//                    System.out.println(nDcrList.get(i).getGLCode() + " | " + nDcrList.get(i).getDescription()+ " | " + nDcrList.get(i).getAmount());
+                    returnDCRList.add(dcr);
+                }
+            }
+            
+            return returnDCRList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public List<DCRSummaryTransactions> sumSameAccounts(List<DCRSummaryTransactions> dcrList) {
+        try {
+            Map<String, Double> mergedAccountsMap = new HashMap<>();
+            Map<String, String> accountNameMap = new HashMap<>();
+            
+            dcrList.forEach((account) -> {
+                String accountCode = account.getGLCode();
+                double amount = ObjectHelpers.doubleFromString(account.getAmount());
+                String accountName = account.getDescription();
+
+                // If AccountCode already exists in the map, add the amount to the existing total
+                if (mergedAccountsMap.containsKey(accountCode)) {
+                    mergedAccountsMap.put(accountCode, mergedAccountsMap.get(accountCode) + amount);
+                } else {
+                    // If AccountCode doesn't exist, add it to the map with the initial amount
+                    mergedAccountsMap.put(accountCode, amount);
+                    accountNameMap.put(accountCode, accountName);
+                }
+            });
+            
+            List<DCRSummaryTransactions> mergedList = new ArrayList<>();
+            mergedAccountsMap.entrySet().forEach((entry) -> {
+                String accountCode = entry.getKey();
+                double totalAmount = entry.getValue();
+                String accountName = accountNameMap.get(accountCode);
+                mergedList.add(new DCRSummaryTransactions("03",
+                        accountCode,
+                        null, accountName,
+                        ObjectHelpers.roundTwoNoComma(totalAmount),
+                        null, // day 
+                        null, null, null, null, null, null, null, null, null, null));
+            });
+            
+            return mergedList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

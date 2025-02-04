@@ -22,7 +22,7 @@ import pojos.TransactionDetails;
 public class DCRSummaryTransactionsDao {
     public static boolean insert(Connection con, DCRSummaryTransactions dCRSummaryTransactions) {
         try {
-            PreparedStatement ps = con.prepareStatement("INSERT INTO Cashier_DCRSummaryTransactions(id, GLCode, NEACode, Description, Amount, Day, Time, Teller, DCRNumber, Status, created_at, updated_at, ORNumber, ReportDestination, Office, AccountNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement ps = con.prepareStatement("INSERT INTO Cashier_DCRSummaryTransactions(id, GLCode, NEACode, Description, Amount, Day, Time, Teller, DCRNumber, Status, created_at, updated_at, ORNumber, ReportDestination, Office, AccountNumber, Source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             ps.setString(1, dCRSummaryTransactions.getId());
             ps.setString(2, dCRSummaryTransactions.getGLCode());
             ps.setString(3, dCRSummaryTransactions.getNEACode());
@@ -39,6 +39,7 @@ public class DCRSummaryTransactionsDao {
             ps.setString(14, dCRSummaryTransactions.getReportDestination());
             ps.setString(15, dCRSummaryTransactions.getOffice());
             ps.setString(16, dCRSummaryTransactions.getAccountNumber());
+            ps.setString(17, dCRSummaryTransactions.getSource());
             ps.executeUpdate();
             ps.close();
             return true;
@@ -215,6 +216,7 @@ public class DCRSummaryTransactionsDao {
                         rs.getString("Description"),
                         rs.getString("Amount"),
                         day,
+                        null,
                         null,
                         null,
                         null,

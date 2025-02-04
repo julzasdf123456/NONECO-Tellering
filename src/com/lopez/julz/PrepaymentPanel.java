@@ -1317,7 +1317,8 @@ public class PrepaymentPanel extends javax.swing.JPanel {
                         orNumberField.getText(),
                         "COLLECTION",
                         office,
-                        activeAccount.getId()
+                        activeAccount.getId(),
+                        "MISCELLANEOUS"
                 );
                 DCRSummaryTransactionsDao.insert(connection, dcr);
                 

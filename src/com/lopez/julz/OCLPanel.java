@@ -1385,7 +1385,8 @@ public class OCLPanel extends javax.swing.JPanel {
                                 nextOrNumber + "",
                                 "COLLECTION",
                                 office,
-                                activeAccount.getId());
+                                activeAccount.getId(),
+                                "MISCELLANEOUS");
                             DCRSummaryTransactionsDao.insert(connection, dcr);      
                         }
 
@@ -1558,7 +1559,8 @@ public class OCLPanel extends javax.swing.JPanel {
                             nextOrNumber + "",
                             "COLLECTION",
                             office,
-                            activeAccount.getId());
+                            activeAccount.getId(),
+                            "MISCELLANEOUS");
                         DCRSummaryTransactionsDao.insert(connection, dcr);   
                         
                         /**
